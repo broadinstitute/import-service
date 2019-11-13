@@ -6,15 +6,9 @@ def iservice(request: flask.Request) -> flask.Response:
     return flask.make_response(service.handle(request))
 
 
-def flaskapp() -> flask.Flask:
-    app = flask.Flask(__name__)
-    @app.route('/test', methods=['POST'])
-    def test():
-        return iservice(flask.request)
-    return app
+# Update this with a list of all HTTP cloud functions, it's used to build the unit testing client
+ALL_HTTP_FUNCTIONS = [iservice]
 
 
-if __name__ == "__main__":
-    c = flaskapp().test_client()
-    resp = c.post('/test', json={"bees":"buzz"})
-    print(f"HTTP {resp.status} message {resp.data}")
+#todo: deploy to cloud function. pass --env-vars-file to get environment-y things in
+#see https://cloud.google.com/sdk/gcloud/reference/functions/deploy#--env-vars-file
