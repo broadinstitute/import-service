@@ -30,6 +30,6 @@ def handle(request: flask.Request) -> flask.Response:
         except jsonschema.ValidationError as ve:
             return flask.make_response((ve.message, 400))
 
-        flask.make_response(("ok", 200))
+        return flask.make_response(("ok", 200))
     else:
         return flask.make_response(f"Unhandled HTTP method {request.method}")

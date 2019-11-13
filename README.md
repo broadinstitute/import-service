@@ -7,7 +7,7 @@ Terra Import Service. Tech doc [here](https://docs.google.com/document/d/1MeL9J5
 
 Code shared by cloud functions is in `functions/common`.
 
-### Getting started
+### Developer instructions
 
 #### First time setup
 
@@ -28,6 +28,15 @@ $ source venv/bin/activate
 <do all your work here>
 (venv) $ deactivate
 ```
+
+#### Type linting
+
+```
+(venv) $ cd functions
+(venv) $ mypy *.py
+```
+
+Don't check in until these are clean.
 
 #### Testing
 ```
