@@ -32,4 +32,4 @@ def handle(request: flask.Request) -> flask.Response:
 
         return flask.make_response(("ok", 200))
     else:
-        return flask.make_response(f"Unhandled HTTP method {request.method}")
+        return flask.make_response((f"Unhandled HTTP method {request.method}", 500))
