@@ -13,6 +13,6 @@ ALL_HTTP_FUNCTIONS = [iservice]
 
 def taskchunk(event, context):
     from functions import chunk_task
-    from functions.common import db
-    chunk_task.handle(event["attributes"], db.get_connection())
+    from functions.common import db_conn
+    chunk_task.handle(event["attributes"], db_conn.get_connection())
     return None  # background functions want you to return something
