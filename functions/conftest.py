@@ -3,9 +3,10 @@ import flask.testing
 import pytest
 import sqlalchemy.engine
 import sqlalchemy.orm
+from typing import Iterable
 
-import main
-from common import db
+from . import main
+from .common import db, model
 
 
 @pytest.fixture(scope="session")
@@ -30,11 +31,10 @@ Session = sqlalchemy.orm.sessionmaker()
 
 # internal fixture for creating one sqlite db for test and a connection to it
 @pytest.fixture(scope="session")
-def _dbconn_internal() -> sqlalchemy.engine.Connection:
+def _dbconn_internal() -> Iterable[sqlalchemy.engine.Connection]:
     global _db, _connection
     _db = sqlalchemy.create_engine('sqlite://')
 
-    from common import model
     model.Base.metadata.create_all(_db)
 
     _connection = _db.connect()
@@ -47,7 +47,7 @@ def _dbconn_internal() -> sqlalchemy.engine.Connection:
 # Google doesn't give us a mechanism to access the Flask app, so we have to monkey patch the
 # "give me a database session" function called by application code. YIKES!!!!
 @pytest.fixture(scope="function", autouse=True)
-def dbsession(_dbconn_internal) -> db.DBSession:
+def dbsession(_dbconn_internal: sqlalchemy.engine.Connection) -> Iterable[db.DBSession]:
     txn = _dbconn_internal.begin()
     sess = Session(bind=_dbconn_internal)
     db.get_session = lambda: sess

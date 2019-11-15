@@ -1,4 +1,4 @@
-from common import db, model
+from ..common import db, model
 
 
 def test_db_add(dbsession: db.DBSession):

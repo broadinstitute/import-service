@@ -1,7 +1,7 @@
 import flask
 import jsonschema
 
-from common import db, model
+from .common import db, model
 
 NEW_IMPORT_SCHEMA = {
   "$schema": "http://json-schema.org/draft-07/schema#",

@@ -32,19 +32,27 @@ $ source venv/bin/activate
 (venv) $ deactivate
 ```
 
-To run the type linter:
-```
-(venv) $ cd functions
-(venv) $ python3 -m mypy *.py
-```
-
-Don't check in until these are clean.
-
 To run tests:
 ```
 (venv) $ cd functions
 (venv) $ python3 -m pytest -s
 ```
+
+### Type linting
+
+This project uses type linting. To run the type linter, go to the repo root directory and run:
+```
+(venv) $ python3 -m mypy -p functions
+```
+
+You should make the linter happy before opening a PR.
+
+You are not required to type hint everything, but you *should* add types for:
+* function arguments
+* function return types
+* class variables
+
+If you are relying on an external library which doesn't have type stubs, you can add a new section in `mypy.ini` to tell it sorry, nothing you can do.
 
 ### Writing tests
 

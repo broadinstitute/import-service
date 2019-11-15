@@ -31,7 +31,7 @@ class Import(Base):
         self.workspace_namespace = workspace_ns
         self.submitter = submitter
         self.submit_time = datetime.now()
-        self.status = ImportStatus.Pending
+        self.status = ImportStatus.Pending.name
 
     def __repr__(self):
         # todo: replace with https://github.com/manicmaniac/sqlalchemy-repr
