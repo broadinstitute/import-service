@@ -34,6 +34,9 @@ def get_session() -> DBSession:
             max_overflow=0
         )
 
+        from common import model
+        model.Base.metadata.create_all(_db)
+
     if _session is None:
         sessionmaker = sqlalchemy.orm.sessionmaker(bind=_db)
         _session = sessionmaker()

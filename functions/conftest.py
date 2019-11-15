@@ -32,8 +32,10 @@ Session = sqlalchemy.orm.sessionmaker()
 def _dbconn_internal() -> sqlalchemy.engine.Connection:
     global _db, _connection
     _db = sqlalchemy.create_engine('sqlite://')
+
     from common import model
     model.Base.metadata.create_all(_db)
+
     _connection = _db.connect()
     yield _connection
     _connection.close()
