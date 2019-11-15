@@ -1,6 +1,8 @@
-import sqlalchemy
-from common import dbsetup
+import sqlalchemy.engine.url
+import sqlalchemy.orm
 import os
+
+DBSession = sqlalchemy.orm.session.Session
 
 # todo: env vars
 db_user = os.environ.get("DB_USER")
@@ -8,15 +10,15 @@ db_pass = os.environ.get("DB_PASS")
 db_name = os.environ.get("DB_NAME")
 cloud_sql_connection_name = os.environ.get("CLOUD_SQL_CONNECTION_NAME")
 
-db = None
-connection = None
+_db = None
+_session = None
 
 
-def get_connection() -> sqlalchemy.engine.Connection:
-    global db, connection
+def get_session() -> DBSession:
+    global _db, _session
 
-    if db is None:
-        db = sqlalchemy.create_engine(
+    if _db is None:
+        _db = sqlalchemy.create_engine(
             # Equivalent URL:
             # mysql+pymysql://<db_user>:<db_pass>@/<db_name>?unix_socket=/cloudsql/<cloud_sql_instance_name>
             sqlalchemy.engine.url.URL(
@@ -32,8 +34,8 @@ def get_connection() -> sqlalchemy.engine.Connection:
             max_overflow=0
         )
 
-    if connection is None:
-        connection = db.connect()
-        dbsetup.create_tables(connection)
+    if _session is None:
+        sessionmaker = sqlalchemy.orm.sessionmaker(bind=_db)
+        _session = sessionmaker()
 
-    return connection
+    return _session

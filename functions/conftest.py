@@ -1,9 +1,10 @@
 import flask
 import flask.testing
 import sqlalchemy.engine
+import sqlalchemy.orm
 import pytest
 from functions import main
-from functions.common import dbsetup
+from functions.common import db
 
 
 @pytest.fixture(scope="module")
@@ -21,24 +22,29 @@ def client() -> flask.testing.FlaskClient:
     return app.test_client()
 
 
-db = None
-connection = None
+_db = None
+_connection = None
+Session = sqlalchemy.orm.sessionmaker()
 
 
-# internal fixture for creating one sqlite db for tests
+# internal fixture for creating one sqlite db for test and a connection to it
 @pytest.fixture(scope="session")
 def _dbconn_internal() -> sqlalchemy.engine.Connection:
-    global db, connection
-    db = sqlalchemy.create_engine('sqlite://')
-    connection = db.connect()
-    dbsetup.create_tables(connection)
-    yield connection
-    connection.close()
+    global _db, _connection
+    _db = sqlalchemy.create_engine('sqlite://')
+    from common import model
+    model.Base.metadata.create_all(_db)
+    _connection = _db.connect()
+    yield _connection
+    _connection.close()
 
 
-# fixture for database connections in tests. vanishes everything the test does with a txn rollback
+# fixture for database sessions in tests.
+# vanishes everything the test does with a txn rollback
 @pytest.fixture(scope="function")
-def dbconn(_dbconn_internal) -> sqlalchemy.engine.Connection:
+def dbsession(_dbconn_internal) -> db.DBSession:
     txn = _dbconn_internal.begin()
-    yield _dbconn_internal
+    sess = Session(bind=_dbconn_internal)
+    yield sess
+    sess.close()
     txn.rollback()
