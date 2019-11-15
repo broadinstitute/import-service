@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+from typing import Iterator
 import os
 
 import sqlalchemy.engine.url
@@ -46,7 +47,7 @@ def get_session() -> DBSession:
 
 
 @contextmanager
-def session_ctx() -> DBSession:
+def session_ctx() -> Iterator[DBSession]:
     """Provide a transactional scope around a series of operations."""
     session = get_session()
     try:
