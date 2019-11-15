@@ -32,10 +32,11 @@ def handle(request: flask.Request) -> flask.Response:
         except jsonschema.ValidationError as ve:
             return flask.make_response((ve.message, 400))
 
-        newImport = model.Import(workspace_name="myws", workspace_ns="myns", submitter="hussein@cool.com")
-        sess = db.get_session()
-        sess.add(newImport)
-        sess.commit()
-        return flask.make_response((str(newImport.id), 200))
+        new_import = model.Import(workspace_name="myws", workspace_ns="myns", submitter="hussein@cool.com")
+
+        with db.session_ctx() as sess:
+            sess.add(new_import)
+            sess.commit()
+            return flask.make_response((str(new_import.id), 200))
     else:
         return flask.make_response((f"Unhandled HTTP method {request.method}", 500))

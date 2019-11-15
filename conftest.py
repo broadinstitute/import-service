@@ -5,8 +5,8 @@ import sqlalchemy.engine
 import sqlalchemy.orm
 from typing import Iterable
 
-from . import main
-from .common import db, model
+import main
+from functions.common import db, model
 
 
 @pytest.fixture(scope="session")

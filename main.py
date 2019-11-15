@@ -2,7 +2,7 @@ import flask
 
 
 def iservice(request: flask.Request) -> flask.Response:
-    from . import service  # scope this import so it's not dragged in for other functions
+    from functions import service  # scope this import so it's not dragged in for other functions
     """HTTP function for accepting an import request"""
     return flask.make_response(service.handle(request))
 
@@ -12,6 +12,6 @@ ALL_HTTP_FUNCTIONS = [iservice]
 
 
 def taskchunk(event, context) -> None:
-    from . import chunk_task
+    from functions import chunk_task
     chunk_task.handle(event["attributes"])
     return None  # background functions want you to return something

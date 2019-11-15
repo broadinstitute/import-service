@@ -1,7 +1,7 @@
 # This is the basic set of requirements installed by Cloud Functions.
 
 click==6.7
-Flask==1.0.2
+#Flask==1.0.2
 itsdangerous==0.24
 #Jinja2==2.10
 #MarkupSafe==1.0
@@ -12,6 +12,7 @@ setuptools==40.2.0
 wheel==0.31.1
 
 #Things that cloud functions installs, but we're upgrading.
+Flask==1.1.1
 Werkzeug==0.16.0
 MarkupSafe==1.1.1
 Jinja2==2.10.3
