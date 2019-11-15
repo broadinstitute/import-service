@@ -11,7 +11,7 @@ schema = {
 def handle(message: dict) -> None:
     if "job_id" in message:
         sess = db.get_session()
-        result = sess.query(Import).filter(Import.id == message["job_id"]).fetchall()
+        result = sess.query(Import).filter(Import.id == message["job_id"]).all()
         print(f"db results {result}")
         return result
     else:

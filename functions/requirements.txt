@@ -3,13 +3,18 @@
 click==6.7
 Flask==1.0.2
 itsdangerous==0.24
-Jinja2==2.10
-MarkupSafe==1.0
+#Jinja2==2.10
+#MarkupSafe==1.0
 pip==18.0
 requests==2.21.0
 setuptools==40.2.0
-Werkzeug==0.14.1
+#Werkzeug==0.14.1
 wheel==0.31.1
+
+#Things that cloud functions installs, but we're upgrading.
+Werkzeug==0.16.0
+MarkupSafe==1.1.1
+Jinja2==2.10.3
 
 # Extras for us.
 jsonschema==3.1.1
