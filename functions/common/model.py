@@ -1,7 +1,8 @@
 from sqlalchemy import Column, DateTime, String, Enum
 from sqlalchemy.ext.declarative import declarative_base
 import enum
-
+import uuid
+from datetime import datetime
 
 @enum.unique
 class ImportStatus(enum.Enum):
@@ -15,12 +16,20 @@ Base = declarative_base()
 class Import(Base):
     __tablename__ = 'imports'
 
-    id = Column(String, primary_key=True)
-    workspace_name = Column(String, nullable=False)
-    workspace_namespace = Column(String, nullable=False)
-    submitter = Column(String, nullable=False)
+    id = Column(String(36), primary_key=True)
+    workspace_name = Column(String(100), nullable=False)
+    workspace_namespace = Column(String(100), nullable=False)
+    submitter = Column(String(100), nullable=False)
     submit_time = Column(DateTime, nullable=False)
     status = Column(Enum(ImportStatus), nullable=False)
+
+    def __init__(self, workspace_name: str, workspace_ns: str, submitter: str):
+        self.id = str(uuid.uuid4())
+        self.workspace_name = workspace_name
+        self.workspace_namespace = workspace_ns
+        self.submitter = submitter
+        self.submit_time = datetime.now()
+        self.status = ImportStatus.Pending
 
     def __repr__(self):
         # todo: replace with https://github.com/manicmaniac/sqlalchemy-repr

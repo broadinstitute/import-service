@@ -1,14 +1,11 @@
 import datetime
-from functions.common import db, model
+from common import db, model
 
 
 def test_db_add(dbsession: db.DBSession):
-    new_import = model.Import(id="uuid",
-                              workspace_name="wsName",
-                              workspace_namespace="wsNs",
-                              submitter="hussein@coolguy.email",
-                              submit_time=datetime.datetime.now(),
-                              status=model.ImportStatus.Pending)
+    new_import = model.Import(workspace_name="wsName",
+                              workspace_ns="wsNs",
+                              submitter="hussein@coolguy.email")
     dbsession.add(new_import)
 
     # session doesn't write to the db until it's flushed

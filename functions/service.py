@@ -1,5 +1,7 @@
 import flask
 import jsonschema
+import uuid
+from common import db, model
 
 NEW_IMPORT_SCHEMA = {
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -30,6 +32,10 @@ def handle(request: flask.Request) -> flask.Response:
         except jsonschema.ValidationError as ve:
             return flask.make_response((ve.message, 400))
 
-        return flask.make_response(("ok", 200))
+        newImport = model.Import(workspace_name="myws", workspace_ns="myns", submitter="hussein@cool.com")
+        sess = db.get_session()
+        sess.add(newImport)
+        sess.commit()
+        return flask.make_response((str(newImport.id), 200))
     else:
         return flask.make_response((f"Unhandled HTTP method {request.method}", 500))

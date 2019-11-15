@@ -1,8 +1,6 @@
 #! /bin/bash
 
-#todo: pass in env vars. see https://cloud.google.com/sdk/gcloud/reference/functions/deploy#--env-vars-file
-
 pushd functions
-gcloud --quiet functions deploy iservice --runtime python37 --timeout 540s --trigger-http
-gcloud --quiet functions deploy taskchunk --runtime python37 --timeout 540s --trigger-topic task_chunk_topic
+gcloud --quiet functions deploy iservice --runtime python37 --timeout 540s --trigger-http --env-vars-file="../secrets.yaml"
+gcloud --quiet functions deploy taskchunk --runtime python37 --timeout 540s --trigger-topic task_chunk_topic --env-vars-file="../secrets.yaml"
 popd

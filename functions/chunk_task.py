@@ -1,5 +1,5 @@
-import sqlalchemy.engine
-from functions.common import db
+from common import db
+from common.model import *
 
 schema = {
     "task_id" : "uuid",
@@ -8,11 +8,11 @@ schema = {
 }
 
 
-def handle(message: dict, db: db.DBSession):
+def handle(message: dict):
     if "job_id" in message:
-        print(f"task has job id {message['job_id']}")
-        result: sqlalchemy.engine.ResultProxy = db.execute("select * from imports")
-        return result.fetchall()
+        sess = db.get_session()
+        result = sess.query(Import).filter(Import.id == message["job_id"]).fetchall()
+        print(f"db results {result}")
+        return result
     else:
         raise RuntimeError("task is missing job id!")
-    return None
