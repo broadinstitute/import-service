@@ -1,8 +1,9 @@
 import flask
 import flask.testing
+import pytest
 import sqlalchemy.engine
 import sqlalchemy.orm
-import pytest
+
 import main
 from common import db
 

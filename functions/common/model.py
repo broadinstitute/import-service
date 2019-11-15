@@ -1,8 +1,10 @@
-from sqlalchemy import Column, DateTime, String, Enum
-from sqlalchemy.ext.declarative import declarative_base
 import enum
 import uuid
 from datetime import datetime
+
+from sqlalchemy import Column, DateTime, String, Enum
+from sqlalchemy.ext.declarative import declarative_base
+
 
 @enum.unique
 class ImportStatus(enum.Enum):

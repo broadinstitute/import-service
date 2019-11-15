@@ -1,6 +1,7 @@
+import os
+
 import sqlalchemy.engine.url
 import sqlalchemy.orm
-import os
 
 DBSession = sqlalchemy.orm.session.Session
 

@@ -1,6 +1,6 @@
 import flask
 import jsonschema
-import uuid
+
 from common import db, model
 
 NEW_IMPORT_SCHEMA = {

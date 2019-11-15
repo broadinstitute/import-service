@@ -1,8 +1,9 @@
-from functions import service
-import jsonschema
 import flask.testing
+import jsonschema
+
 from common import db
 from common.model import *
+from functions import service
 
 
 def test_schema_valid():

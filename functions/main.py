@@ -1,5 +1,4 @@
 import flask
-from common import db
 
 
 def iservice(request: flask.Request) -> flask.Response:
