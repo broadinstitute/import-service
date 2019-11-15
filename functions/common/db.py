@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 import os
 
 import sqlalchemy.engine.url
@@ -42,3 +43,17 @@ def get_session() -> DBSession:
         _session = sessionmaker()
 
     return _session
+
+
+@contextmanager
+def session_ctx() -> DBSession:
+    """Provide a transactional scope around a series of operations."""
+    session = get_session()
+    try:
+        yield session
+        session.commit()
+    except:
+        session.rollback()
+        raise
+    finally:
+        session.close()
