@@ -3,13 +3,13 @@ Terra Import Service. Tech doc [here](https://docs.google.com/document/d/1MeL9J5
 
 ## Finding your way around
 
-All Python code lives in `functions/`. Other elements of this service, like deployment scripts, can be found in the root of the repo.
-
-`functions/main.py` is the entrypoint file for all cloud functions in this repo. Each function in this file corresponds to a single deployed cloud function. The implementation of each can be found in its corresponding module, e.g. the import service is in `functions/service.py`.
+`main.py` is the entrypoint file for all cloud functions in this repo. Each function in this file corresponds to a single deployed cloud function. The implementation of each can be found in its corresponding module, e.g. the import service is in `functions/service.py`.
 
 Code shared across multiple cloud functions is in `functions/common/`.
 
 Tests live in `functions/tests/`. The special file `functions/conftest.py` is pytest's configuration and fixture-definition file.
+
+Other useful things, like deployment and test scripts, can be found in the root of the repo.
 
 ## Developer notes
 
@@ -22,6 +22,8 @@ $ python3 -m venv venv
 $ source venv/bin/activate
 (venv) $ pip install --user -r requirements.txt
 ```
+
+You should periodically run the `pip install` line within your venv to keep it up-to-date with changes in dependencies.
 
 ### Normal usage
 
@@ -37,25 +39,25 @@ To run tests:
 (venv) $ ./pytest.sh
 ```
 
-### Type linting
+### This project uses Python type hints!
 
-This project uses type linting. To run the type linter, go to the repo root directory and run:
-```
-(venv) $ ./mypy.sh
-```
-
-You should make the linter happy before opening a PR.
-
-You are not required to type hint everything, but you *should* add types for:
+This project uses type hinting. You are not required to type hint everything, but you *should* add types for:
 * function arguments
 * function return types
 * class variables
 
 If you are relying on an external library which doesn't have type stubs, you can add a new section in `mypy.ini` to tell it sorry, nothing you can do.
 
+To run the type linter, go to the repo root directory and run:
+```
+(venv) $ ./mypy.sh
+```
+
+You should make the linter happy before opening a PR. Note that errors in some modules will be listed twice. This is annoying, but the good news is that you only have to fix them once.
+
 ### Writing tests
 
-If you pass your test function the magic parameter `client` it will be initialized with a Flask client that you can post requests to. For testing purposes, each Cloud Function endpoint is at the name of its function, e.g. posting to `/iservice` will hit the `iservice()` function in `main.py`.
+If you pass your test function the magic parameter `client` it will be initialized with a Flask client that you can post requests to. For testing purposes, each Cloud Function endpoint is at the name of its function, e.g. `client.post("/iservice")` will hit the `iservice()` function in `main.py`.
 
 ### Deployment
 
@@ -65,7 +67,7 @@ To smoke test a deployment, run `./smoketest.sh`. This will do a few things and 
 
 ### Notes on SQLAlchemy
 
-This project uses SQLAlchemy as its database library. It's an ORM and its behaviour can be surprising if you're not used to it.
+This project uses [SQLAlchemy](https://docs.sqlalchemy.org/en/13/) as its database library. It's an ORM and its behaviour can be surprising if you're not used to it. Here are some gotchas you should keep in mind.
 
 ##### Avoid using `execute()`
 
@@ -77,15 +79,15 @@ Remember to call `commit()` to actually commit your session's transaction to the
 
 ##### Manage your sessions carefully
 
-Sessions can interact with Cloud Functions weirdly. Running the same Cloud Function twice (or more) in quick succession will reuse the instance, preserving global state. Not closing your session at the end of your CF invocation can lead to unexpected behaviour (like not seeing objects in the database).
+Running the same Cloud Function twice (or more) in quick succession will reuse the instance, preserving global state. Sessions are global state, so not closing your session at the end of your CF invocation can lead to unexpected behaviour (like not seeing objects in the database).
 
 In application code, you can make sure that your session always get closed by asking for a session with `session_ctx()`:
 
 ```python
-def foo():
+def get_all_imports() -> List[Import]:
     with db.session_ctx() as session:
         all_imports = session.query(Import).all()
         return all_imports
 ```
 
-In test code, you may use either `session_ctx()` or `db.get_session()` without worrying about cleaning up. The test harness creates a new transaction at the beginning of each test function, creates a session inside that, and hands out that same session whenever anyone asks for one. At test teardown time, the session is closed and the transaction is rolled back
+In test code, you may use either `session_ctx()` or `db.get_session()` without worrying about cleaning up. The test harness creates a new transaction at the beginning of each test function, creates a session inside that, and hands out that same session whenever anyone asks for one. At test teardown time, the session is closed and the transaction is rolled back, restoring the database to its empty state.
