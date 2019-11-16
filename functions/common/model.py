@@ -12,7 +12,7 @@ class ImportStatus(enum.Enum):
     Running = enum.auto()
 
 
-Base = declarative_base()
+Base = declarative_base()  # sqlalchemy magic base class.
 
 
 class Import(Base):

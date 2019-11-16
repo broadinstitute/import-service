@@ -1,3 +1,10 @@
+"""
+This module contains fixtures for pytest -- objects that are set up by the test framework and summonable by name.
+They can be created and torn down at different scopes: the entire test session, within a module, or around every
+test function.
+For more info, see here: https://docs.pytest.org/en/latest/fixture.html
+"""
+
 import flask
 import flask.testing
 import pytest
@@ -29,9 +36,9 @@ _connection = None
 Session = sqlalchemy.orm.sessionmaker()
 
 
-# internal fixture for creating one sqlite db for test and a connection to it
 @pytest.fixture(scope="session")
 def _dbconn_internal() -> Iterator[sqlalchemy.engine.Connection]:
+    """Internal fixture for creating one sqlite db for test and a connection to it."""
     global _db, _connection
     _db = sqlalchemy.create_engine('sqlite://')
 
@@ -42,12 +49,15 @@ def _dbconn_internal() -> Iterator[sqlalchemy.engine.Connection]:
     _connection.close()
 
 
-# At the start of every test function, create a new session and put it in a transaction.
-# This lets us roll back at the end of the test.
-# Google doesn't give us a mechanism to access the Flask app, so we have to monkey patch the
-# "give me a database session" function called by application code. YIKES!!!!
 @pytest.fixture(scope="function", autouse=True)
 def dbsession(_dbconn_internal: sqlalchemy.engine.Connection) -> Iterator[db.DBSession]:
+    """
+    At the start of every test function, create a new session and put it in a transaction.
+    This lets us roll back at the end of the test.
+    Putting a reference to this function on the Flask app might work, but that would only be
+    usable in HTTP cloud functions. Background functions would still need to find another way.
+    So until we come up with a better idea, we monkey patch the give me a database session"
+    function called by application code. YIKES!!!!"""
     txn = _dbconn_internal.begin()
     sess = Session(bind=_dbconn_internal)
     db.get_session = lambda: sess

@@ -12,6 +12,10 @@ db_pass = os.environ.get("DB_PASS")
 db_name = os.environ.get("DB_NAME")
 cloud_sql_connection_name = os.environ.get("CLOUD_SQL_CONNECTION_NAME")
 
+# Store the db so it can be reused between Cloud Function invocations.
+# FIXME: Storing the session seems sketchier, and results in strange behaviour if application code isn't
+# careful to close its sessions. It's worth investigating if a top-level session context would be
+# a better way to do this.
 _db = None
 _session = None
 

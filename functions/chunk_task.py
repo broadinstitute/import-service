@@ -8,6 +8,8 @@ schema = {
     "path": "string"
 }
 
+# TODO: This is all still really placeholder.
+
 
 def handle(message: dict) -> List[Import]:
     if "job_id" in message:
