@@ -11,7 +11,7 @@ def get_user_action_on_resource(resource_type: str, resource_id: str, action: st
         headers={"Authorization": bearer_token})
 
     if resp.ok:
-        jsonschema.validate({"type": "bool"}, resp.json())  # will raise an exc if body is wrong, to be caught upstream
+        jsonschema.validate(resp.json(), schema={"type": "boolean"})  # will raise an exc if body is wrong, to be caught upstream
         return resp.json()
     else:
         raise ISvcException(resp.text, resp.status_code)

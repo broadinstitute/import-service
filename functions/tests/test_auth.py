@@ -31,23 +31,24 @@ def test_extract_bearer_token():
 def test_workspace_uuid():
     # rawls returns an exception for the workspace, exception raised, sam not called
     with mock.patch.object(auth.rawls, "get_workspace_uuid", side_effect = exceptions.ISvcException("bork", 400)):
-        auth.sam.get_user_action_on_resource: mock.MagicMock = mock.MagicMock()
-        with pytest.raises(exceptions.ISvcException):
-            auth.workspace_uuid_with_auth("a", "a", "a", "read")
-        auth.sam.get_user_action_on_resource.assert_not_called()
+        with mock.patch.object(auth.sam, "get_user_action_on_resource"):
+            auth.sam.get_user_action_on_resource: mock.MagicMock = mock.MagicMock()
+            with pytest.raises(exceptions.ISvcException):
+                auth.workspace_uuid_with_auth("wsns", "wsn", "bearer", "read")
+            auth.sam.get_user_action_on_resource.assert_not_called()
 
     # rawls returns no workspace id in the body, KeyError reported, sam not called
     with mock.patch.object(auth.rawls, "get_workspace_uuid", side_effect = KeyError):
-        auth.sam.get_user_action_on_resource: mock.MagicMock = mock.MagicMock()
-        with pytest.raises(KeyError):
-            auth.workspace_uuid_with_auth("a", "a", "a", "read")
-        auth.sam.get_user_action_on_resource.assert_not_called()
+        with mock.patch.object(auth.sam, "get_user_action_on_resource"):
+            with pytest.raises(KeyError):
+                auth.workspace_uuid_with_auth("wsns", "wsn", "bearer", "read")
+            auth.sam.get_user_action_on_resource.assert_not_called()
 
     # rawls returns workspace id, action is "read", no need to call sam
     with mock.patch.object(auth.rawls, "get_workspace_uuid", return_value = "uuid"):
-        auth.sam.get_user_action_on_resource: mock.MagicMock = mock.MagicMock()
-        assert auth.workspace_uuid_with_auth("a", "a", "a", "read") == "uuid"
-        auth.sam.get_user_action_on_resource.assert_not_called()
+        with mock.patch.object(auth.sam, "get_user_action_on_resource"):
+            assert auth.workspace_uuid_with_auth("wsns", "wsn", "bearer", "read") == "uuid"
+            auth.sam.get_user_action_on_resource.assert_not_called()
 
 
 
