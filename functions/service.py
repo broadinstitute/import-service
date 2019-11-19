@@ -22,7 +22,17 @@ NEW_IMPORT_SCHEMA = {
 schema_validator = jsonschema.Draft7Validator(NEW_IMPORT_SCHEMA)
 
 
-def handle(request: flask.Request) -> flask.Response:
+def urlchoppy(request: flask.Request):
+    import re
+    m = re.match(r'/(?P<wsn>\w+)/(?P<ws>\w+)/import', request.path)
+    m.groupdict() #returns {"wsn": "foo", "ws": "bar" } for request.path="/foo/bar/import"
+
+
+def handle(request: flask.Request, path_prefix = "") -> flask.Response:
+    # in testing this is /iservice/burp/borp/import.
+    # TODO: what is it in GCP?
+    # I think it's just /burp/borp/import but we can use path_prefix to fix it.
+    print(request.path)
     if request.method == 'POST':
         # force parsing as json regardless of application/content-type, return None if errors
         request_json = request.get_json(force=True, silent=True)

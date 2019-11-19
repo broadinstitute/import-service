@@ -5,7 +5,7 @@ from ..common import db
 from ..common.model import *
 from .. import service
 
-
+"""
 def test_schema_valid():
     jsonschema.Draft7Validator.check_schema(service.NEW_IMPORT_SCHEMA)
 
@@ -34,3 +34,10 @@ def test_good_json(client):
     dbres = sess.query(Import).filter(Import.id == resp.get_data(as_text=True)).all()
     assert len(dbres) == 1
     assert dbres[0].id == str(resp.get_data(as_text=True))
+"""
+
+def test_path(client):
+    import pdb
+    resp = client.post('/iservice/burp/borp/import')
+    pdb.set_trace()
+    print("")
