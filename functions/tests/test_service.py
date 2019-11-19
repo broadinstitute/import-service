@@ -5,6 +5,7 @@ from ..common import db
 from ..common.model import *
 from .. import service
 
+
 def test_schema_valid():
     jsonschema.Draft7Validator.check_schema(service.NEW_IMPORT_SCHEMA)
 

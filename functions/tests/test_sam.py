@@ -1,34 +1,29 @@
 import jsonschema
 import pytest
 import unittest.mock as mock
+from . import testutils
 from ..common import sam
 from ..common import exceptions
 
 
-def get_user_action_on_resource():
+def test_get_user_action_on_resource():
     # sam returns non-OK response
-    with mock.patch.object(sam.requests, "get") as mock_get:
-        mock_get.return_value.ok = False
-        mock_get.return_value.text = "bees"
-        mock_get.return_value.status_code = 403
+    with testutils.patch_request("functions.common.sam", "get", 403, "bees"):
         with pytest.raises(exceptions.ISvcException):
             sam.get_user_action_on_resource("rtype", "rid", "action", "bearer")
 
     # sam returns ok response with non-bool response (shouldn't get here irl!)
-    with mock.patch("functions.common.sam.requests.get") as mock_get:
-        mock_get.return_value.ok = True
-        mock_get.return_value.json.return_value = "notabool"
-        mock_get.return_value.status_code = 200
+    with testutils.patch_request("functions.common.sam", "get", 200, json="notabool"):
         with pytest.raises(jsonschema.ValidationError):
             sam.get_user_action_on_resource("rtype", "rid", "action", "bearer")
 
     # sam returns ok with good json, parse it out
-    with mock.patch("functions.common.sam.requests.get") as mock_get:
-        mock_get.return_value.ok = True
-        mock_get.return_value.json.return_value = True
-        mock_get.return_value.status_code = 200
+    with testutils.patch_request("functions.common.sam", "get", 200, json=True):
         assert sam.get_user_action_on_resource("rtype", "rid", "action", "bearer")
 
 
 def test_validate_user():
-    assert False  # write me
+    # sam returns surprising garbage
+    with testutils.patch_request("functions.common.sam", "get", 200, json={"userSubjectID": "foo"}):  # missing a bunch of stuff
+        with pytest.raises(jsonschema.ValidationError):
+            sam.validate_user("ya29.bearer_token")

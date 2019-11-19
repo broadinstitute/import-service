@@ -1,11 +1,11 @@
 import os
 import jsonschema
 import requests
-from . import auth
+from .auth import UserInfo
 from .exceptions import AuthorizationException, ISvcException
 
 
-def validate_user(bearer_token: str) -> auth.UserInfo:
+def validate_user(bearer_token: str) -> UserInfo:
     schema = {
         "type": "object",
         "required": ["userSubjectId", "userEmail", "enabled"],
@@ -23,7 +23,7 @@ def validate_user(bearer_token: str) -> auth.UserInfo:
     if resp.ok:
         uinfo = resp.json()
         jsonschema.validate(uinfo, schema=schema)
-        user_info = auth.UserInfo(uinfo["userSubjectId"], uinfo["userEmail"], uinfo["enabled"])
+        user_info = UserInfo(uinfo["userSubjectId"], uinfo["userEmail"], uinfo["enabled"])
         if not user_info.enabled:
             raise AuthorizationException("Not enabled")
         return user_info

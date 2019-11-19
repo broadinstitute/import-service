@@ -2,8 +2,6 @@ from typing import NamedTuple
 import flask
 from typing import Optional
 from .exceptions import AuthorizationException
-from ..common import rawls
-from ..common import sam
 
 
 class UserInfo(NamedTuple):
@@ -21,6 +19,9 @@ def extract_auth_token(request: flask.Request) -> str:
 
     return token
 
+
+from ..common import rawls
+from ..common import sam
 
 def workspace_uuid_with_auth(workspace_ns: str, workspace_name: str, bearer_token: str, sam_action: str = "read") -> str:
     """Checks Rawls to get the workspace UUID, and then checks Sam to see if the user has the given action on the workspace resource.
