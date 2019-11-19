@@ -5,7 +5,7 @@ from ..common import sam
 from ..common import exceptions
 
 
-def test_get_boo():
+def get_user_action_on_resource():
     # sam returns non-OK response
     with mock.patch.object(sam.requests, "get") as mock_get:
         mock_get.return_value.ok = False
@@ -28,3 +28,7 @@ def test_get_boo():
         mock_get.return_value.json.return_value = True
         mock_get.return_value.status_code = 200
         assert sam.get_user_action_on_resource("rtype", "rid", "action", "bearer")
+
+
+def test_validate_user():
+    assert False  # write me

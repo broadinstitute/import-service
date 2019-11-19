@@ -1,7 +1,34 @@
 import os
 import jsonschema
 import requests
-from .exceptions import ISvcException
+from . import auth
+from .exceptions import AuthorizationException, ISvcException
+
+
+def validate_user(bearer_token: str) -> auth.UserInfo:
+    schema = {
+        "type": "object",
+        "required": ["userSubjectId", "userEmail", "enabled"],
+        "properties": {
+            "userSubjectId": {"type": "string"},
+            "userEmail": {"type": "string"},
+            "enabled": {"type": "boolean"}
+        }
+    }
+
+    resp = requests.get(
+        f"{os.environ.get('SAM_URL')}/register/user/v2/self/info",
+        headers={"Authorization": bearer_token})
+
+    if resp.ok:
+        uinfo = resp.json()
+        jsonschema.validate(uinfo, schema=schema)
+        user_info = auth.UserInfo(uinfo["userSubjectId"], uinfo["userEmail"], uinfo["enabled"])
+        if not user_info.enabled:
+            raise AuthorizationException("Not enabled")
+        return user_info
+    else:
+        raise ISvcException(resp.text, resp.status_code)
 
 
 def get_user_action_on_resource(resource_type: str, resource_id: str, action: str, bearer_token: str) -> bool:

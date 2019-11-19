@@ -1,7 +1,7 @@
 import flask
 import jsonschema
 
-from .common import db, model
+from .common import auth, sam, db, model, exceptions, httputils
 
 NEW_IMPORT_SCHEMA = {
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -22,34 +22,30 @@ NEW_IMPORT_SCHEMA = {
 schema_validator = jsonschema.Draft7Validator(NEW_IMPORT_SCHEMA)
 
 
-def urlchoppy(request: flask.Request):
-    import re
-    m = re.match(r'/(?P<wsn>\w+)/(?P<ws>\w+)/import', request.path)
-    if m is None:
-        pass # this is not the request we're looking for
-    else:
-        m.groupdict() #returns {"wsn": "foo", "ws": "bar" } for request.path="/foo/bar/import"
+def handle(request: flask.Request, url_prefix: str) -> flask.Response:
+    request_path = httputils.correct_gcf_path(request.path, url_prefix)
+    access_token = auth.extract_auth_token(request)
+    user_info = sam.validate_user(access_token)
 
-
-def handle(request: flask.Request, path_prefix = "") -> flask.Response:
-    # in testing this is /iservice/burp/borp/import.
-    # TODO: what is it in GCP?
-    # I think it's just /burp/borp/import but we can use path_prefix to fix it.
-    print(request.path)
     if request.method == 'POST':
+        urlparams = httputils.expect_urlshape('/iservice/<ws_ns>/<ws_name>/import', request_path)
+
         # force parsing as json regardless of application/content-type, return None if errors
         request_json = request.get_json(force=True, silent=True)
 
         try:  # now validate that the input is correctly shaped
             schema_validator.validate(request_json)
         except jsonschema.ValidationError as ve:
-            return flask.make_response((ve.message, 400))
+            raise exceptions.BadJsonException(ve.message)
 
-        new_import = model.Import(workspace_name="myws", workspace_ns="myns", submitter="hussein@cool.com")
+        new_import = model.Import(
+            workspace_name=urlparams["ws_name"],
+            workspace_ns=urlparams["ws_ns"],
+            submitter=user_info.user_email)
 
         with db.session_ctx() as sess:
             sess.add(new_import)
             sess.commit()
             return flask.make_response((str(new_import.id), 200))
     else:
-        return flask.make_response((f"Unhandled HTTP method {request.method}", 500))
+        raise exceptions.MethodNotAllowedException(request.method)

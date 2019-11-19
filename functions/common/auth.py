@@ -1,8 +1,15 @@
+from typing import NamedTuple
 import flask
 from typing import Optional
 from .exceptions import AuthorizationException
 from ..common import rawls
 from ..common import sam
+
+
+class UserInfo(NamedTuple):
+    subject_id: str
+    user_email: str
+    enabled: bool
 
 
 def extract_auth_token(request: flask.Request) -> str:

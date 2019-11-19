@@ -21,6 +21,8 @@ def client() -> flask.testing.FlaskClient:
     """Builds a Flask client wired up for unit tests. Created once per test invocation and reused thereafter."""
     app = flask.Flask(__name__)
     app.debug = True
+    with app.app_context():
+        flask.current_app.is_test_fixture = True
 
     # Cloud Functions forward all HTTP methods.
     # https://cloud.google.com/functions/docs/writing/http#handling_http_methods
