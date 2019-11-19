@@ -15,7 +15,7 @@ At the time of writing, there are two Google Cloud Functions:
 
 Neither of these are in their final forms; I wanted to get an example of each working before fleshing them out.
 
-## Finding your way around
+### Finding your way around
 
 A very high-level summary of what you can find in this repo:
 
@@ -34,9 +34,9 @@ At the root of the repo, you can also find:
 * Initialization files for mypy (the type linter) and pytest (the test framework)
 * `secrets.conf`, a placeholder template-ish file that, when filled in, should be turned into `secrets.yaml`.
 
-## Code walkthrough
+# Code walkthrough
 
-### The app
+## Handlers
 
 #### The Cloud Functions entrypoint `main.py`
 
@@ -66,11 +66,11 @@ This handler does the following:
 
 This is a placeholder background function. When it grows up it wants to be the "chunk" import task, but for now it pulls a parameter out of the Pub/Sub message and looks it up in the database. Because background functions don't return anything, it just logs the result, which you can see in the Cloud Function logs in the GCP console.
 
-### Concepts
+## Utilities
 
 There's more to this codebase than three files! A lot of it is either working behind the scenes, or just not hooked up yet. Come with me as we discover the hairy internals...
 
-#### Database
+### Database
 
 This project uses [SQLAlchemy](https://docs.sqlalchemy.org/en/13/) as its database library. SQLAlchemy was chosen because it's the example Google uses when [showing you how to connect to Cloud SQL from Cloud Functions](https://cloud.google.com/sql/docs/mysql/connect-functions#connecting_to); no further research was done. It seems to be popular in the Python community.
 
@@ -91,11 +91,11 @@ Note also that tucked away in the definition of `get_session()` is a call to `mo
 SQLAlchemy's behaviour can be confusing to people coming from Scala's Slick. In particular, it adds objects to the database lazily, not when you ask it to. This means that if you tell it to add a `Foo` object, and then call `session.execute("SQL select * from foos")`, you might not get back what you expect. See the [Gotchas](GOTCHAS.md#sqlalchemy) for the correct way to do this, as well as some other gotchas you should definitely know.
 
 
-#### Auth\[n/z\] `functions/common/auth.py`
+### Auth\[n/z\] `functions/common/auth.py`
 
 This is still very WIP and hasn't been hooked up to anything yet. The intention here is to allow HTTP Cloud Functions to extract the OAuth bearer token from the header of incoming requests and use it to ask Rawls and Sam if the user has access to the workspace.
 
-#### Exception handling `functions/common/httputils.py`, `functions/common/exceptions.py`
+### Exception handling `functions/common/httputils.py`, `functions/common/exceptions.py`
 
 Failures raise exceptions which are caught by the `@httpify_excs` decorator used in `main.py`. This decorator is defined at `functions/common/httputils.py`: you can see it takes a function, calls it, catches any exceptions, and returns an HTTP response with that exception's status code. The exception classes are defined in `functions/common/exceptions.py`.
 
@@ -232,7 +232,7 @@ In lieu of a proper set of integration tests, there's a very simple smoke test s
 
 You'll need to be `gcloud auth login`'d to your `@broadinstitute.org` account for both the deployment and smoke test scripts, as both work in `broad-dsde-dev`.
 
-## Things still to do
+# Things still to do
 
 This list is separate to the tasks outlined in [the epic](https://broadworkbench.atlassian.net/browse/AS-128), and is very code-oriented.
 
