@@ -105,3 +105,6 @@ venv.bak/
 
 # IJ
 .idea/
+
+# our things
+secrets.yaml
