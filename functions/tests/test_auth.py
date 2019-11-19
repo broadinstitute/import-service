@@ -13,20 +13,20 @@ def fake_request(headers: dict) -> flask.Request:
     return flask.Request(env)
 
 
-def test_extract_bearer_token():
+def test_extract_auth_token():
     good_header = {"Authorization": "auth_header", "Some": "Other header"}
     lowercase_header = {"authorization": "auth_header", "Some": "Other header"}
     missing_header = {"Some": "Other header"}
     no_header = {}
 
-    assert auth.extract_bearer_token(fake_request(good_header)) == "auth_header"
-    assert auth.extract_bearer_token(fake_request(lowercase_header)) == "auth_header"
+    assert auth.extract_auth_token(fake_request(good_header)) == "auth_header"
+    assert auth.extract_auth_token(fake_request(lowercase_header)) == "auth_header"
 
     with pytest.raises(exceptions.AuthorizationException):
-        auth.extract_bearer_token(fake_request(missing_header))
+        auth.extract_auth_token(fake_request(missing_header))
 
     with pytest.raises(exceptions.AuthorizationException):
-        auth.extract_bearer_token(fake_request(no_header))
+        auth.extract_auth_token(fake_request(no_header))
 
 
 def test_workspace_uuid():

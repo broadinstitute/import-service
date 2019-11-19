@@ -37,7 +37,5 @@ def test_good_json(client):
 """
 
 def test_path(client):
-    import pdb
     resp = client.post('/iservice/burp/borp/import')
-    pdb.set_trace()
-    print("")
+    print(resp)

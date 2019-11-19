@@ -5,7 +5,8 @@ from ..common import rawls
 from ..common import sam
 
 
-def extract_bearer_token(request: flask.Request) -> str:
+def extract_auth_token(request: flask.Request) -> str:
+    """Given an incoming Flask request, extract the value of the Authorization header"""
     token: Optional[str] = request.headers.get("Authorization", type=str)
 
     if token is None:
@@ -15,6 +16,8 @@ def extract_bearer_token(request: flask.Request) -> str:
 
 
 def workspace_uuid_with_auth(workspace_ns: str, workspace_name: str, bearer_token: str, sam_action: str = "read") -> str:
+    """Checks Rawls to get the workspace UUID, and then checks Sam to see if the user has the given action on the workspace resource.
+    If so, returns the workspace UUID."""
     ws_uuid = rawls.get_workspace_uuid(workspace_ns, workspace_name, bearer_token)
 
     if sam_action != "read":  # the read check is done when you ask rawls for the workspace UUID, so don't redo it

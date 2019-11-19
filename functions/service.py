@@ -25,7 +25,10 @@ schema_validator = jsonschema.Draft7Validator(NEW_IMPORT_SCHEMA)
 def urlchoppy(request: flask.Request):
     import re
     m = re.match(r'/(?P<wsn>\w+)/(?P<ws>\w+)/import', request.path)
-    m.groupdict() #returns {"wsn": "foo", "ws": "bar" } for request.path="/foo/bar/import"
+    if m is None:
+        pass # this is not the request we're looking for
+    else:
+        m.groupdict() #returns {"wsn": "foo", "ws": "bar" } for request.path="/foo/bar/import"
 
 
 def handle(request: flask.Request, path_prefix = "") -> flask.Response:
