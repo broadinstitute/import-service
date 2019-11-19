@@ -38,10 +38,14 @@ def handle(request: flask.Request, url_prefix: str) -> flask.Response:
         except jsonschema.ValidationError as ve:
             raise exceptions.BadJsonException(ve.message)
 
+        # make sure the user is allowed to import to this workspace
+        workspace_uuid = auth.workspace_uuid_with_auth(urlparams["ws_ns"], urlparams["ws_name"], access_token, "write")
+
         new_import = model.Import(
             workspace_name=urlparams["ws_name"],
             workspace_ns=urlparams["ws_ns"],
             submitter=user_info.user_email)
+            #TODO: add workspace_uuid here
 
         with db.session_ctx() as sess:
             sess.add(new_import)

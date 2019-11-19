@@ -236,7 +236,6 @@ You'll need to be `gcloud auth login`'d to your `@broadinstitute.org` account fo
 
 This list is separate to the tasks outlined in [the epic](https://broadworkbench.atlassian.net/browse/AS-128), and is very code-oriented.
 
-* Extract URL parameters from the HTTP function (Hussein working on this right now)
 * Hook up the auth code to the HTTP function so we can authorize users (Hussein hopes to have this done before vaca)
 * CI
 * Figure out how to stream files to/from GCS buckets without localizing them
