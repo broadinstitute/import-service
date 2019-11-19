@@ -1,7 +1,7 @@
 import os
 import jsonschema
 import requests
-from .auth import UserInfo
+from .userinfo import UserInfo
 from .exceptions import AuthorizationException, ISvcException
 
 

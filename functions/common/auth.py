@@ -1,14 +1,8 @@
-from typing import NamedTuple
 import flask
 from typing import Optional
 from .exceptions import AuthorizationException
-
-
-class UserInfo(NamedTuple):
-    subject_id: str
-    user_email: str
-    enabled: bool
-
+from ..common import rawls
+from ..common import sam
 
 def extract_auth_token(request: flask.Request) -> str:
     """Given an incoming Flask request, extract the value of the Authorization header"""
@@ -18,11 +12,6 @@ def extract_auth_token(request: flask.Request) -> str:
         raise AuthorizationException("Missing Authorization: Bearer token in header")
 
     return token
-
-
-# these have to be lower break auth <-> sam circular import dependency
-from ..common import rawls
-from ..common import sam
 
 
 def workspace_uuid_with_auth(workspace_ns: str, workspace_name: str, bearer_token: str, sam_action: str = "read") -> str:
