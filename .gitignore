@@ -108,3 +108,4 @@ venv.bak/
 
 # our things
 secrets.yaml
+app.yaml

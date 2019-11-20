@@ -16,11 +16,11 @@ good_json = {"path": "foo", "filetype": "pfb"}
 good_headers = {"Authorization": "Bearer ya29.blahblah"}
 
 sam_valid_user = testutils.fxpatch(
-    "functions.common.sam.validate_user",
+    "app.common.sam.validate_user",
     return_value=userinfo.UserInfo("123456", "hello@bees.com", True))
 
 user_has_ws_access = testutils.fxpatch(
-    "functions.common.auth.workspace_uuid_with_auth",
+    "app.common.auth.workspace_uuid_with_auth",
     return_value="some-uuid")
 
 
@@ -39,7 +39,7 @@ def test_golden_path(client):
 @pytest.mark.usefixtures(sam_valid_user, user_has_ws_access)
 def test_wrong_httpmethod(client: flask.testing.FlaskClient):
     resp = client.get('/iservice/namespace/name/import', headers=good_headers)
-    assert resp.status_code == 405
+    assert resp.status_code == 404
 
 
 @pytest.mark.usefixtures(sam_valid_user, user_has_ws_access)
@@ -73,7 +73,7 @@ def test_bad_token(client):
 
 @pytest.mark.usefixtures(
     testutils.fxpatch(
-        "functions.common.sam.validate_user",
+        "app.common.sam.validate_user",
         side_effect = exceptions.ISvcException("who are you?", 404)))
 def test_user_not_found(client):
     resp = client.post('/iservice/namespace/name/import', json=good_json, headers=good_headers)
@@ -83,7 +83,7 @@ def test_user_not_found(client):
 @pytest.mark.usefixtures(
     sam_valid_user,
     testutils.fxpatch(
-        "functions.common.auth.workspace_uuid_with_auth",
+        "app.common.auth.workspace_uuid_with_auth",
         side_effect = exceptions.ISvcException("what workspace?", 404)))
 def test_user_cant_see_workspace(client):
     resp = client.post('/iservice/namespace/name/import', json=good_json, headers=good_headers)
@@ -93,7 +93,7 @@ def test_user_cant_see_workspace(client):
 @pytest.mark.usefixtures(
     sam_valid_user,
     testutils.fxpatch(
-        "functions.common.auth.workspace_uuid_with_auth",
+        "app.common.auth.workspace_uuid_with_auth",
         side_effect = exceptions.ISvcException("you can't write to this", 403)))
 def test_user_cant_write_to_workspace(client):
     resp = client.post('/iservice/namespace/name/import', json=good_json, headers=good_headers)

@@ -1,0 +1,10 @@
+runtime: python37
+
+env_variables:
+    DB_USER: "{secrets.dbuser}"
+    DB_PASS: "{secrets.dbpass}"
+    DB_NAME: "{secrets.dbname}"
+    CLOUD_SQL_CONNECTION_NAME: "{project:region:dbname}"
+
+    RAWLS_URL: "{env.rawls_url}"
+    SAM_URL: "{env.sam_url}"
