@@ -6,4 +6,4 @@ then
     exit 1
 fi
 
-python3 -m pytest -s
+python3 -m pytest
