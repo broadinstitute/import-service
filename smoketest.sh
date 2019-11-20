@@ -2,17 +2,25 @@
 
 echo "Running smoke test of all Cloud Functions..."
 echo "You should have deployed before this! It won't deploy for you."
-
 echo ""
 
-echo "Pinging the import service..."
+echo "What's your dev Terra user email address? I'm going to gcloud config set account it:"
+read DEV_EMAIL
+gcloud config set account "$DEV_EMAIL"
+echo ""
+
+echo "Pinging the import service as your dev user..."
 JOB_ID=`curl -X POST https://us-central1-broad-dsde-dev.cloudfunctions.net/iservice/general-dev-billing-account/import-service-test/import -H "Authorization: bearer $(gcloud auth print-access-token)" -d '{"path":"buzz", "filetype":"pfb"}'`
 echo $JOB_ID
 echo "That last line should look like a UUID. If it doesn't, something's broken!"
-
 echo ""
 
-echo "Putting two messages on the PubSub queue..."
+echo "Now I need to be your Broad user to trigger the import tasks through Pub/Sub. What's that email address?"
+read BROAD_EMAIL
+gcloud config set account "$BROAD_EMAIL"
+echo ""
+
+echo "Putting two messages on the PubSub queue as your Broad user..."
 gcloud --project broad-dsde-dev pubsub topics publish task_chunk_topic --attribute=job_id="$JOB_ID",boo=fnoo
 sleep 2
 gcloud --project broad-dsde-dev pubsub topics publish task_chunk_topic --attribute=job_id="$JOB_ID",boo=fnoo
