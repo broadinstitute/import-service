@@ -48,11 +48,11 @@ def correct_gcf_path(flask_path: str, desired_prefix: str) -> str:
 
 
 def _part_to_regex(part: str) -> str:
-    """Turns <foo> into (?P<foo>\w+)"""
+    """Turns <foo> into (?P<foo>[\w\-]+)"""
     if len(part) == 0:
         return part
     if part[0] == '<' and part[-1] == '>':
-        return r"(?P<" + part[1:-1] + r">\w+)"
+        return r"(?P<" + part[1:-1] + r">[\w-]+)"
     else:
         return part
 
@@ -68,6 +68,7 @@ def expect_urlshape(pattern: str, request_path: str) -> dict:
 
     m = re.match(regex, request_path)
     if m is None:
+        logging.info(f"httputils.expect_urlshape: couldn't match {request_path} against {pattern}")
         raise NotFoundException()
     else:
         return m.groupdict()

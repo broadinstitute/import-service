@@ -6,7 +6,7 @@ echo "You should have deployed before this! It won't deploy for you."
 echo ""
 
 echo "Pinging the import service..."
-JOB_ID=`curl -X POST https://us-central1-broad-dsde-dev.cloudfunctions.net/iservice -H "Authorization: bearer $(gcloud auth print-identity-token)" -d '{"path":"buzz", "filetype":"pfb"}'`
+JOB_ID=`curl -X POST https://us-central1-broad-dsde-dev.cloudfunctions.net/iservice/general-dev-billing-account/import-service-test/import -H "Authorization: bearer $(gcloud auth print-access-token)" -d '{"path":"buzz", "filetype":"pfb"}'`
 echo $JOB_ID
 echo "That last line should look like a UUID. If it doesn't, something's broken!"
 

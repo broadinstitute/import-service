@@ -1,5 +1,6 @@
 import flask
 import jsonschema
+import logging
 
 from functions.common import auth, sam, db, model, exceptions, httputils
 
@@ -40,6 +41,7 @@ def handle(request: flask.Request, url_prefix: str) -> flask.Response:
         try:  # now validate that the input is correctly shaped
             schema_validator.validate(request_json)
         except jsonschema.ValidationError as ve:
+            logging.info("service.handle: Got malformed JSON.")
             raise exceptions.BadJsonException(ve.message)
 
         new_import = model.Import(

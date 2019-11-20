@@ -1,3 +1,4 @@
+import logging
 import os
 
 import requests
@@ -14,4 +15,5 @@ def get_workspace_uuid(workspace_namespace: str, workspace_name: str, bearer_tok
         return resp.json()["workspace"]["workspaceId"]
     else:
         # just pass the error upwards
+        logging.info(f"rawls.get_workspace_uuid: Got {resp.status_code} from Rawls for {workspace_namespace}/{workspace_name}: {resp.text}")
         raise ISvcException(resp.text, resp.status_code)
