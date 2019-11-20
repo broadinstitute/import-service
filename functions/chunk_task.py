@@ -1,6 +1,7 @@
 from .common import db
 from .common.model import *
 from typing import List
+import logging
 
 schema = {
     "task_id": "uuid",
@@ -13,10 +14,10 @@ schema = {
 
 def handle(message: dict) -> List[Import]:
     if "job_id" in message:
-        print(f'received message for job id {message["job_id"]}')
+        logging.info(f'received message for job id {message["job_id"]}')
         with db.session_ctx() as sess:
             result = sess.query(Import).filter(Import.id == message["job_id"]).all()
-            print(f"db results {result}")
+            logging.info(f"db results {result}")
             return result
     else:
         raise RuntimeError("task is missing job id!")

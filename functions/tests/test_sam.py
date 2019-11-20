@@ -16,11 +16,18 @@ def test_validate_user():
         with pytest.raises(jsonschema.ValidationError):
             sam.validate_user("ya29.bearer_token")
 
-    # sam returns an error
-    with testutils.patch_request("functions.common.sam", "get", 403):
+    # sam doesn't know who you are
+    # note here that sam returns 404 for "who are you", and we return 403 "you're not authorized"
+    with testutils.patch_request("functions.common.sam", "get", 404):
         with pytest.raises(exceptions.ISvcException) as excinfo:
             sam.validate_user("ya29.bearer_token")
             assert excinfo.value.http_status == 403
+
+    # sam returns an error
+    with testutils.patch_request("functions.common.sam", "get", 500):
+        with pytest.raises(exceptions.ISvcException) as excinfo:
+            sam.validate_user("ya29.bearer_token")
+            assert excinfo.value.http_status == 500
 
     # sam returns a non-enabled user
     bad_user = {"userSubjectId": "12456", "userEmail": "hello@bees.com", "enabled": False}

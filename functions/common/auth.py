@@ -23,6 +23,6 @@ def workspace_uuid_with_auth(workspace_ns: str, workspace_name: str, bearer_toke
     if sam_action != "read":  # the read check is done when you ask rawls for the workspace UUID, so don't redo it
         if not sam.get_user_action_on_resource("workspace", ws_uuid, sam_action, bearer_token):
             # you can see the workspace, but Sam says you can't do the action to it, so return 403
-            raise AuthorizationException()
+            raise AuthorizationException(f"You need the {sam_action} permission to perform this task.")
 
     return ws_uuid

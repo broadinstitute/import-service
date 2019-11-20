@@ -34,13 +34,13 @@ def handle(request: flask.Request, url_prefix: str) -> flask.Response:
         # force parsing as json regardless of application/content-type, return None if errors
         request_json = request.get_json(force=True, silent=True)
 
+        # make sure the user is allowed to import to this workspace
+        workspace_uuid = auth.workspace_uuid_with_auth(urlparams["ws_ns"], urlparams["ws_name"], access_token, "write")
+
         try:  # now validate that the input is correctly shaped
             schema_validator.validate(request_json)
         except jsonschema.ValidationError as ve:
             raise exceptions.BadJsonException(ve.message)
-
-        # make sure the user is allowed to import to this workspace
-        workspace_uuid = auth.workspace_uuid_with_auth(urlparams["ws_ns"], urlparams["ws_name"], access_token, "write")
 
         new_import = model.Import(
             workspace_name=urlparams["ws_name"],

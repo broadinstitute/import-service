@@ -27,6 +27,8 @@ def validate_user(bearer_token: str) -> UserInfo:
         if not user_info.enabled:
             raise AuthorizationException("Not enabled")
         return user_info
+    elif resp.status_code == 404:
+        raise AuthorizationException("Not registered")
     else:
         raise ISvcException(resp.text, resp.status_code)
 
