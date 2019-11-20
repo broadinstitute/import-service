@@ -1,5 +1,7 @@
-import flask
 from typing import Optional
+
+import flask
+
 from .exceptions import AuthorizationException
 from ..common import rawls
 from ..common import sam

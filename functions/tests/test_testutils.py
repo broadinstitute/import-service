@@ -1,7 +1,7 @@
 import pytest
-from . import testutils
 
 from . import dummy
+from . import testutils
 
 
 def test_patch_request():

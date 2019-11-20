@@ -1,7 +1,9 @@
+import unittest.mock as mock
 from contextlib import contextmanager
 from typing import Optional, Iterator, Any
+
 import pytest
-import unittest.mock as mock
+
 
 @contextmanager
 def patch_request(

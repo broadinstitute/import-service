@@ -1,8 +1,8 @@
 import pytest
-import unittest.mock as mock
+
 from . import testutils
-from ..common import rawls
 from ..common import exceptions
+from ..common import rawls
 
 
 def test_get_workspace_uuid():

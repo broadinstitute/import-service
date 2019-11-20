@@ -5,12 +5,13 @@ test function.
 For more info, see here: https://docs.pytest.org/en/latest/fixture.html
 """
 
+from typing import Iterator
+
 import flask
 import flask.testing
 import pytest
 import sqlalchemy.engine
 import sqlalchemy.orm
-from typing import Iterator
 
 import main
 from functions.common import db, model
@@ -29,6 +30,9 @@ def client() -> flask.testing.FlaskClient:
     HTTP_METHODS = ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'CONNECT', 'OPTIONS', 'TRACE', 'PATCH']
 
     for f in main.ALL_HTTP_FUNCTIONS:
+        # <path:rest> is Flask for "match anything here, including if it has slashes".
+        # the bound value would get assigned to the "rest" key in kwargs, but we don't have access
+        # to this in GCF-land so we just throw it away and re-implement path matching ourselves.
         app.add_url_rule(f"/{f.__name__}/<path:rest>", f.__name__, lambda **kwargs: f(flask.request), methods=HTTP_METHODS)
 
     return app.test_client()

@@ -1,8 +1,10 @@
+import unittest.mock as mock
+
 import flask
 import jsonschema
 import pytest
-import unittest.mock as mock
 from werkzeug.test import EnvironBuilder
+
 from ..common import auth
 from ..common import exceptions
 

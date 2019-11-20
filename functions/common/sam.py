@@ -1,8 +1,10 @@
 import os
+
 import jsonschema
 import requests
-from .userinfo import UserInfo
+
 from .exceptions import AuthorizationException, ISvcException
+from .userinfo import UserInfo
 
 
 def validate_user(bearer_token: str) -> UserInfo:

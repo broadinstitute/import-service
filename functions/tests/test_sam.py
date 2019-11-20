@@ -1,5 +1,6 @@
 import jsonschema
 import pytest
+
 from . import testutils
 from ..common import sam, exceptions, userinfo
 

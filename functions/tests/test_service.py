@@ -1,10 +1,11 @@
 import flask.testing
 import jsonschema
 import pytest
+
+from . import testutils
+from .. import service
 from ..common import db, exceptions, userinfo
 from ..common.model import *
-from .. import service
-from . import testutils
 
 
 def test_schema_valid():
