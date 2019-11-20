@@ -4,6 +4,7 @@ from .exceptions import AuthorizationException
 from ..common import rawls
 from ..common import sam
 
+
 def extract_auth_token(request: flask.Request) -> str:
     """Given an incoming Flask request, extract the value of the Authorization header"""
     token: Optional[str] = request.headers.get("Authorization", type=str)

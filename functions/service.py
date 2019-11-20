@@ -1,7 +1,7 @@
 import flask
 import jsonschema
 
-from .common import auth, sam, db, model, exceptions, httputils
+from functions.common import auth, sam, db, model, exceptions, httputils
 
 NEW_IMPORT_SCHEMA = {
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -24,11 +24,12 @@ schema_validator = jsonschema.Draft7Validator(NEW_IMPORT_SCHEMA)
 
 def handle(request: flask.Request, url_prefix: str) -> flask.Response:
     request_path = httputils.correct_gcf_path(request.path, url_prefix)
-    access_token = auth.extract_auth_token(request)
-    user_info = sam.validate_user(access_token)
 
     if request.method == 'POST':
         urlparams = httputils.expect_urlshape('/iservice/<ws_ns>/<ws_name>/import', request_path)
+
+        access_token = auth.extract_auth_token(request)
+        user_info = sam.validate_user(access_token)
 
         # force parsing as json regardless of application/content-type, return None if errors
         request_json = request.get_json(force=True, silent=True)
