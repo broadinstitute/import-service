@@ -1,5 +1,5 @@
 runtime: python37
-
+service: import-service
 env_variables:
     DB_USER: "{secrets.dbuser}"
     DB_PASS: "{secrets.dbpass}"
@@ -8,3 +8,5 @@ env_variables:
 
     RAWLS_URL: "{env.rawls_url}"
     SAM_URL: "{env.sam_url}"
+
+    PUBSUB_TOKEN: "{secrets.pubsub_token}"
