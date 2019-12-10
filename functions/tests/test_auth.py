@@ -32,50 +32,43 @@ def test_extract_auth_token():
 
 
 def test_workspace_uuid():
-    # rawls returns an exception for the workspace, exception raised, sam not called
+    # rawls returns an exception for the workspace, exception raised, auth check not called
     with mock.patch.object(auth.rawls, "get_workspace_uuid", side_effect = exceptions.ISvcException("bork", 400)):
-        with mock.patch.object(auth.sam, "get_user_action_on_resource") as mock_sam_getaction:
+        with mock.patch.object(auth.rawls, "check_workspace_iam_action") as mock_rawls_getaction:
             with pytest.raises(exceptions.ISvcException):
                 auth.workspace_uuid_with_auth("wsns", "wsn", "bearer", "read")
-            mock_sam_getaction.assert_not_called()
+            mock_rawls_getaction.assert_not_called()
 
-    # rawls returns no workspace id in the body, KeyError reported, sam not called
+    # rawls returns no workspace id in the body, KeyError reported, auth check not called
     with mock.patch.object(auth.rawls, "get_workspace_uuid", side_effect = KeyError):
-        with mock.patch.object(auth.sam, "get_user_action_on_resource") as mock_sam_getaction:
+        with mock.patch.object(auth.rawls, "check_workspace_iam_action") as mock_rawls_getaction:
             with pytest.raises(KeyError):
                 auth.workspace_uuid_with_auth("wsns", "wsn", "bearer", "read")
-            mock_sam_getaction.assert_not_called()
+            mock_rawls_getaction.assert_not_called()
 
-    # rawls returns workspace id, action is "read", no need to call sam
+    # rawls returns workspace id, action is "read", no need to do auth check
     with mock.patch.object(auth.rawls, "get_workspace_uuid", return_value = "uuid"):
-        with mock.patch.object(auth.sam, "get_user_action_on_resource") as mock_sam_getaction:
+        with mock.patch.object(auth.rawls, "check_workspace_iam_action") as mock_rawls_getaction:
             assert auth.workspace_uuid_with_auth("wsns", "wsn", "bearer", "read") == "uuid"
-            mock_sam_getaction.assert_not_called()
+            mock_rawls_getaction.assert_not_called()
 
-    # rawls returns workspace id, action is write, sam called, returns non-OK status
+    # rawls returns workspace id, action is write, auth check called, returns non-OK status
     with mock.patch.object(auth.rawls, "get_workspace_uuid", return_value = "uuid"):
-        with mock.patch.object(auth.sam, "get_user_action_on_resource", side_effect = exceptions.ISvcException("bork", 400)) as mock_sam_getaction:
+        with mock.patch.object(auth.rawls, "check_workspace_iam_action", side_effect = exceptions.ISvcException("bork", 500)) as mock_rawls_getaction:
             with pytest.raises(exceptions.ISvcException):
                 auth.workspace_uuid_with_auth("wsns", "wsn", "bearer", "write")
-            mock_sam_getaction.assert_called_once()
+            mock_rawls_getaction.assert_called_once()
 
-    # rawls returns workspace id, action is write, sam called, returns bad json
+    # rawls returns workspace id, action is write, auth check called, returns false: you can't do this action
     with mock.patch.object(auth.rawls, "get_workspace_uuid", return_value = "uuid"):
-        with mock.patch.object(auth.sam, "get_user_action_on_resource", side_effect = jsonschema.ValidationError("bad json")) as mock_sam_getaction:
-            with pytest.raises(jsonschema.ValidationError):
-                auth.workspace_uuid_with_auth("wsns", "wsn", "bearer", "write")
-            mock_sam_getaction.assert_called_once()
-
-    # rawls returns workspace id, action is write, sam called, sam returns false: you can't do this action
-    with mock.patch.object(auth.rawls, "get_workspace_uuid", return_value = "uuid"):
-        with mock.patch.object(auth.sam, "get_user_action_on_resource", return_value = False) as mock_sam_getaction:
+        with mock.patch.object(auth.rawls, "check_workspace_iam_action", return_value = False) as mock_rawls_getaction:
             with pytest.raises(exceptions.AuthorizationException):
                 auth.workspace_uuid_with_auth("wsns", "wsn", "bearer", "write")
-            mock_sam_getaction.assert_called_once()
+            mock_rawls_getaction.assert_called_once()
 
-    # rawls returns workspace id, action is write, sam called, sam returns true: hooray!
+    # rawls returns workspace id, action is write, auth check called, returns true: hooray!
     with mock.patch.object(auth.rawls, "get_workspace_uuid", return_value = "uuid"):
-        with mock.patch.object(auth.sam, "get_user_action_on_resource", return_value = True) as mock_sam_getaction:
+        with mock.patch.object(auth.rawls, "check_workspace_iam_action", return_value = True) as mock_rawls_getaction:
             assert auth.workspace_uuid_with_auth("wsns", "wsn", "bearer", "write") == "uuid"
-            mock_sam_getaction.assert_called_once()
+            mock_rawls_getaction.assert_called_once()
 

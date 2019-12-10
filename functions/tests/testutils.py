@@ -15,7 +15,7 @@ def patch_request(
     """Wrapper for mock.patch over a python requests call."""
     fn_to_patch = f"{module_path}.requests.{http_method.lower()}"
     with mock.patch(fn_to_patch) as mocked_fn:
-        mocked_fn.return_value.ok = status_code / 100 == 2
+        mocked_fn.return_value.ok = status_code // 100 == 2
         mocked_fn.return_value.status_code = status_code
         mocked_fn.return_value.text = text
         if json is not None:

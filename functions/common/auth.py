@@ -24,10 +24,10 @@ def workspace_uuid_with_auth(workspace_ns: str, workspace_name: str, bearer_toke
     If so, returns the workspace UUID."""
     ws_uuid = rawls.get_workspace_uuid(workspace_ns, workspace_name, bearer_token)
 
-    if sam_action != "read":  # the read check is done when you ask rawls for the workspace UUID, so don't redo it
-        if not sam.get_user_action_on_resource("workspace", ws_uuid, sam_action, bearer_token):
-            # you can see the workspace, but Sam says you can't do the action to it, so return 403
-            logging.info(f"auth.workspace_uuid_with_auth: User has read action on workspace {workspace_ns}/{workspace_name}, but {sam_action} is required.")
-            raise AuthorizationException(f"You need the {sam_action} permission to perform this task on {workspace_ns}/{workspace_name}.")
+    # the read check is done when you ask rawls for the workspace UUID, so don't redo it
+    if sam_action != "read" and not rawls.check_workspace_iam_action(workspace_ns, workspace_name, sam_action, bearer_token):
+        # you can see the workspace, but you can't do the action to it (potentially also because the workspace is locked), so return 403
+        logging.info(f"auth.workspace_uuid_with_auth: User has read action on workspace {workspace_ns}/{workspace_name}, but cannot perform {sam_action}.")
+        raise AuthorizationException(f"Cannot perform the action {sam_action} on {workspace_ns}/{workspace_name}.")
 
     return ws_uuid

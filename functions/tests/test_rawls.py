@@ -20,3 +20,17 @@ def test_get_workspace_uuid():
     with testutils.patch_request("functions.common.rawls", "get", status_code = 200, json={"workspace" : {"workspaceId" : "uuid"}}):
         assert rawls.get_workspace_uuid("a", "a", "a") == "uuid"
 
+
+def test_check_workspace_iam_action():
+    # rawls says yes
+    with testutils.patch_request("functions.common.rawls", "get", status_code = 204):
+        assert rawls.check_workspace_iam_action("a", "a", "a", "a")
+
+    # rawls says no
+    with testutils.patch_request("functions.common.rawls", "get", status_code = 403):
+        assert not rawls.check_workspace_iam_action("a", "a", "a", "a")
+
+    # rawls errors
+    with testutils.patch_request("functions.common.rawls", "get", status_code = 500, text="barf"):
+        with pytest.raises(exceptions.ISvcException):
+            rawls.check_workspace_iam_action("a", "a", "a", "a")
