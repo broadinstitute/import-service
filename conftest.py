@@ -5,12 +5,13 @@ test function.
 For more info, see here: https://docs.pytest.org/en/latest/fixture.html
 """
 
+from typing import Iterator
+
 import flask
 import flask.testing
 import pytest
 import sqlalchemy.engine
 import sqlalchemy.orm
-from typing import Iterator
 
 import main
 from functions.common import db, model
@@ -20,13 +21,19 @@ from functions.common import db, model
 def client() -> flask.testing.FlaskClient:
     """Builds a Flask client wired up for unit tests. Created once per test invocation and reused thereafter."""
     app = flask.Flask(__name__)
+    app.debug = True
+    with app.app_context():
+        flask.current_app.is_test_fixture = True
 
     # Cloud Functions forward all HTTP methods.
     # https://cloud.google.com/functions/docs/writing/http#handling_http_methods
     HTTP_METHODS = ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'CONNECT', 'OPTIONS', 'TRACE', 'PATCH']
 
     for f in main.ALL_HTTP_FUNCTIONS:
-        app.add_url_rule('/'+f.__name__, f.__name__, lambda: f(flask.request), methods=HTTP_METHODS)
+        # <path:rest> is Flask for "match anything here, including if it has slashes".
+        # the bound value would get assigned to the "rest" key in kwargs, but we don't have access
+        # to this in GCF-land so we just throw it away and re-implement path matching ourselves.
+        app.add_url_rule(f"/{f.__name__}/<path:rest>", f.__name__, lambda **kwargs: f(flask.request), methods=HTTP_METHODS)
 
     return app.test_client()
 
