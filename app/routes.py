@@ -9,7 +9,7 @@ routes = flask.Blueprint('import-service', __name__, '/')
 
 @routes.route('/iservice/<path:rest>', methods=["POST"])
 @httpify_excs
-def iservice() -> flask.Response:
+def iservice(rest) -> flask.Response:
     from app import service  # scope this import so it's not dragged in for other functions
     """HTTP function for accepting an import request"""
     return flask.make_response(service.handle(flask.request))

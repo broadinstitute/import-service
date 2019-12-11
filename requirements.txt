@@ -1,26 +1,13 @@
-# This is the basic set of requirements installed by Cloud Functions.
-
-click==6.7
-#Flask==1.0.2
-itsdangerous==0.24
-#Jinja2==2.10
-#MarkupSafe==1.0
-#pip==18.0 commented out because it's causing problems building for GAE
-requests==2.21.0
-setuptools==40.2.0
-#Werkzeug==0.14.1
-wheel==0.31.1
-
-#Things that cloud functions installs, but we're upgrading.
+requests==2.22.0
+setuptools==42.0.2
+wheel==0.33.6
 Flask==1.1.1
 Werkzeug==0.16.0
 MarkupSafe==1.1.1
 Jinja2==2.10.3
-
-# Extras for us.
-jsonschema==3.1.1
-pytest==5.2.2
-mypy==0.740
+jsonschema==3.2.0
+pytest==5.3.1
+mypy==0.750
 sqlalchemy==1.3.11
-sqlalchemy-stubs==0.2
+sqlalchemy-stubs==0.3
 pymysql==0.9.3
