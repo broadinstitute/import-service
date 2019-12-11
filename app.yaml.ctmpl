@@ -9,4 +9,8 @@ env_variables:
     RAWLS_URL: "{env.rawls_url}"
     SAM_URL: "{env.sam_url}"
 
+    PUBSUB_TOPIC: task_chunk_topic
+    PUBSUB_SUBSCRIPTION: task_chunk_subscription
     PUBSUB_TOKEN: "{secrets.pubsub_token}"
+    PUBSUB_ACCOUNT: "{secrets.pubsub_account}"
+    PUBSUB_AUDIENCE: "{secrets.pubsub_audience}"

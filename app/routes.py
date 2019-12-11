@@ -1,7 +1,8 @@
 import flask
 import json
-import base64
+import os
 from app.common.httputils import httpify_excs
+from app.common import auth
 
 
 routes = flask.Blueprint('import-service', __name__, '/')
@@ -14,13 +15,13 @@ def iservice(rest) -> flask.Response:
     """HTTP function for accepting an import request"""
     return flask.make_response(service.handle(flask.request))
 
+
 # This particular URL, though weird, can be secured using GCP magic.
 # See https://cloud.google.com/pubsub/docs/push#authenticating_standard_and_urls
 @routes.route('/_ah/push-handlers/receive_messages', methods=['POST'])
+@httpify_excs
 def taskchunk() -> flask.Response:
-
-    #TODO: steal from here
-    # https://github.com/GoogleCloudPlatform/python-docs-samples/blob/master/appengine/standard_python37/pubsub/main.py
+    auth.verify_pubsub_jwt(flask.request)
 
     envelope = json.loads(flask.request.data.decode('utf-8'))
     attributes = envelope['message']['attributes']

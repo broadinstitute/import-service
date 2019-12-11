@@ -11,6 +11,12 @@ class BadJsonException(ISvcException):
         super().__init__(message, 400)
 
 
+class BadPubSubTokenException(ISvcException):
+    def __init__(self):
+        # This is a deliberately unhelpful message so we don't give details to attackers.
+        super().__init__("Invalid request", 400)
+
+
 class AuthorizationException(ISvcException):
     def __init__(self, message: str = "Forbidden"):
         super().__init__(message, 403)
