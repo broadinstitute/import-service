@@ -40,7 +40,7 @@ def handle(request: flask.Request) -> flask.Response:
     try:  # now validate that the input is correctly shaped
         schema_validator.validate(request_json)
     except jsonschema.ValidationError as ve:
-        logging.info("service.handle: Got malformed JSON.")
+        logging.info("Got malformed JSON.")
         raise exceptions.BadJsonException(ve.message)
 
     new_import = model.Import(

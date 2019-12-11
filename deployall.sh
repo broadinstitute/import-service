@@ -9,4 +9,4 @@ gcloud pubsub subscriptions create task_chunk_subscription \
     "https://import-service-dot-broad-dsde-dev.appspot.com/_ah/push-handlers/receive_messages?token=$(cat token.secret)" \
     --ack-deadline 10
 
-gcloud app deploy
+gcloud app deploy --quiet

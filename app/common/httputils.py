@@ -51,7 +51,7 @@ def expect_urlshape(pattern: str, request_path: str) -> dict:
 
     m = re.match(regex, request_path)
     if m is None:
-        logging.info(f"httputils.expect_urlshape: couldn't match {request_path} against {pattern}")
+        logging.info(f"couldn't match {request_path} against {pattern}")
         raise NotFoundException()
     else:
         return m.groupdict()

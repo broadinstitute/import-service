@@ -13,7 +13,7 @@ def extract_auth_token(request: flask.Request) -> str:
     token: Optional[str] = request.headers.get("Authorization", type=str)
 
     if token is None:
-        logging.info("auth.extract_auth_token: missing Authorization header")
+        logging.info("Missing Authorization header")
         raise AuthorizationException("Missing Authorization: Bearer token in header")
 
     return token
@@ -27,7 +27,7 @@ def workspace_uuid_with_auth(workspace_ns: str, workspace_name: str, bearer_toke
     # the read check is done when you ask rawls for the workspace UUID, so don't redo it
     if sam_action != "read" and not rawls.check_workspace_iam_action(workspace_ns, workspace_name, sam_action, bearer_token):
         # you can see the workspace, but you can't do the action to it (potentially also because the workspace is locked), so return 403
-        logging.info(f"auth.workspace_uuid_with_auth: User has read action on workspace {workspace_ns}/{workspace_name}, but cannot perform {sam_action}.")
+        logging.info(f"User has read action on workspace {workspace_ns}/{workspace_name}, but cannot perform {sam_action}.")
         raise AuthorizationException(f"Cannot perform the action {sam_action} on {workspace_ns}/{workspace_name}.")
 
     return ws_uuid
