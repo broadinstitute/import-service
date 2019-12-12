@@ -34,11 +34,16 @@ jobs:
 
       - run:
           name: run tests
-          command: ./pytest.sh
+          command: |
+            . venv/bin/activate
+            ./pytest.sh
 
       - run:
           name: run linter
-          command: ./mypy.sh
+          command: |
+            . venv/bin/activate
+            ./mypy.sh
+
 
       - store_artifacts:
           path: test-reports
