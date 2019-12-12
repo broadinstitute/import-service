@@ -2,7 +2,7 @@
 
 set -e
 
-if [[ "$VIRTUAL_ENV" == "" ]]
+if [[ "$VIRTUAL_ENV" == "" ]] && [[ "$CI" == "" ]]
 then
     echo "You're not in a virtualenv! Set that up first."
     exit 1
