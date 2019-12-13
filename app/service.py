@@ -2,7 +2,7 @@ import flask
 import jsonschema
 import logging
 
-from app.common import auth, sam, db, model, exceptions, httputils
+from app.common import user_auth, sam, db, model, exceptions, httputils
 
 NEW_IMPORT_SCHEMA = {
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -28,14 +28,14 @@ def handle(request: flask.Request) -> flask.Response:
 
     urlparams = httputils.expect_urlshape('/iservice/<ws_ns>/<ws_name>/import', request_path)
 
-    access_token = auth.extract_auth_token(request)
+    access_token = user_auth.extract_auth_token(request)
     user_info = sam.validate_user(access_token)
 
     # force parsing as json regardless of application/content-type, return None if errors
     request_json = request.get_json(force=True, silent=True)
 
     # make sure the user is allowed to import to this workspace
-    workspace_uuid = auth.workspace_uuid_with_auth(urlparams["ws_ns"], urlparams["ws_name"], access_token, "write")
+    workspace_uuid = user_auth.workspace_uuid_with_auth(urlparams["ws_ns"], urlparams["ws_name"], access_token, "write")
 
     try:  # now validate that the input is correctly shaped
         schema_validator.validate(request_json)

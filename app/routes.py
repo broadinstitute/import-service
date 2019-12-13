@@ -1,8 +1,10 @@
 import flask
 import json
 import os
+
+import app.common.service_auth
 from app.common.httputils import httpify_excs
-from app.common import auth
+from app.common import user_auth
 
 
 routes = flask.Blueprint('import-service', __name__, '/')
@@ -21,7 +23,7 @@ def iservice(rest) -> flask.Response:
 @routes.route('/_ah/push-handlers/receive_messages', methods=['POST'])
 @httpify_excs
 def taskchunk() -> flask.Response:
-    auth.verify_pubsub_jwt(flask.request)
+    app.common.service_auth.verify_pubsub_jwt(flask.request)
 
     envelope = json.loads(flask.request.data.decode('utf-8'))
     attributes = envelope['message']['attributes']
