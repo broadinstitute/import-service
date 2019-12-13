@@ -28,14 +28,14 @@ def validate_user(bearer_token: str) -> UserInfo:
         jsonschema.validate(uinfo, schema=schema)
         user_info = UserInfo(uinfo["userSubjectId"], uinfo["userEmail"], uinfo["enabled"])
         if not user_info.enabled:
-            logging.info(f"sam.validate_user: User {uinfo['userSubjectId']} is not enabled")
+            logging.info(f"User {uinfo['userSubjectId']} is not enabled")
             raise AuthorizationException("Not enabled")
         return user_info
     elif resp.status_code == 404:
-        logging.info(f"sam.validate_user: Not registered at all in Terra")
+        logging.info(f"Not registered at all in Terra")
         raise AuthorizationException("Not registered")
     else:
-        logging.info(f"sam.validate_user: Got {resp.status_code} from Sam while trying to validate bearer token")
+        logging.info(f"Got {resp.status_code} from Sam while trying to validate bearer token")
         raise ISvcException(resp.text, resp.status_code)
 
 
@@ -49,5 +49,5 @@ def get_user_action_on_resource(resource_type: str, resource_id: str, action: st
         jsonschema.validate(resp.json(), schema={"type": "boolean"})  # will raise an exc if body is wrong, to be caught upstream
         return resp.json()
     else:
-        logging.info(f"sam.get_user_action_on_resource: Got {resp.status_code} from Sam while checking {action} on resource {resource_type}/{resource_id}: {resp.text}")
+        logging.info(f"Got {resp.status_code} from Sam while checking {action} on resource {resource_type}/{resource_id}: {resp.text}")
         raise ISvcException(resp.text, resp.status_code)

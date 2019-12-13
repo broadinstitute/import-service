@@ -15,7 +15,7 @@ def get_workspace_uuid(workspace_namespace: str, workspace_name: str, bearer_tok
         return resp.json()["workspace"]["workspaceId"]
     else:
         # just pass the error upwards
-        logging.info(f"rawls.get_workspace_uuid: Got {resp.status_code} from Rawls for {workspace_namespace}/{workspace_name}: {resp.text}")
+        logging.info(f"Got {resp.status_code} from Rawls for {workspace_namespace}/{workspace_name}: {resp.text}")
         raise ISvcException(resp.text, resp.status_code)
 
 
@@ -30,5 +30,5 @@ def check_workspace_iam_action(workspace_namespace: str, workspace_name: str, ac
         return False
     else:
         # just pass the error upwards
-        logging.info(f"rawls.check_workspace_iam_action: Got {resp.status_code} from Rawls for {workspace_namespace}/{workspace_name}: {resp.text}")
+        logging.info(f"Got {resp.status_code} from Rawls for {workspace_namespace}/{workspace_name}: {resp.text}")
         raise ISvcException(resp.text, resp.status_code)

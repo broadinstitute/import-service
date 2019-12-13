@@ -1,15 +1,68 @@
 import unittest.mock as mock
 
 import flask
-import jsonschema
 import pytest
+import time
+import json
 from werkzeug.test import EnvironBuilder
+from google.auth import transport as gtransport  # type: ignore
 
 from ..common import auth
 from ..common import exceptions
 
 
-def fake_request(headers: dict) -> flask.Request:
+def fake_jwt_request(pubsub_token: str = "token", audience: str = "aud", service_account: str = "sa@sa.org") -> flask.Request:
+    mockrq = mock.MagicMock()
+    mockrq.args = {"token": pubsub_token}
+
+    payload = {
+        "aud": audience,
+        "email": service_account,
+        "sub": service_account,
+        "iss": "https://accounts.google.com",
+        "exp": int(time.time()) + 3600,
+        "iat": int(time.time())
+    }
+
+    mockrq.headers = {"Authorization": f"Bearer {json.dumps(payload)}"}
+    return mockrq
+
+
+def fake_verify_oauth2_token(token: str, request: gtransport.Request, audience: str) -> dict:
+    """This function works in concert with fake_jwt_request and the jwt_env fixture to fake behaviour of the
+    oauth2 ID token verification, since it's hard to hand-roll a custom ID token that Google's lib likes."""
+    claim = json.loads(token)
+    if claim["aud"] != audience:
+        raise ValueError("Token has wrong audience")
+    return claim
+
+
+@pytest.fixture(scope="function")
+def jwt_env(monkeypatch):
+    monkeypatch.setenv("PUBSUB_TOKEN", "token")
+    monkeypatch.setenv("PUBSUB_AUDIENCE", "aud")
+    monkeypatch.setenv("PUBSUB_ACCOUNT", "sa@sa.org")
+    monkeypatch.setattr(auth.id_token, "verify_oauth2_token", fake_verify_oauth2_token)
+
+
+def test_verify_pubsub_jwt(jwt_env):
+    good_rq = fake_jwt_request()
+    assert auth.verify_pubsub_jwt(good_rq) is None
+
+    wrong_token = fake_jwt_request(pubsub_token="wrong")
+    with pytest.raises(exceptions.BadPubSubTokenException):
+        auth.verify_pubsub_jwt(wrong_token)
+
+    wrong_audience = fake_jwt_request(audience="wrong")
+    with pytest.raises(exceptions.BadPubSubTokenException):
+        auth.verify_pubsub_jwt(wrong_audience)
+
+    wrong_sa = fake_jwt_request(service_account="wrong@wr.ong")
+    with pytest.raises(exceptions.BadPubSubTokenException):
+        auth.verify_pubsub_jwt(wrong_sa)
+
+
+def fake_authtoken_request(headers: dict) -> flask.Request:
     builder = EnvironBuilder(method='GET', headers=headers)
     env = builder.get_environ()
     return flask.Request(env)
@@ -21,14 +74,14 @@ def test_extract_auth_token():
     missing_header = {"Some": "Other header"}
     no_header = {}
 
-    assert auth.extract_auth_token(fake_request(good_header)) == "auth_header"
-    assert auth.extract_auth_token(fake_request(lowercase_header)) == "auth_header"
+    assert auth.extract_auth_token(fake_authtoken_request(good_header)) == "auth_header"
+    assert auth.extract_auth_token(fake_authtoken_request(lowercase_header)) == "auth_header"
 
     with pytest.raises(exceptions.AuthorizationException):
-        auth.extract_auth_token(fake_request(missing_header))
+        auth.extract_auth_token(fake_authtoken_request(missing_header))
 
     with pytest.raises(exceptions.AuthorizationException):
-        auth.extract_auth_token(fake_request(no_header))
+        auth.extract_auth_token(fake_authtoken_request(no_header))
 
 
 def test_workspace_uuid():

@@ -1,27 +1,23 @@
-import flask
-
-from functions.common.httputils import httpify_excs
-
-# Stackdriver logging picks up native Python logs, but ignores the formatting and only shows the message.
-# Being able to use this formatter would save us some typing. But since it doesn't work on GCF, I've left it
-# commented out for now.
-# I've got a StackOverflow question out about this: https://stackoverflow.com/q/58955720/2941784
-#
-# import logging
-# logging.basicConfig(format="%(module)s.%(funcName)s: %(message)s", level=logging.INFO)
-
-@httpify_excs
-def iservice(request: flask.Request) -> flask.Response:
-    from functions import service  # scope this import so it's not dragged in for other functions
-    """HTTP function for accepting an import request"""
-    return flask.make_response(service.handle(request, "/iservice"))
+import logging, os, sys
+from app import create_app
 
 
-# Keep this updated this with a list of all HTTP cloud functions, it's used to build the unit testing client
-ALL_HTTP_FUNCTIONS = [iservice]
+# Google's suggested integration with Stackdriver logging produces duplicate logs in Stackdriver.
+# This does it right. See https://stackoverflow.com/a/58655297/2941784
+if "GAE_APPLICATION" in os.environ:
+    from google.cloud.logging.handlers import AppEngineHandler  # type: ignore
+    import google.cloud.logging as glogging  # type: ignore
+    client = glogging.Client()
+    formatter = logging.Formatter("%(module)s.%(funcName)s: %(message)s")
+    handler = AppEngineHandler(client, stream=sys.stderr)
+    handler.setFormatter(formatter)
+    handler.setLevel(logging.INFO)
+    root = logging.getLogger()
+    root.addHandler(handler)
+    root.setLevel(logging.INFO)
+else:
+    # For local runs, use normal Python logging (so we don't send all our test logs to Stackdriver!)
+    logging.basicConfig(format="%(module)s.%(funcName)s: %(message)s", level=logging.INFO)
 
 
-def taskchunk(event, context) -> None:
-    from functions import chunk_task
-    chunk_task.handle(event["attributes"])
-    return None  # background functions want you to return something
+app = create_app()

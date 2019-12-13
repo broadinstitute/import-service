@@ -30,23 +30,6 @@ def httpify_excs(some_func: Callable[..., flask.Response]):
     return catch_excs
 
 
-def correct_gcf_path(flask_path: str, desired_prefix: str) -> str:
-    """In GCF, a cloud function deployed to /foo will strip /foo from the beginning of flask.request.path.
-    i.e. GET /foo/bar/baz will give you flask.request.path = "/bar/baz".
-
-    In testing, the test harness puts /foo there.
-    i.e. GET /foo/bar/baz will give you flask.request.path = "/foo/bar/baz".
-
-    This function fixes the path in the GCF case to put /foo back."""
-    try:
-        if flask.current_app.is_test_fixture:  # yuck.
-            return flask_path
-        else:
-            return desired_prefix + flask_path  # won't get here, this never gets explicitly set to false
-    except AttributeError:
-        return desired_prefix + flask_path  # will get here
-
-
 def _part_to_regex(part: str) -> str:
     """Turns <foo> into (?P<foo>[\w\-]+)"""
     if len(part) == 0:
@@ -68,7 +51,7 @@ def expect_urlshape(pattern: str, request_path: str) -> dict:
 
     m = re.match(regex, request_path)
     if m is None:
-        logging.info(f"httputils.expect_urlshape: couldn't match {request_path} against {pattern}")
+        logging.info(f"couldn't match {request_path} against {pattern}")
         raise NotFoundException()
     else:
         return m.groupdict()

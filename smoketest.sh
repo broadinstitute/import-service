@@ -24,7 +24,7 @@ echo ""
 
 echo "Pinging the import service as your dev user..."
 gcloud config set account $DEV_EMAIL
-JOB_ID=`curl -X POST "https://us-central1-broad-dsde-dev.cloudfunctions.net/iservice/$WS_NAMESPACE/$WS_NAME/import" -H "Authorization: bearer $(gcloud auth print-access-token)" -d '{"path":"buzz", "filetype":"pfb"}'`
+JOB_ID=`curl -X POST "https://import-service-dot-broad-dsde-dev.appspot.com/iservice/$WS_NAMESPACE/$WS_NAME/import" -H "Authorization: bearer $(gcloud auth print-access-token)" -d '{"path":"buzz", "filetype":"pfb"}'`
 echo $JOB_ID
 echo "That last line should look like a UUID. If it doesn't, something's broken!"
 echo ""

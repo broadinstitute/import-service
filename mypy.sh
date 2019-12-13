@@ -21,4 +21,4 @@ fi
 # So this means that errors in files that are imported by BOTH the root-files and the functions-files will
 # show up twice. The good news is that you only have to fix them once ;)
 python3 -m mypy *.py
-python3 -m mypy -p functions
+python3 -m mypy -p app
