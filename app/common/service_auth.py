@@ -3,22 +3,42 @@ import os
 import traceback
 
 import flask
-from typing import Optional
 
 import google.auth
 from google.auth.transport import requests as grequests
 from google.oauth2 import id_token
+import googleapiclient.discovery
 
 from app.common.exceptions import BadPubSubTokenException
 
 
+IMPORT_SERVICE_SCOPES = [
+    "https://www.googleapis.com/auth/userinfo.email",
+    "https://www.googleapis.com/auth/userinfo.profile"
+]
+
+
 def get_app_token() -> str:
-    """Get a token for the application SA using the Application Default Credentials available to the GAE VM."""
-    app_sa_creds: google.auth.Credentials
-    project: Optional[str]
-    app_sa_creds, project = google.auth.default()
-    app_sa_creds.refresh()
-    return app_sa_creds.token()
+    """The app engine SA has token creator on the import service SA"""
+    credentials, project = google.auth.default()
+    iam = googleapiclient.discovery.build('iamcredentials', 'v1', credentials=credentials)
+
+    # create service account name
+    email = os.environ.get('IMPORT_SVC_SA_EMAIL')
+    name = 'projects/-/serviceAccounts/{}'.format(email)
+
+    # create body for request
+    body = {
+        'scope': IMPORT_SERVICE_SCOPES
+    }
+
+    # return token
+    access_token = iam.projects().serviceAccounts().generateAccessToken(
+        name=name,
+        body=body,
+    ).execute().get('accessToken')
+
+    return access_token
 
 
 def verify_pubsub_jwt(request: flask.Request) -> None:
