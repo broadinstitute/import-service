@@ -77,9 +77,10 @@ def admin_get_pet_token(google_project: str, user_email: str) -> str:
     """Use our SA to get a token for this user's pet.
     Other Terra services have ended up adding a cache here, but given that App Engine VMs spin up and down at will,
     we may not get enough repeated requests on the same machine for an in-memory cache to be worthwhile."""
+    import_svc_token = service_auth.get_isvc_token()
     resp = requests.get(
         f"{os.environ.get('SAM_URL')}/api/google/v1/petServiceAccount/{google_project}/{user_email}",
-        headers={"Authorization": f"Bearer {service_auth.get_app_token()}"})
+        headers={"Authorization": f"Bearer {import_svc_token}"})
 
     if resp.ok:
         creds = _creds_from_key(resp.json())
