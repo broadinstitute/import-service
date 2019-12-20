@@ -73,19 +73,6 @@ def _creds_from_key(key_info: dict, scopes: Optional[List[str]] = None) -> servi
     return creds
 
 
-def get_pet_token(google_project: str, bearer_token: str) -> str:
-    resp = requests.get(
-        f"{os.environ.get('SAM_URL')}/api/google/v1/user/petServiceAccount/{google_project}/key",
-        headers={"Authorization": f"Bearer {bearer_token}"})
-
-    if resp.ok:
-        creds = _creds_from_key(resp.json())
-        return creds.token
-    else:
-        logging.debug(f"Got {resp.status_code} from Sam while trying to get pet key for {google_project}: {resp.text}")
-        raise ISvcException(resp.text, resp.status_code)
-
-
 def admin_get_pet_token(google_project: str, user_email: str) -> str:
     """Use our SA to get a token for this user's pet.
     Other Terra services have ended up adding a cache here, but given that App Engine VMs spin up and down at will,
