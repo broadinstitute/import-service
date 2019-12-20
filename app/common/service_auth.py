@@ -9,7 +9,7 @@ import google.auth
 from google.auth.transport import requests as grequests
 from google.oauth2 import id_token
 import googleapiclient.discovery
-from typing import Optional
+from typing import Optional, NamedTuple
 
 from app.common.exceptions import BadPubSubTokenException
 
@@ -20,16 +20,20 @@ IMPORT_SERVICE_SCOPES = [
 ]
 
 
-_cached_isvc_token: Optional[str] = None
-_cached_isvc_expiry: Optional[datetime.datetime] = None
+class TokenAndExpiry(NamedTuple):
+    token: str
+    expiry: datetime.datetime
+
+
+_cached_isvc_token: Optional[TokenAndExpiry] = None
 
 
 def get_isvc_token() -> str:
     """Use the cached token if it still exists and we have at least 5 minutes until it expires."""
     if _cached_isvc_token is not None and \
-            _cached_isvc_expiry > datetime.datetime.utcnow() + datetime.timedelta(minutes=5):
+            _cached_isvc_token.expiry > datetime.datetime.utcnow() + datetime.timedelta(minutes=5):
         logging.info("using cached token for import service SA")
-        return _cached_isvc_token
+        return _cached_isvc_token.token
     else:
         logging.info("generating new token for import service SA")
         return _update_isvc_token()
@@ -54,11 +58,11 @@ def _update_isvc_token() -> str:
         body=body,
     ).execute()
 
-    global _cached_isvc_expiry, _cached_isvc_token
-    _cached_isvc_token = token_response["accessToken"]
-    _cached_isvc_expiry = datetime.datetime.strptime(token_response["expireTime"], "%Y-%m-%dT%H:%M:%SZ")
+    global _cached_isvc_token
+    _cached_isvc_token = TokenAndExpiry(token=token_response["accessToken"],
+                                        expiry=datetime.datetime.strptime(token_response["expireTime"], "%Y-%m-%dT%H:%M:%SZ"))
 
-    return _cached_isvc_token
+    return _cached_isvc_token.token
 
 
 def verify_pubsub_jwt(request: flask.Request) -> None:
