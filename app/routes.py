@@ -4,7 +4,6 @@ import os
 
 import app.common.service_auth
 from app.common.httputils import httpify_excs
-from app.common import user_auth
 
 
 routes = flask.Blueprint('import-service', __name__, '/')

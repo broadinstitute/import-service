@@ -41,9 +41,16 @@ def get_isvc_token() -> str:
 
 def _update_isvc_token() -> str:
     """The app engine SA has token creator on the import service SA"""
-    credentials, project = google.auth.default()
-    iam = googleapiclient.discovery.build('iamcredentials', 'v1', credentials=credentials)
+    token_response = _get_isvc_token_from_google()
 
+    global _cached_isvc_token
+    _cached_isvc_token = TokenAndExpiry(token=token_response["accessToken"],
+                                        expiry=datetime.datetime.strptime(token_response["expireTime"], "%Y-%m-%dT%H:%M:%SZ"))
+
+    return _cached_isvc_token.token
+
+
+def _get_isvc_token_from_google() -> dict:
     # create service account name
     email = os.environ.get('IMPORT_SVC_SA_EMAIL')
     name = 'projects/-/serviceAccounts/{}'.format(email)
@@ -53,16 +60,13 @@ def _update_isvc_token() -> str:
         'scope': IMPORT_SERVICE_SCOPES
     }
 
-    token_response = iam.projects().serviceAccounts().generateAccessToken(
+    credentials, project = google.auth.default()
+    iam = googleapiclient.discovery.build('iamcredentials', 'v1', credentials=credentials)
+
+    return iam.projects().serviceAccounts().generateAccessToken(
         name=name,
         body=body,
     ).execute()
-
-    global _cached_isvc_token
-    _cached_isvc_token = TokenAndExpiry(token=token_response["accessToken"],
-                                        expiry=datetime.datetime.strptime(token_response["expireTime"], "%Y-%m-%dT%H:%M:%SZ"))
-
-    return _cached_isvc_token.token
 
 
 def verify_pubsub_jwt(request: flask.Request) -> None:
