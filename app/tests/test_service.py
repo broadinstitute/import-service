@@ -20,7 +20,7 @@ sam_valid_user = testutils.fxpatch(
     return_value=userinfo.UserInfo("123456", "hello@bees.com", True))
 
 user_has_ws_access = testutils.fxpatch(
-    "app.common.auth.workspace_uuid_with_auth",
+    "app.common.user_auth.workspace_uuid_with_auth",
     return_value="some-uuid")
 
 
@@ -83,7 +83,7 @@ def test_user_not_found(client):
 @pytest.mark.usefixtures(
     sam_valid_user,
     testutils.fxpatch(
-        "app.common.auth.workspace_uuid_with_auth",
+        "app.common.user_auth.workspace_uuid_with_auth",
         side_effect = exceptions.ISvcException("what workspace?", 404)))
 def test_user_cant_see_workspace(client):
     resp = client.post('/iservice/namespace/name/import', json=good_json, headers=good_headers)
@@ -93,7 +93,7 @@ def test_user_cant_see_workspace(client):
 @pytest.mark.usefixtures(
     sam_valid_user,
     testutils.fxpatch(
-        "app.common.auth.workspace_uuid_with_auth",
+        "app.common.user_auth.workspace_uuid_with_auth",
         side_effect = exceptions.ISvcException("you can't write to this", 403)))
 def test_user_cant_write_to_workspace(client):
     resp = client.post('/iservice/namespace/name/import', json=good_json, headers=good_headers)

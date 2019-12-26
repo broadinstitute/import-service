@@ -1,5 +1,6 @@
 import jsonschema
 import pytest
+import unittest.mock as mock
 
 from . import testutils
 from ..common import sam, exceptions, userinfo
@@ -45,17 +46,34 @@ def test_validate_user():
 
 def test_get_user_action_on_resource():
     # sam returns non-OK response
-    with testutils.patch_request("app.common.sam", "get", 403, "bees"):
+    with testutils.patch_request("app.common.sam", "get", 403, "not ok"):
         with pytest.raises(exceptions.ISvcException) as excinfo:
-            sam.get_user_action_on_resource("rtype", "rid", "action", "bearer")
+            sam.get_user_action_on_resource("rtype", "resource_id", "action", "bearer")
             assert excinfo.value.http_status == 403
 
     # sam returns ok response with non-bool response (shouldn't get here irl!)
     with testutils.patch_request("app.common.sam", "get", 200, json="notabool"):
         with pytest.raises(jsonschema.ValidationError):
-            sam.get_user_action_on_resource("rtype", "rid", "action", "bearer")
+            sam.get_user_action_on_resource("rtype", "resource_id", "action", "bearer")
 
     # sam returns ok with good json, parse it out
     with testutils.patch_request("app.common.sam", "get", 200, json=True):
-        assert sam.get_user_action_on_resource("rtype", "rid", "action", "bearer")
+        assert sam.get_user_action_on_resource("rtype", "resource_id", "action", "bearer")
 
+
+@pytest.mark.usefixtures(
+    testutils.fxpatch(
+        "app.common.service_auth.get_isvc_token",
+        return_value={"accessToken": "ya29.isvc_token", "expireTime": "2014-10-02T15:01:23Z"}))
+def test_admin_get_pet_token():
+    # happy path
+    with testutils.patch_request("app.common.sam", "get", 200, json={}):
+        with mock.patch("app.common.sam._creds_from_key") as mock_pet_creds:
+            mock_pet_creds.return_value.token = "ya29.pet_token"
+            assert sam.admin_get_pet_token("project", "user@hello.com") == "ya29.pet_token"
+
+    # sam returns non-OK response
+    with testutils.patch_request("app.common.sam", "get", 404, "who?"):
+        with pytest.raises(exceptions.ISvcException) as excinfo:
+            sam.admin_get_pet_token("project", "user@hello.com")
+            assert excinfo.value.http_status == 404
