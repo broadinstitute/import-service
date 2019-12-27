@@ -7,7 +7,7 @@ from typing import Callable
 
 import flask
 
-from .exceptions import *
+from app.util.exceptions import *
 
 
 def httpify_excs(some_func: Callable[..., flask.Response]):
@@ -45,7 +45,7 @@ def _pattern_to_regex(pattern: str) -> str:
 
 
 def expect_urlshape(pattern: str, request_path: str) -> dict:
-    """Takes a pattern like "/foo/<boo>/woo" and tests the request path against it.
+    """Takes a pattern like "/foo/<boo>/woo" and app.tests the request path against it.
     Returns {"boo": something} only if the request path matches the pattern and has no slashes in it."""
     regex = _pattern_to_regex(pattern)
 

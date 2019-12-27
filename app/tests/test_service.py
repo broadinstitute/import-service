@@ -4,8 +4,10 @@ import pytest
 
 from app.tests import testutils
 from app import service
-from app.common import db, exceptions, userinfo
-from app.common.model import *
+from app.util import exceptions
+from app.db import db
+from app.auth import userinfo
+from app.db.model import *
 
 
 def test_schema_valid():
@@ -16,11 +18,11 @@ good_json = {"path": "foo", "filetype": "pfb"}
 good_headers = {"Authorization": "Bearer ya29.blahblah"}
 
 sam_valid_user = testutils.fxpatch(
-    "app.common.sam.validate_user",
+    "app.external.sam.validate_user",
     return_value=userinfo.UserInfo("123456", "hello@bees.com", True))
 
 user_has_ws_access = testutils.fxpatch(
-    "app.common.user_auth.workspace_uuid_with_auth",
+    "app.auth.user_auth.workspace_uuid_with_auth",
     return_value="some-uuid")
 
 
@@ -73,7 +75,7 @@ def test_bad_token(client):
 
 @pytest.mark.usefixtures(
     testutils.fxpatch(
-        "app.common.sam.validate_user",
+        "app.external.sam.validate_user",
         side_effect = exceptions.ISvcException("who are you?", 404)))
 def test_user_not_found(client):
     resp = client.post('/iservice/namespace/name/import', json=good_json, headers=good_headers)
@@ -83,7 +85,7 @@ def test_user_not_found(client):
 @pytest.mark.usefixtures(
     sam_valid_user,
     testutils.fxpatch(
-        "app.common.user_auth.workspace_uuid_with_auth",
+        "app.auth.user_auth.workspace_uuid_with_auth",
         side_effect = exceptions.ISvcException("what workspace?", 404)))
 def test_user_cant_see_workspace(client):
     resp = client.post('/iservice/namespace/name/import', json=good_json, headers=good_headers)
@@ -93,7 +95,7 @@ def test_user_cant_see_workspace(client):
 @pytest.mark.usefixtures(
     sam_valid_user,
     testutils.fxpatch(
-        "app.common.user_auth.workspace_uuid_with_auth",
+        "app.auth.user_auth.workspace_uuid_with_auth",
         side_effect = exceptions.ISvcException("you can't write to this", 403)))
 def test_user_cant_write_to_workspace(client):
     resp = client.post('/iservice/namespace/name/import', json=good_json, headers=good_headers)

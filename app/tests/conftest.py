@@ -7,19 +7,18 @@ For more info, see here: https://docs.pytest.org/en/latest/fixture.html
 
 from typing import Iterator
 
-import flask
 import flask.testing
 import pytest
 import sqlalchemy.engine
 import sqlalchemy.orm
 
 from app import create_app
-from app.common import db, model
+from app.db import db, model
 
 
 @pytest.fixture(scope="session")
 def client() -> flask.testing.FlaskClient:
-    """Builds a Flask client wired up for unit tests. Created once per test invocation and reused thereafter."""
+    """Builds a Flask client wired up for unit app.tests. Created once per test invocation and reused thereafter."""
     app = create_app()
     app.debug = True
 

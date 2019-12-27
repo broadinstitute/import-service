@@ -3,7 +3,7 @@ import os
 
 import requests
 
-from .exceptions import ISvcException
+from app.util.exceptions import ISvcException
 
 
 def get_workspace_uuid(workspace_namespace: str, workspace_name: str, bearer_token: str) -> str:

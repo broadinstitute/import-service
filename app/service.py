@@ -2,7 +2,11 @@ import flask
 import jsonschema
 import logging
 
-from app.common import user_auth, sam, db, model, exceptions, httputils
+from app.util import exceptions
+from app.http import httputils
+from app.db import db, model
+from app.external import sam
+from app.auth import user_auth
 
 NEW_IMPORT_SCHEMA = {
   "$schema": "http://json-schema.org/draft-07/schema#",

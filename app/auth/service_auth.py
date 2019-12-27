@@ -11,7 +11,7 @@ from google.oauth2 import id_token
 import googleapiclient.discovery
 from typing import Optional, NamedTuple
 
-from app.common.exceptions import BadPubSubTokenException
+from app.util.exceptions import BadPubSubTokenException
 
 
 IMPORT_SERVICE_SCOPES = [

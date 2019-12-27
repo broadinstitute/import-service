@@ -3,8 +3,8 @@ from typing import Optional
 import flask
 import logging
 
-from app.common.exceptions import AuthorizationException
-from app.common import rawls
+from app.util.exceptions import AuthorizationException
+from app.external import rawls
 
 
 def extract_auth_token(request: flask.Request) -> str:

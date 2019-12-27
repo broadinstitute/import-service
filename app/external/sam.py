@@ -8,10 +8,9 @@ from typing import List, Optional
 from google.auth.transport import requests as grequests
 from google.oauth2 import service_account
 
-from app.common.exceptions import AuthorizationException, ISvcException
-from app.common.userinfo import UserInfo
-from app.common import service_auth
-
+from app.util.exceptions import AuthorizationException, ISvcException
+from app.auth.userinfo import UserInfo
+from app.auth import service_auth
 
 DEFAULT_PET_SCOPES = [
     "https://www.googleapis.com/auth/userinfo.email",

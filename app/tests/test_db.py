@@ -1,4 +1,4 @@
-from app.common import db, model
+from app.db import db, model
 
 
 def test_db_add():
@@ -35,7 +35,7 @@ def test_db_rollback():
 def test_db_session_ctx_close():
     """Sanity check to ensure that session.close() is idempotent.
     This is important because application code WILL use the session_ctx,
-    and tests will again close the session at function teardown."""
+    and app.tests will again close the session at function teardown."""
     with db.session_ctx() as session:
         new_import = model.Import("aa", "aa", "aa@aa.aa")
         session.add(new_import)

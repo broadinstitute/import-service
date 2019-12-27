@@ -1,7 +1,7 @@
 import pytest
 
-from app.common import exceptions
-from app.common.httputils import _part_to_regex, _pattern_to_regex, expect_urlshape
+from app.util import exceptions
+from app.http.httputils import _part_to_regex, _pattern_to_regex, expect_urlshape
 
 
 def test_part_to_regex():
