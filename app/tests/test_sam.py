@@ -2,8 +2,8 @@ import jsonschema
 import pytest
 import unittest.mock as mock
 
-from . import testutils
-from ..common import sam, exceptions, userinfo
+from app.tests import testutils
+from app.common import sam, exceptions, userinfo
 
 
 def test_validate_user():

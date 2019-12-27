@@ -23,14 +23,14 @@ echo "You should have deployed before this! It won't deploy for you."
 echo ""
 
 echo "Pinging the import service as your dev user..."
-gcloud config set account $DEV_EMAIL
-JOB_ID=`curl -X POST "https://import-service-dot-broad-dsde-dev.appspot.com/iservice/$WS_NAMESPACE/$WS_NAME/import" -H "Authorization: bearer $(gcloud auth print-access-token)" -d '{"path":"buzz", "filetype":"pfb"}'`
-echo $JOB_ID
+gcloud config set account "$DEV_EMAIL"
+JOB_ID=$(curl -X POST "https://import-service-dot-broad-dsde-dev.appspot.com/iservice/$WS_NAMESPACE/$WS_NAME/import" -H "Authorization: bearer $(gcloud auth print-access-token)" -d '{"path":"buzz", "filetype":"pfb"}')
+echo "$JOB_ID"
 echo "That last line should look like a UUID. If it doesn't, something's broken!"
 echo ""
 
 echo "Putting two messages on the PubSub queue as your Broad user..."
-gcloud config set account $BROAD_EMAIL
+gcloud config set account "$BROAD_EMAIL"
 gcloud --project broad-dsde-dev pubsub topics publish task_chunk_topic --attribute=job_id="$JOB_ID",boo=fnoo
 sleep 2
 gcloud --project broad-dsde-dev pubsub topics publish task_chunk_topic --attribute=job_id="$JOB_ID",boo=fnoo

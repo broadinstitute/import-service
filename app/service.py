@@ -35,7 +35,8 @@ def handle(request: flask.Request) -> flask.Response:
     request_json = request.get_json(force=True, silent=True)
 
     # make sure the user is allowed to import to this workspace
-    workspace_uuid = user_auth.workspace_uuid_with_auth(urlparams["ws_ns"], urlparams["ws_name"], access_token, "write")
+    # remove the leading underscore from this variable name when it's time to use it
+    _workspace_uuid = user_auth.workspace_uuid_with_auth(urlparams["ws_ns"], urlparams["ws_name"], access_token, "write")
 
     try:  # now validate that the input is correctly shaped
         schema_validator.validate(request_json)

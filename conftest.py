@@ -13,7 +13,6 @@ import pytest
 import sqlalchemy.engine
 import sqlalchemy.orm
 
-import main
 from app import create_app
 from app.common import db, model
 

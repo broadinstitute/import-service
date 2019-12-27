@@ -1,8 +1,8 @@
 import pytest
 
-from . import testutils
-from ..common import exceptions
-from ..common import rawls
+from app.tests import testutils
+from app.common import exceptions
+from app.common import rawls
 
 
 def test_get_workspace_uuid():

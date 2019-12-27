@@ -2,10 +2,10 @@ import flask.testing
 import jsonschema
 import pytest
 
-from . import testutils
-from .. import service
-from ..common import db, exceptions, userinfo
-from ..common.model import *
+from app.tests import testutils
+from app import service
+from app.common import db, exceptions, userinfo
+from app.common.model import *
 
 
 def test_schema_valid():

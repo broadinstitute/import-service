@@ -4,8 +4,8 @@ import flask
 import pytest
 from werkzeug.test import EnvironBuilder
 
-from ..common import user_auth
-from ..common import exceptions
+from app.common import user_auth
+from app.common import exceptions
 
 
 def fake_authtoken_request(headers: dict) -> flask.Request:

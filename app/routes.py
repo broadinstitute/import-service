@@ -1,7 +1,7 @@
 import flask
 import json
-import os
 
+import app.service
 import app.common.service_auth
 from app.common.httputils import httpify_excs
 
@@ -12,9 +12,8 @@ routes = flask.Blueprint('import-service', __name__, '/')
 @routes.route('/iservice/<path:rest>', methods=["POST"])
 @httpify_excs
 def iservice(rest) -> flask.Response:
-    from app import service  # scope this import so it's not dragged in for other functions
-    """HTTP function for accepting an import request"""
-    return flask.make_response(service.handle(flask.request))
+    """Accept an import request"""
+    return flask.make_response(app.service.handle(flask.request))
 
 
 # This particular URL, though weird, can be secured using GCP magic.
