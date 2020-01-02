@@ -19,7 +19,7 @@ def httpify_excs(some_func: Callable[..., flask.Response]):
         except ISvcException as hxc:
             # Some kind of exception we want to propagate up to the user.
             return flask.make_response(hxc.message, hxc.http_status)
-        except RuntimeError:
+        except Exception:
             # Anything else is a definite programmer error.
             # Return a 500 and a UUID which developers can look up in the log.
             # NOTE: This will log callstack information and potentially user values.
