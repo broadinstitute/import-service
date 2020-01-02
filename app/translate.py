@@ -1,6 +1,9 @@
 import flask
 import logging
 
+from app.db import db
+from app.db.model import *
+
 from typing import Dict, Optional
 from urllib.parse import urlparse
 
@@ -11,13 +14,28 @@ VALID_FILETYPES = ["pfb"]
 
 VALID_NETLOCS = ["gen3-pfb-export.s3.amazonaws.com", "storage.googleapis.com"]
 
-def translate(attributes: Dict[str, str]) -> flask.Response:
-    # the filetype attribute has been validated on ingest, so we don't need to revalidate it here.
-    # at some point in the future this function will flesh out to ingest other filetypes.
-    return pfb_to_rawls(attributes)
+def translate(msg: Dict[str, str]) -> flask.Response:
+    import_id = msg["import_id"]
+    with db.session_ctx() as sess:
+        # flip the status to Translating, and then get the row
+        update_successful = Import.update_status_exclusively(import_id, ImportStatus.Pending, ImportStatus.Translating, sess)
+        import_details = sess.query(Import).filter(Import.id == import_id).first()
+
+    if not update_successful:
+        # this import wasn't in pending. most likely this means that the pubsub message we got was delivered twice,
+        # and some other GAE instance has picked it up and is happily processing it. happy translating, friendo!
+        return flask.make_response("ok")
+
+    # at some point in the future we'll be able to handle other filetypes.
+    # note that the filetype attribute has been validated on ingest, so we don't need to revalidate it here.
+    # for now, it's always pfb.
+    return pfb_to_rawls(import_details)
 
 
-def pfb_to_rawls(attributes: Dict[str, str]) -> flask.Response:
+def pfb_to_rawls(import_details: Import) -> flask.Response:
+    # otherwise: actually do the translate.
+    # if there's some error, flip the status to Error and put the message in a new column.
+
     return flask.make_response("ok")
 
 def validate_import_url(import_url: Optional[str], user_info: UserInfo) -> bool:

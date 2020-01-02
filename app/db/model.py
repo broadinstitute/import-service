@@ -4,6 +4,7 @@ from datetime import datetime
 
 from sqlalchemy import Column, DateTime, String
 from sqlalchemy.ext.declarative import declarative_base
+from app.db.db import DBSession
 
 
 # Mypy gets confused about whether sqlalchemy enum columns are strings or enums, see here:
@@ -23,7 +24,7 @@ else:
 @enum.unique
 class ImportStatus(enum.Enum):
     Pending = enum.auto()
-    Running = enum.auto()
+    Translating = enum.auto()
 
 
 Base = declarative_base()  # sqlalchemy magic base class.
@@ -54,3 +55,12 @@ class Import(Base):
     def __repr__(self):
         # todo: replace with https://github.com/manicmaniac/sqlalchemy-repr
         return f"<Import({self.id}, {self.workspace_name}, {self.workspace_namespace}, {self.submitter}, {self.submit_time}, {self.status})>"
+
+    @classmethod
+    def update_status_exclusively(cls, id: str, current_status: ImportStatus, new_status: ImportStatus, sess: DBSession) -> bool:
+        update = cls.update() \
+            .where(Import.id == id) \
+            .where(Import.status == current_status) \
+            .values(status=new_status)
+        num_affected_rows = sess.execute(update).rowcount
+        return num_affected_rows > 0
