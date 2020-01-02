@@ -2,25 +2,26 @@ import flask
 import jsonschema
 import logging
 
+from app import translate
 from app.util import exceptions
 from app.http import httputils
 from app.db import db, model
-from app.external import sam
+from app.external import sam, pubsub
 from app.auth import user_auth
 
 NEW_IMPORT_SCHEMA = {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "properties": {
-    "path":{
+    "path": {
       "type": "string"
     },
     "filetype": {
       "type": "string",
-      "enum":["pfb"]
+      "enum": translate.VALID_FILETYPES
     }
   },
-  "required": ["path","filetype"]
+  "required": ["path", "filetype"]
 }
 
 
@@ -39,8 +40,7 @@ def handle(request: flask.Request) -> flask.Response:
     request_json = request.get_json(force=True, silent=True)
 
     # make sure the user is allowed to import to this workspace
-    # remove the leading underscore from this variable name when it's time to use it
-    _workspace_uuid = user_auth.workspace_uuid_with_auth(urlparams["ws_ns"], urlparams["ws_name"], access_token, "write")
+    workspace_uuid = user_auth.workspace_uuid_with_auth(urlparams["ws_ns"], urlparams["ws_name"], access_token, "write")
 
     try:  # now validate that the input is correctly shaped
         schema_validator.validate(request_json)
@@ -51,10 +51,15 @@ def handle(request: flask.Request) -> flask.Response:
     new_import = model.Import(
         workspace_name=urlparams["ws_name"],
         workspace_ns=urlparams["ws_ns"],
-        submitter=user_info.user_email)
-        #TODO: add workspace_uuid here
+        workspace_uuid=workspace_uuid,
+        submitter=user_info.user_email,
+        import_url=request_json["path"])
 
     with db.session_ctx() as sess:
         sess.add(new_import)
         sess.commit()
-        return flask.make_response((str(new_import.id), 200))
+        new_import_id = new_import.id
+
+    pubsub.publish({"action": "translate", "import_id": new_import_id})
+
+    return flask.make_response((str(new_import_id), 200))

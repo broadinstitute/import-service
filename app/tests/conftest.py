@@ -58,3 +58,14 @@ def dbsession(_dbconn_internal: sqlalchemy.engine.Connection) -> Iterator[db.DBS
     yield sess
     sess.close()
     txn.rollback()
+
+
+@pytest.fixture(scope="function")
+def pubsub_fake_env(monkeypatch) -> Iterator[None]:
+    monkeypatch.setenv("PUBSUB_PROJECT", "pubsub-project")
+    monkeypatch.setenv("PUBSUB_TOPIC", "pubsub-topic")
+    monkeypatch.setenv("PUBSUB_TOPIC", "pubsub-subscription")
+    monkeypatch.setenv("PUBSUB_TOKEN", "token")
+    monkeypatch.setenv("PUBSUB_AUDIENCE", "aud")
+    monkeypatch.setenv("PUBSUB_ACCOUNT", "sa@sa.org")
+    yield

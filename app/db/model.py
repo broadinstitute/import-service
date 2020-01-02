@@ -21,15 +21,19 @@ class Import(Base):
     id = Column(String(36), primary_key=True)
     workspace_name = Column(String(100), nullable=False)
     workspace_namespace = Column(String(100), nullable=False)
+    workspace_uuid = Column(String(36), nullable=False)
     submitter = Column(String(100), nullable=False)
+    import_url = Column(String(2048), nullable=False)  # max url length: https://stackoverflow.com/q/417142/2941784
     submit_time = Column(DateTime, nullable=False)
     status = Column(Enum(ImportStatus), nullable=False)
 
-    def __init__(self, workspace_name: str, workspace_ns: str, submitter: str):
+    def __init__(self, workspace_name: str, workspace_ns: str, workspace_uuid: str, submitter: str, import_url: str):
         self.id = str(uuid.uuid4())
         self.workspace_name = workspace_name
         self.workspace_namespace = workspace_ns
+        self.workspace_uuid = workspace_uuid
         self.submitter = submitter
+        self.import_url = import_url
         self.submit_time = datetime.now()
         self.status = ImportStatus.Pending.name
 

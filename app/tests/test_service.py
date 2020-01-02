@@ -25,8 +25,12 @@ user_has_ws_access = testutils.fxpatch(
     "app.auth.user_auth.workspace_uuid_with_auth",
     return_value="some-uuid")
 
+# replace the publish to google pub/sub with a no-op one
+pubsub_publish = testutils.fxpatch(
+    "app.external.pubsub.publish")
 
-@pytest.mark.usefixtures(sam_valid_user, user_has_ws_access)
+
+@pytest.mark.usefixtures(sam_valid_user, user_has_ws_access, pubsub_publish, "pubsub_fake_env")
 def test_golden_path(client):
     resp = client.post('/iservice/namespace/name/import', json=good_json, headers=good_headers)
     assert resp.status_code == 200

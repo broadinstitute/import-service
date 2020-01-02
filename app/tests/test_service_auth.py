@@ -39,14 +39,12 @@ def fake_verify_oauth2_token(token: str, request: gtransport.Request, audience: 
 
 
 @pytest.fixture(scope="function")
-def jwt_env(monkeypatch):
-    monkeypatch.setenv("PUBSUB_TOKEN", "token")
-    monkeypatch.setenv("PUBSUB_AUDIENCE", "aud")
-    monkeypatch.setenv("PUBSUB_ACCOUNT", "sa@sa.org")
+def jwt_env(monkeypatch, pubsub_fake_env):
     monkeypatch.setattr(service_auth.id_token, "verify_oauth2_token", fake_verify_oauth2_token)
 
 
-def test_verify_pubsub_jwt(jwt_env):
+@pytest.mark.usefixtures("jwt_env")
+def test_verify_pubsub_jwt():
     good_rq = fake_jwt_request()
     assert service_auth.verify_pubsub_jwt(good_rq) is None
 

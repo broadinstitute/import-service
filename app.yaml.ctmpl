@@ -11,8 +11,9 @@ env_variables:
 
     IMPORT_SVC_SA_EMAIL: "{env.import_svc_sa_email}"
 
-    PUBSUB_TOPIC: task_chunk_topic
-    PUBSUB_SUBSCRIPTION: task_chunk_subscription
+    PUBSUB_PROJECT: "{env.project}"
+    PUBSUB_TOPIC: "task_chunk_topic"
+    PUBSUB_SUBSCRIPTION: "task_chunk_subscription"
     PUBSUB_TOKEN: "{secrets.pubsub_token}"
     PUBSUB_ACCOUNT: "{secrets.pubsub_account}"
     PUBSUB_AUDIENCE: "{secrets.pubsub_audience}"
