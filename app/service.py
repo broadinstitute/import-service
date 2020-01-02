@@ -2,7 +2,11 @@ import flask
 import jsonschema
 import logging
 
-from app.common import user_auth, sam, db, model, exceptions, httputils
+from app.util import exceptions
+from app.http import httputils
+from app.db import db, model
+from app.external import sam
+from app.auth import user_auth
 
 NEW_IMPORT_SCHEMA = {
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -35,7 +39,8 @@ def handle(request: flask.Request) -> flask.Response:
     request_json = request.get_json(force=True, silent=True)
 
     # make sure the user is allowed to import to this workspace
-    workspace_uuid = user_auth.workspace_uuid_with_auth(urlparams["ws_ns"], urlparams["ws_name"], access_token, "write")
+    # remove the leading underscore from this variable name when it's time to use it
+    _workspace_uuid = user_auth.workspace_uuid_with_auth(urlparams["ws_ns"], urlparams["ws_name"], access_token, "write")
 
     try:  # now validate that the input is correctly shaped
         schema_validator.validate(request_json)

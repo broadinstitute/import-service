@@ -1,5 +1,5 @@
 import flask
-from app import routes
+from app.http import routes
 
 
 def create_app() -> flask.Flask:

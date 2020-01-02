@@ -7,15 +7,13 @@ For more info, see here: https://docs.pytest.org/en/latest/fixture.html
 
 from typing import Iterator
 
-import flask
 import flask.testing
 import pytest
 import sqlalchemy.engine
 import sqlalchemy.orm
 
-import main
 from app import create_app
-from app.common import db, model
+from app.db import db, model
 
 
 @pytest.fixture(scope="session")

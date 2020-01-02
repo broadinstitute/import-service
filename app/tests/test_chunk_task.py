@@ -1,4 +1,4 @@
-from .. import chunk_task
+from app import chunk_task
 
 
 def test_chunk_task():

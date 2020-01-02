@@ -7,8 +7,8 @@ import time
 import json
 from google.auth import transport as gtransport
 
-from app.common import service_auth
-from app.common import exceptions
+from app.auth import service_auth
+from app.util import exceptions
 from app.tests import testutils
 
 
@@ -65,18 +65,18 @@ def test_verify_pubsub_jwt(jwt_env):
 
 @pytest.mark.usefixtures(
     testutils.fxpatch(
-        "app.common.service_auth._get_isvc_token_from_google",
+        "app.auth.service_auth._get_isvc_token_from_google",
         return_value = {"accessToken": "ya29.google", "expireTime": "2014-10-02T15:01:23Z"}))
 def test_get_isvc_token():
     # test we call google if there's no cache (which there isn't by default)
     assert service_auth.get_isvc_token() == "ya29.google"
 
     # test we call google if the cache is expired
-    with mock.patch("app.common.service_auth._cached_isvc_token",
+    with mock.patch("app.auth.service_auth._cached_isvc_token",
                     service_auth.TokenAndExpiry(token="ya29.cached", expiry=datetime.datetime.utcnow() - datetime.timedelta(hours=1))):
         assert service_auth.get_isvc_token() == "ya29.google"
 
     # test we use the cache if it's still okay
-    with mock.patch("app.common.service_auth._cached_isvc_token",
+    with mock.patch("app.auth.service_auth._cached_isvc_token",
                     service_auth.TokenAndExpiry(token="ya29.cached", expiry=datetime.datetime.utcnow() + datetime.timedelta(hours=1))):
         assert service_auth.get_isvc_token() == "ya29.cached"

@@ -1,8 +1,8 @@
 import logging
 from typing import List
 
-from .common import db
-from .common.model import *
+from app.db import db
+from app.db.model import *
 
 schema = {
     "task_id": "uuid",
