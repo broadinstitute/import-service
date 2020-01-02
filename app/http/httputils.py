@@ -31,7 +31,8 @@ def httpify_excs(some_func: Callable[..., flask.Response]):
 
 
 def _part_to_regex(part: str) -> str:
-    """Turns <foo> into (?P<foo>[\w\-]+)"""
+    r"""Turns <foo> into (?P<foo>[\w\-]+)
+    (side note: this docstring has to be a raw string with the r-prefix to prevent a DeprecationWarning)"""
     if len(part) == 0:
         return part
     if part[0] == '<' and part[-1] == '>':

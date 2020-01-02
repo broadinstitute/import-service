@@ -80,3 +80,11 @@ def test_get_isvc_token():
     with mock.patch("app.auth.service_auth._cached_isvc_token",
                     service_auth.TokenAndExpiry(token="ya29.cached", expiry=datetime.datetime.utcnow() + datetime.timedelta(hours=1))):
         assert service_auth.get_isvc_token() == "ya29.cached"
+
+
+def test_google_expiretime_to_datetime():
+    # test that we truncate nanoseconds correctly
+    assert service_auth._google_expiretime_to_datetime("2014-10-02T15:01:23.045123456Z") == datetime.datetime(2014, 10, 2, 15, 1, 23)
+
+    # test that nothing breaks if there are no nanoseconds
+    assert service_auth._google_expiretime_to_datetime("2014-10-02T15:01:23Z") == datetime.datetime(2014, 10, 2, 15, 1, 23)
