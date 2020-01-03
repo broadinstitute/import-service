@@ -4,7 +4,17 @@ from datetime import datetime
 
 from sqlalchemy import Column, DateTime, String
 from sqlalchemy.ext.declarative import declarative_base
-from app.db.db import DBSession
+from app.db import DBSession
+
+
+Base = declarative_base()  # sqlalchemy magic base class.
+
+
+class ImportServiceTable(Base):
+    """sqlalchemy's declarative_base() function constructs a base class for declarative class definitions -- in this
+    case, our database tables. It creates the __table__ attribute on that class, but mypy can't see it.
+    This class exists to add a type hint to the __table__ variable so mypy knows about it."""
+    __table__: Table
 
 
 # Mypy gets confused about whether sqlalchemy enum columns are strings or enums, see here:
@@ -27,10 +37,7 @@ class ImportStatus(enum.Enum):
     Translating = enum.auto()
 
 
-Base = declarative_base()  # sqlalchemy magic base class.
-
-
-class Import(Base):
+class Import(ImportServiceTable):
     __tablename__ = 'imports'
 
     id = Column(String(36), primary_key=True)
@@ -58,7 +65,7 @@ class Import(Base):
 
     @classmethod
     def update_status_exclusively(cls, id: str, current_status: ImportStatus, new_status: ImportStatus, sess: DBSession) -> bool:
-        update = cls.update() \
+        update = Import.__table__.update() \
             .where(Import.id == id) \
             .where(Import.status == current_status) \
             .values(status=new_status)

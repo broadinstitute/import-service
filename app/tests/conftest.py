@@ -13,7 +13,7 @@ import sqlalchemy.engine
 import sqlalchemy.orm
 
 from app import create_app
-from app.db import db, model
+from app.db import db, model, DBSession
 
 
 @pytest.fixture(scope="session")
@@ -44,7 +44,7 @@ def _dbconn_internal() -> Iterator[sqlalchemy.engine.Connection]:
 
 
 @pytest.fixture(scope="function", autouse=True)
-def dbsession(_dbconn_internal: sqlalchemy.engine.Connection) -> Iterator[db.DBSession]:
+def dbsession(_dbconn_internal: sqlalchemy.engine.Connection) -> Iterator[DBSession]:
     """
     At the start of every test function, create a new session and put it in a transaction.
     This lets us roll back at the end of the test.
