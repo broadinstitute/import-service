@@ -10,6 +10,7 @@ env_variables:
     SAM_URL: "{env.sam_url}"
 
     IMPORT_SVC_SA_EMAIL: "{env.import_svc_sa_email}"
+    BATCH_UPSERT_BUCKET: "import-service-batchupsert-{env}"
 
     PUBSUB_PROJECT: "{env.project}"
     PUBSUB_TOPIC: "task_chunk_topic"

@@ -4,7 +4,7 @@ from typing import Dict, Callable
 
 from app import service, translate, status
 import app.auth.service_auth
-from app.http.httputils import httpify_excs
+from app.server.requestutils import httpify_excs
 
 routes = flask.Blueprint('import-service', __name__, '/')
 
