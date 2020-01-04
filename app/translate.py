@@ -1,15 +1,18 @@
 import flask
 import logging
 
+from app.auth import service_auth
+from app.auth.userinfo import UserInfo
 from app.db import db
 from app.db.model import *
 from app.util import http
-from app.auth.userinfo import UserInfo
 from app.util.exceptions import InvalidPathException
-
 from typing import Dict, Optional, IO
-from urllib.parse import urlparse
 
+from urllib.parse import urlparse
+import os
+
+from gcsfs.core import GCSFileSystem
 
 VALID_FILETYPES = ["pfb"]
 
@@ -27,25 +30,30 @@ def translate(msg: Dict[str, str]) -> flask.Response:
         # and some other GAE instance has picked it up and is happily processing it. happy translating, friendo!
         return flask.make_response("ok")
 
+    # pfb_file and dest_upsert below are both file-like objects which support streaming.
+    # Translate also supports streaming (I think -- untested!).
+    # TODO: translate from one to the other.
+    # TODO also: you refactored service_auth so tests are very broken.
+
     with http.http_as_filelike(import_details.import_url) as pfb_file:
-        pass
+        gcsfs = GCSFileSystem(os.environ.get("PUBSUB_PROJECT"), token=service_auth.get_isvc_credential())
 
-    # TODO:
-    # - determine destination (gs:// somewhere? a bucket we control?)
-    import_details.workspace_namespace
-    import_details.import_url
+        with gcsfs.open(f'{os.environ.get("BATCH_UPSERT_BUCKET")}/{import_details.id}.rawlsUpsert', 'w+') as dest_upsert:
 
-    # at some point in the future we'll be able to handle other filetypes.
-    # note that the filetype attribute has been validated on ingest, so we don't need to revalidate it here.
-    # for now, it's always pfb.
-    return pfb_to_rawls(import_details)
+            # at some point in the future we'll be able to handle other filetypes.
+            # note that the filetype attribute has been validated on ingest, so we don't need to revalidate it here.
+            # for now, it's always pfb.
+            try:
+                pfb_to_rawls(pfb_file, dest_upsert)
+            except Exception as e:
+                return flask.make_response("oh no")  # FIXME
+            return flask.make_response("oh yes")
 
 
-def pfb_to_rawls(import_details: Import) -> flask.Response:
-    # otherwise: actually do the translate.
-    # if there's some error, flip the status to Error and put the message in a new column.
-
-    return flask.make_response("ok")
+def pfb_to_rawls(source: IO, dest: IO) -> None:
+    # translate from source to dest.
+    # raise an exc if there's an error.
+    pass
 
 def validate_import_url(import_url: Optional[str], user_info: UserInfo) -> bool:
     """Inspects the URI from which the user wants to import data. Because our service will make an
