@@ -10,7 +10,7 @@ from app.db import DBSession
 Base = declarative_base()  # sqlalchemy magic base class.
 
 
-class ImportServiceTable(Base):
+class ImportServiceTable:
     """sqlalchemy's declarative_base() function constructs a base class for declarative class definitions -- in this
     case, our database tables. It creates the __table__ attribute on that class, but mypy can't see it.
     This class exists to add a type hint to the __table__ variable so mypy knows about it."""
@@ -37,7 +37,7 @@ class ImportStatus(enum.Enum):
     Translating = enum.auto()
 
 
-class Import(ImportServiceTable):
+class Import(Base, ImportServiceTable):
     __tablename__ = 'imports'
 
     id = Column(String(36), primary_key=True)

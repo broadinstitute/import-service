@@ -33,7 +33,6 @@ def translate(msg: Dict[str, str]) -> flask.Response:
     # pfb_file and dest_upsert below are both file-like objects which support streaming.
     # Translate also supports streaming (I think -- untested!).
     # TODO: translate from one to the other.
-    # TODO also: you refactored service_auth so tests are very broken.
 
     with http.http_as_filelike(import_details.import_url) as pfb_file:
         gcsfs = GCSFileSystem(os.environ.get("PUBSUB_PROJECT"), token=service_auth.get_isvc_credential())

@@ -38,6 +38,11 @@ def fake_verify_oauth2_token(token: str, request: gtransport.Request, audience: 
     return claim
 
 
+def fake_credentials(token: str, expire_delta: datetime.timedelta) -> service_auth.CachedCreds:
+    return service_auth.CachedCreds(access_token=token,
+                                    expire_str=(datetime.datetime.utcnow() + expire_delta).isoformat() + "Z")
+
+
 @pytest.fixture(scope="function")
 def jwt_env(monkeypatch, pubsub_fake_env):
     monkeypatch.setattr(service_auth.id_token, "verify_oauth2_token", fake_verify_oauth2_token)
@@ -70,19 +75,19 @@ def test_get_isvc_token():
     assert service_auth.get_isvc_token() == "ya29.google"
 
     # test we call google if the cache is expired
-    with mock.patch("app.auth.service_auth._cached_isvc_token",
-                    service_auth.TokenAndExpiry(token="ya29.cached", expiry=datetime.datetime.utcnow() - datetime.timedelta(hours=1))):
+    with mock.patch("app.auth.service_auth._cached_isvc_creds",
+                    fake_credentials("ya29.cached", datetime.timedelta(hours=-1))):
         assert service_auth.get_isvc_token() == "ya29.google"
 
     # test we use the cache if it's still okay
-    with mock.patch("app.auth.service_auth._cached_isvc_token",
-                    service_auth.TokenAndExpiry(token="ya29.cached", expiry=datetime.datetime.utcnow() + datetime.timedelta(hours=1))):
+    with mock.patch("app.auth.service_auth._cached_isvc_creds",
+                    fake_credentials("ya29.cached", datetime.timedelta(hours=1))):
         assert service_auth.get_isvc_token() == "ya29.cached"
 
 
 def test_google_expiretime_to_datetime():
     # test that we truncate nanoseconds correctly
-    assert service_auth._google_expiretime_to_datetime("2014-10-02T15:01:23.045123456Z") == datetime.datetime(2014, 10, 2, 15, 1, 23)
+    assert service_auth.CachedCreds._google_expiretime_to_datetime("2014-10-02T15:01:23.045123456Z") == datetime.datetime(2014, 10, 2, 15, 1, 23)
 
     # test that nothing breaks if there are no nanoseconds
-    assert service_auth._google_expiretime_to_datetime("2014-10-02T15:01:23Z") == datetime.datetime(2014, 10, 2, 15, 1, 23)
+    assert service_auth.CachedCreds._google_expiretime_to_datetime("2014-10-02T15:01:23Z") == datetime.datetime(2014, 10, 2, 15, 1, 23)
