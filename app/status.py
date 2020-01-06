@@ -7,7 +7,7 @@ from app.external import sam
 from app.auth import user_auth
 from sqlalchemy import and_
 
-def handle_one(request: flask.Request, ws_ns: string, ws_name: string, import_id: string) -> flask.Response:
+def handle_one(request: flask.Request, ws_ns: str, ws_name: str, import_id: str) -> flask.Response:
     access_token = user_auth.extract_auth_token(request)
     sam.validate_user(access_token)
 
@@ -25,7 +25,7 @@ def import_list_entry(imprt: model.Import):
     return {"id": imprt.id, "status": imprt.status.name}
 
 
-def handle_list(request: flask.Request, ws_ns: string, ws_name: string) -> flask.Response:
+def handle_list(request: flask.Request, ws_ns: str, ws_name: str) -> flask.Response:
     running_only = bool(request.args.get("running_only")) #todo this doesn't quite work
 
     access_token = user_auth.extract_auth_token(request)
