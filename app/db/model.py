@@ -4,10 +4,11 @@ from datetime import datetime
 
 from sqlalchemy import Column, DateTime, String
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy_repr import RepresentableBase
 from app.db import DBSession
 
 
-Base = declarative_base()  # sqlalchemy magic base class.
+Base = declarative_base(cls=RepresentableBase)  # sqlalchemy magic base class.
 
 
 class ImportServiceTable:
@@ -58,10 +59,6 @@ class Import(Base, ImportServiceTable):
         self.import_url = import_url
         self.submit_time = datetime.now()
         self.status = ImportStatus.Pending
-
-    def __repr__(self):
-        # todo: replace with https://github.com/manicmaniac/sqlalchemy-repr
-        return f"<Import({self.id}, {self.workspace_name}, {self.workspace_namespace}, {self.submitter}, {self.submit_time}, {self.status})>"
 
     @classmethod
     def update_status_exclusively(cls, id: str, current_status: ImportStatus, new_status: ImportStatus, sess: DBSession) -> bool:
