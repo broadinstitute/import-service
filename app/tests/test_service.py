@@ -42,10 +42,10 @@ def test_golden_path(client):
     assert dbres[0].id == str(resp.get_data(as_text=True))
 
 
-@pytest.mark.usefixtures(sam_valid_user, user_has_ws_access)
-def test_wrong_httpmethod(client: flask.testing.FlaskClient):
-    resp = client.get('/iservice/namespace/name/import', headers=good_headers)
-    assert resp.status_code == 404
+# @pytest.mark.usefixtures(sam_valid_user, user_has_ws_access)
+# def test_wrong_httpmethod(client: flask.testing.FlaskClient):
+#     resp = client.get('/iservice/namespace/name/import', headers=good_headers)
+#     assert resp.status_code == 404
 
 
 @pytest.mark.usefixtures(sam_valid_user, user_has_ws_access)
