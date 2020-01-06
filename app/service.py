@@ -18,7 +18,7 @@ NEW_IMPORT_SCHEMA = {
     },
     "filetype": {
       "type": "string",
-      "enum": translate.VALID_FILETYPES
+      "enum": list(translate.FILETYPE_TRANSLATORS.keys())
     }
   },
   "required": ["path", "filetype"]

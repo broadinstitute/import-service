@@ -5,16 +5,21 @@ from app.auth import service_auth
 from app.auth.userinfo import UserInfo
 from app.db import db
 from app.db.model import *
+from app.translators import PFBToRawls
+from typing import Dict, IO
 from app.util import http
+from app.util.json import StreamArray
 from app.util.exceptions import InvalidPathException
 from typing import Dict, Optional, IO
 
 from urllib.parse import urlparse
 import os
 
+from json import JSONEncoder
+
 from gcsfs.core import GCSFileSystem
 
-VALID_FILETYPES = ["pfb"]
+FILETYPE_TRANSLATORS = {"pfb": PFBToRawls}
 
 VALID_NETLOCS = ["gen3-pfb-export.s3.amazonaws.com", "storage.googleapis.com"]
 
@@ -50,9 +55,10 @@ def translate(msg: Dict[str, str]) -> flask.Response:
 
 
 def pfb_to_rawls(source: IO, dest: IO) -> None:
-    # translate from source to dest.
-    # raise an exc if there's an error.
-    pass
+    translator = PFBToRawls()
+    translated_gen = translator.translate(source)
+    for chunk in JSONEncoder(indent=0).iterencode(StreamArray(translated_gen)):
+        dest.write(chunk)
 
 def validate_import_url(import_url: Optional[str], user_info: UserInfo) -> bool:
     """Inspects the URI from which the user wants to import data. Because our service will make an
