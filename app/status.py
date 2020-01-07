@@ -12,7 +12,7 @@ def import_list_entry(imprt: model.Import):
     return {"id": imprt.id, "status": imprt.status.name} #type: ignore
 
 
-def handle_one(request: flask.Request, ws_ns: str, ws_name: str, import_id: str) -> flask.Response:
+def handle_get_import_status(request: flask.Request, ws_ns: str, ws_name: str, import_id: str) -> flask.Response:
     access_token = user_auth.extract_auth_token(request)
     sam.validate_user(access_token)
 
@@ -35,7 +35,7 @@ def select_clauses(running_only: bool, ws_ns: str, ws_name: str):
                     model.Import.workspace_name == ws_name)
 
 
-def handle_list(request: flask.Request, ws_ns: str, ws_name: str) -> flask.Response:
+def handle_list_import_status(request: flask.Request, ws_ns: str, ws_name: str) -> flask.Response:
     running_only = "running_only" in request.args
 
     access_token = user_auth.extract_auth_token(request)
