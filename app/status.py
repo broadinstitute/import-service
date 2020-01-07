@@ -1,11 +1,11 @@
 import flask
-import string
-
-from app.db.model import ImportStatus
-from app.db import db, model
-from app.external import sam
-from app.auth import user_auth
 from sqlalchemy import and_
+
+from app.auth import user_auth
+from app.db import db, model
+from app.db.model import ImportStatus
+from app.external import sam
+
 
 def handle_one(request: flask.Request, ws_ns: str, ws_name: str, import_id: str) -> flask.Response:
     access_token = user_auth.extract_auth_token(request)
@@ -26,7 +26,7 @@ def import_list_entry(imprt: model.Import):
 
 
 def handle_list(request: flask.Request, ws_ns: str, ws_name: str) -> flask.Response:
-    running_only = bool(request.args.get("running_only")) #todo this doesn't quite work
+    running_only = "running_only" in request.args
 
     access_token = user_auth.extract_auth_token(request)
     sam.validate_user(access_token)

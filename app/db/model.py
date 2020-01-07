@@ -4,6 +4,7 @@ from datetime import datetime
 
 from sqlalchemy import Column, DateTime, String
 from sqlalchemy.ext.declarative import declarative_base
+from typing import TYPE_CHECKING, Type
 
 
 # Mypy gets confused about whether sqlalchemy enum columns are strings or enums, see here:
@@ -24,6 +25,15 @@ else:
 class ImportStatus(enum.Enum):
     Pending = enum.auto()
     Running = enum.auto()
+
+
+if TYPE_CHECKING:
+    from sqlalchemy.sql.type_api import TypeEngine
+
+    class Enum(TypeEngine[ImportStatus]):
+        def __init__(self, enum: Type[ImportStatus]) -> None: ...
+else:
+    from sqlalchemy import Enum
 
 
 Base = declarative_base()  # sqlalchemy magic base class.

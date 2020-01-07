@@ -76,7 +76,7 @@ def test_get_all_running(client):
     assert len(dbres) == 1
     assert import_id == str(resp.get_data(as_text=True))
 
-    resp2 = client.get('/iservice/namespace/name/import?running_only=True', headers=good_headers)
+    resp2 = client.get('/iservice/namespace/name/import?running_only', headers=good_headers)
     assert resp2.status_code == 200
     assert resp2.get_data(as_text=True) == str([])
 
