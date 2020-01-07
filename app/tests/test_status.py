@@ -1,6 +1,7 @@
 import pytest
 
 from app.auth import userinfo
+from app.db import db
 from app.db.model import *
 from app.tests import testutils
 
@@ -21,7 +22,7 @@ pubsub_publish = testutils.fxpatch(
 
 
 @pytest.mark.usefixtures(sam_valid_user, user_has_ws_access, pubsub_publish, "pubsub_fake_env")
-def test_get_one(client):
+def test_get_import_status(client):
     import_id = client.post('/iservice/namespace/name/import', json=good_json, headers=good_headers).get_data(as_text=True)
 
     resp = client.get('/iservice/namespace/name/import/{}'.format(import_id), headers=good_headers)
@@ -30,7 +31,7 @@ def test_get_one(client):
 
 
 @pytest.mark.usefixtures(sam_valid_user, user_has_ws_access, pubsub_publish, "pubsub_fake_env")
-def test_get_all(client):
+def test_get_all_import_status(client):
     import_id = client.post('/iservice/namespace/name/import', json=good_json, headers=good_headers).get_data(as_text=True)
 
     resp = client.get('/iservice/namespace/name/import', headers=good_headers)
@@ -39,10 +40,25 @@ def test_get_all(client):
 
 
 @pytest.mark.usefixtures(sam_valid_user, user_has_ws_access, pubsub_publish, "pubsub_fake_env")
-def test_get_all_running(client):
+def test_get_all_running_when_none(client):
     client.post('/iservice/namespace/name/import', json=good_json, headers=good_headers)
 
     resp = client.get('/iservice/namespace/name/import?running_only', headers=good_headers)
     assert resp.status_code == 200
     assert resp.get_data(as_text=True) == str([])
 
+
+@pytest.mark.usefixtures(sam_valid_user, user_has_ws_access, pubsub_publish, "pubsub_fake_env")
+def test_get_all_running_with_one(client):
+    client.post('/iservice/namespace/name/import', json=good_json, headers=good_headers)
+    import_id = client.post('/iservice/namespace/name/import', json=good_json, headers=good_headers).get_data(as_text=True)
+
+    sess = db.get_session()
+    sess.query(Import).filter(Import.id == import_id).update({Import.status: ImportStatus.Running})
+    sess.commit()
+    dbres = sess.query(Import).all()
+    assert len(dbres) == 2
+
+    resp = client.get('/iservice/namespace/name/import?running_only', headers=good_headers)
+    assert resp.status_code == 200
+    assert resp.get_data(as_text=True) == str([{"id": import_id, "status": ImportStatus.Running.name}])
