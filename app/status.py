@@ -22,7 +22,8 @@ def handle_one(request: flask.Request, ws_ns: str, ws_name: str, import_id: str)
 
 
 def import_list_entry(imprt: model.Import):
-    return {"id": imprt.id, "status": imprt.status.name}
+    # see https://github.com/dropbox/sqlalchemy-stubs/issues/114 for why type is ignored
+    return {"id": imprt.id, "status": imprt.status.name} #type: ignore
 
 
 def handle_list(request: flask.Request, ws_ns: str, ws_name: str) -> flask.Response:

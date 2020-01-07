@@ -2,9 +2,8 @@ import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, String
+from sqlalchemy import Column, DateTime, String, Enum
 from sqlalchemy.ext.declarative import declarative_base
-from typing import TYPE_CHECKING, Type
 
 
 # Mypy gets confused about whether sqlalchemy enum columns are strings or enums, see here:
@@ -25,15 +24,6 @@ else:
 class ImportStatus(enum.Enum):
     Pending = enum.auto()
     Running = enum.auto()
-
-
-if TYPE_CHECKING:
-    from sqlalchemy.sql.type_api import TypeEngine
-
-    class Enum(TypeEngine[ImportStatus]):
-        def __init__(self, enum: Type[ImportStatus]) -> None: ...
-else:
-    from sqlalchemy import Enum
 
 
 Base = declarative_base()  # sqlalchemy magic base class.
@@ -59,7 +49,7 @@ class Import(Base):
         self.submitter = submitter
         self.import_url = import_url
         self.submit_time = datetime.now()
-        self.status = ImportStatus.Pending
+        self.status = ImportStatus.Pending.name
 
     def __repr__(self):
         # todo: replace with https://github.com/manicmaniac/sqlalchemy-repr
