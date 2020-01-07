@@ -35,28 +35,28 @@ def translate(msg: Dict[str, str]) -> flask.Response:
         # and some other GAE instance has picked it up and is happily processing it. happy translating, friendo!
         return flask.make_response("ok")
 
-    # pfb_file and dest_upsert below are both file-like objects which support streaming.
-    # Translate also supports streaming (I think -- untested!).
-    # TODO: translate from one to the other.
-
     with http.http_as_filelike(import_details.import_url) as pfb_file:
-        gcsfs = GCSFileSystem(os.environ.get("PUBSUB_PROJECT"), token=service_auth.get_isvc_credential())
 
+        gcsfs = GCSFileSystem(os.environ.get("PUBSUB_PROJECT"), token=service_auth.get_isvc_credential())
         with gcsfs.open(f'{os.environ.get("BATCH_UPSERT_BUCKET")}/{import_details.id}.rawlsUpsert', 'w+') as dest_upsert:
 
-            # at some point in the future we'll be able to handle other filetypes.
-            # note that the filetype attribute has been validated on ingest, so we don't need to revalidate it here.
-            # for now, it's always pfb.
             try:
-                pfb_to_rawls(pfb_file, dest_upsert)
+                _stream_translate(pfb_file, dest_upsert, import_details.filetype)
             except Exception as e:
-                return flask.make_response("oh no")  # FIXME
+                with db.session_ctx() as sess:
+                    sess.refresh(import_details)
+                    import_details.write_error("Translation failed. EID needs to go here")
+                    # FIXME
+                    # is there a better way to do this? we want to return some HTTP code to the pubsub recv endpoint
+                    # but that might require a new version of httpify_excs that handles errors differently.
+                return flask.make_response("oh no")
             return flask.make_response("oh yes")
 
 
-def pfb_to_rawls(source: IO, dest: IO) -> None:
-    translator = PFBToRawls()
+def _stream_translate(source: IO, dest: IO, filetype: str) -> None:
+    translator = FILETYPE_TRANSLATORS[filetype]()
     translated_gen = translator.translate(source)
+
     for chunk in JSONEncoder(indent=0).iterencode(StreamArray(translated_gen)):
         dest.write(chunk)
 

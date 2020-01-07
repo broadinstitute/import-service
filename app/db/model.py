@@ -7,7 +7,6 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy_repr import RepresentableBase
 from app.db import DBSession
 
-
 Base = declarative_base(cls=RepresentableBase)  # sqlalchemy magic base class.
 
 
@@ -36,6 +35,7 @@ else:
 class ImportStatus(enum.Enum):
     Pending = enum.auto()
     Translating = enum.auto()
+    Error = enum.auto()
 
 
 class Import(Base, ImportServiceTable):
@@ -49,8 +49,10 @@ class Import(Base, ImportServiceTable):
     import_url = Column(String(2048), nullable=False)  # max url length: https://stackoverflow.com/q/417142/2941784
     submit_time = Column(DateTime, nullable=False)
     status = Column(Enum(ImportStatus), nullable=False)
+    filetype = Column(String(10), nullable=False)
+    error_message = Column(String(2048), nullable=True)
 
-    def __init__(self, workspace_name: str, workspace_ns: str, workspace_uuid: str, submitter: str, import_url: str):
+    def __init__(self, workspace_name: str, workspace_ns: str, workspace_uuid: str, submitter: str, import_url: str, filetype: str):
         self.id = str(uuid.uuid4())
         self.workspace_name = workspace_name
         self.workspace_namespace = workspace_ns
@@ -59,6 +61,8 @@ class Import(Base, ImportServiceTable):
         self.import_url = import_url
         self.submit_time = datetime.now()
         self.status = ImportStatus.Pending
+        self.filetype = filetype
+        self.error_message = None
 
     @classmethod
     def update_status_exclusively(cls, id: str, current_status: ImportStatus, new_status: ImportStatus, sess: DBSession) -> bool:
@@ -68,3 +72,9 @@ class Import(Base, ImportServiceTable):
             .values(status=new_status)
         num_affected_rows = sess.execute(update).rowcount
         return num_affected_rows > 0
+
+    def write_error(self, msg: str) -> None:
+        self.error_message = msg
+        self.status = ImportStatus.Error
+
+

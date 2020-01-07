@@ -58,7 +58,8 @@ def handle(request: flask.Request) -> flask.Response:
         workspace_ns=urlparams["ws_ns"],
         workspace_uuid=workspace_uuid,
         submitter=user_info.user_email,
-        import_url=import_url)
+        import_url=import_url,
+        filetype=request_json["filetype"])
 
     with db.session_ctx() as sess:
         sess.add(new_import)
