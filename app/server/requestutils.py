@@ -7,21 +7,22 @@ from typing import Callable
 
 import flask
 
+from app import db
 from app.util.exceptions import *
 
 
 def httpify_excs(some_func: Callable[..., flask.Response]):
-    """Catches exceptions and turns them into an appropriate HTTP status."""
+    """Exception handler for "real" (i.e. non-pubsub) endpoints. Turns exceptions into an appropriate HTTP status."""
     @wraps(some_func)
     def catch_excs(*args, **kwargs) -> flask.Response:
         try:
             return some_func(*args, **kwargs)
-        except ISvcException as hxc:
+        except ISvcException as ise:
             # If the exception holds any audit logs, log them
-            for logmsg in hxc.audit_logs:
+            for logmsg in ise.audit_logs:
                 logging.error(logmsg)
             # Some kind of exception we want to propagate up to the user.
-            return flask.make_response(hxc.message, hxc.http_status)
+            return flask.make_response(ise.message, ise.http_status)
         except Exception:
             # Anything else is a definite programmer error.
             # Return a 500 and a UUID which developers can look up in the log.
@@ -31,6 +32,45 @@ def httpify_excs(some_func: Callable[..., flask.Response]):
             return flask.make_response(f"Internal Server Error\nerror id: {eid}", 500)
 
     return catch_excs
+
+
+def pubsubify_excs(some_func: Callable[..., flask.Response]):
+    """Exception handler for pubsub endpoints. Turns exceptions into pubsub responses, and also errors in the db.
+    Pubsub interprets the following HTTP status codes as a successful message ack: [102, 200, 201, 202, 204].
+    Anything else will make pubsub retry the message; in the majority of cases, this is NOT what we want.
+    https://cloud.google.com/pubsub/docs/push#receiving_push_messages
+    """
+    @wraps(some_func)
+    def catch_excs(*args, **kwargs) -> flask.Response:
+        try:
+            return some_func(*args, **kwargs)
+        except ISvcException as ise:
+
+            # mark the imports as errored with the associated message.
+            with db.session_ctx() as sess:
+                for i in ise.imports:
+                    i.write_error(ise.message)
+
+            # TODO test the above code! not sure if being in a session + raising an exc will make this new sess an inner-tx that gets rolled back
+
+            # Most exceptions just want to mark the import as error'd, but not retry the message delivery.
+            return flask.make_response(ise.message, 500 if ise.retry_pubsub else 200)
+
+        except Exception:
+            # Anything else is a definite programmer error.
+            # Without doing something heinous like intercepting all sqlalchemy queries to keep tab on loaded imports,
+            # we can't flip them to errored.
+            # It is thus mightily imperative that application code traps exceptions and converts them to
+            # IServiceExceptions when they are generated.
+            # The best thing we can do is add the error to the log and hope someone notices.
+            # NOTE: This will log callstack information and potentially user values.
+            eid = uuid.uuid4()
+            logging.error(f"eid {eid}:\n{traceback.format_exc()}")
+            return flask.make_response(f"Internal Server Error\nerror id: {eid}", 200)  # don't retry mystery errors
+
+    return catch_excs
+
+    pass
 
 
 def _part_to_regex(part: str) -> str:

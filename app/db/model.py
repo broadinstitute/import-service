@@ -77,5 +77,3 @@ class Import(Base, ImportServiceTable):
     def write_error(self, msg: str) -> None:
         self.error_message = msg
         self.status = ImportStatus.Error
-
-

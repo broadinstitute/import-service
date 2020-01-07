@@ -1,13 +1,17 @@
-from typing import List, Optional
+from typing import Optional, List
+from app.db.model import Import
 from app.auth.userinfo import UserInfo
 
 class ISvcException(Exception):
-    def __init__(self, message: str, http_status: int = 500, audit_logs: Optional[List[str]] = None):
+    def __init__(self, message: str, http_status: int = 500, audit_logs: Optional[List[str]] = None, , imports: Optional[List[Import]] = None, retry_pubsub: bool = False):
         if audit_logs is None:
             audit_logs = []
         self.message = message
         self.http_status = http_status
         self.audit_logs = audit_logs
+        self.retry_pubsub = retry_pubsub
+        self.imports = imports if imports else []
+
 
 class BadJsonException(ISvcException):
     def __init__(self, message):
