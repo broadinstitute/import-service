@@ -39,12 +39,13 @@ def test_get_one(client):
     # response contains the job ID, check it's actually in the database
     sess = db.get_session()
     dbres = sess.query(Import).filter(Import.id == resp.get_data(as_text=True)).all()
+    import_id = dbres[0].id
     assert len(dbres) == 1
     assert dbres[0].id == str(resp.get_data(as_text=True))
 
     resp2 = client.get('/iservice/namespace/name/import/{}'.format(resp.get_data(as_text=True)), headers=good_headers)
     assert resp2.status_code == 200
-    assert resp2.get_data(as_text=True) == ImportStatus.Pending.name
+    assert resp2.get_data(as_text=True) == str({"id": import_id, "status": ImportStatus.Pending.name})
 
 
 @pytest.mark.usefixtures(sam_valid_user, user_has_ws_access, pubsub_publish, "pubsub_fake_env")
