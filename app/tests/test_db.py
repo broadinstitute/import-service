@@ -6,7 +6,8 @@ def test_db_add():
                               workspace_ns="wsNs",
                               workspace_uuid="ws-uuid",
                               submitter="hussein@coolguy.email",
-                              import_url="gs://import/me.pfb")
+                              import_url="gs://import/me.pfb",
+                              filetype="pfb")
 
     dbsession = db.get_session()
     dbsession.add(new_import)
@@ -39,7 +40,7 @@ def test_db_session_ctx_close():
     This is important because application code WILL use the session_ctx,
     and tests will again close the session at function teardown."""
     with db.session_ctx() as session:
-        new_import = model.Import("aa", "aa", "uuid", "aa@aa.aa", "gs://aa/aa")
+        new_import = model.Import("aa", "aa", "uuid", "aa@aa.aa", "gs://aa/aa", "pfb")
         session.add(new_import)
         session.commit()
         session.close()
