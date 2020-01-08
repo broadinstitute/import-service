@@ -1,3 +1,4 @@
+import json
 import pytest
 
 from app.auth import userinfo
@@ -27,7 +28,15 @@ def test_get_import_status(client):
 
     resp = client.get('/iservice/namespace/name/import/{}'.format(import_id), headers=good_headers)
     assert resp.status_code == 200
-    assert resp.get_data(as_text=True) == str({"id": import_id, "status": ImportStatus.Pending.name})
+    assert resp.get_data(as_text=True) == json.dumps({'id': import_id, 'status': ImportStatus.Pending.name})
+
+
+@pytest.mark.usefixtures(sam_valid_user, user_has_ws_access, pubsub_publish, "pubsub_fake_env")
+def test_get_import_status_404(client):
+    fake_id = "fake_id"
+    resp = client.get('/iservice/namespace/name/import/{}'.format(fake_id), headers=good_headers)
+    assert resp.status_code == 404
+    assert fake_id in resp.get_data(as_text=True)
 
 
 @pytest.mark.usefixtures(sam_valid_user, user_has_ws_access, pubsub_publish, "pubsub_fake_env")
@@ -36,7 +45,7 @@ def test_get_all_import_status(client):
 
     resp = client.get('/iservice/namespace/name/import', headers=good_headers)
     assert resp.status_code == 200
-    assert resp.get_data(as_text=True) == str([{"id": import_id, "status": ImportStatus.Pending.name}])
+    assert resp.get_data(as_text=True) == json.dumps([{"id": import_id, "status": ImportStatus.Pending.name}])
 
 
 @pytest.mark.usefixtures(sam_valid_user, user_has_ws_access, pubsub_publish, "pubsub_fake_env")
@@ -45,7 +54,7 @@ def test_get_all_running_when_none(client):
 
     resp = client.get('/iservice/namespace/name/import?running_only', headers=good_headers)
     assert resp.status_code == 200
-    assert resp.get_data(as_text=True) == str([])
+    assert resp.get_data(as_text=True) == json.dumps([])
 
 
 @pytest.mark.usefixtures(sam_valid_user, user_has_ws_access, pubsub_publish, "pubsub_fake_env")
@@ -61,4 +70,4 @@ def test_get_all_running_with_one(client):
 
     resp = client.get('/iservice/namespace/name/import?running_only', headers=good_headers)
     assert resp.status_code == 200
-    assert resp.get_data(as_text=True) == str([{"id": import_id, "status": ImportStatus.Running.name}])
+    assert resp.get_data(as_text=True) == json.dumps([{"id": import_id, "status": ImportStatus.Running.name}])
