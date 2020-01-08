@@ -49,12 +49,11 @@ def pubsubify_excs(some_func: Callable[..., flask.Response]):
             # mark the imports as errored with the associated message.
             with db.session_ctx() as sess:
                 for i in ise.imports:
-                    i.write_error(ise.message)
-
-            # TODO test the above code! not sure if being in a session + raising an exc will make this new sess an inner-tx that gets rolled back
+                    newi: Import = Import.reacquire(i.id, sess)
+                    newi.write_error(ise.message)
 
             # Most exceptions just want to mark the import as error'd, but not retry the message delivery.
-            return flask.make_response(ise.message, 500 if ise.retry_pubsub else 200)
+            return flask.make_response(ise.message, 500 if ise.retry_pubsub else 202)
 
         except Exception:
             # Anything else is a definite programmer error.
@@ -66,7 +65,7 @@ def pubsubify_excs(some_func: Callable[..., flask.Response]):
             # NOTE: This will log callstack information and potentially user values.
             eid = uuid.uuid4()
             logging.error(f"eid {eid}:\n{traceback.format_exc()}")
-            return flask.make_response(f"Internal Server Error\nerror id: {eid}", 200)  # don't retry mystery errors
+            return flask.make_response(f"Internal Server Error\nerror id: {eid}", 202)  # don't retry mystery errors
 
     return catch_excs
 

@@ -39,6 +39,9 @@ class ImportStatus(enum.Enum):
     Error = enum.auto()
 
 
+ImportT = TypeVar('ImportT', bound='Import')
+
+
 class Import(Base, ImportServiceTable):
     __tablename__ = 'imports'
 
@@ -64,6 +67,11 @@ class Import(Base, ImportServiceTable):
         self.status = ImportStatus.Pending
         self.filetype = filetype
         self.error_message = None
+
+    @classmethod
+    def reacquire(cls, id: str, sess: DBSession) -> ImportT:
+        i: ImportT = sess.query(Import).filter(Import.id == id).one()
+        return i
 
     @classmethod
     def update_status_exclusively(cls, id: str, current_status: ImportStatus, new_status: ImportStatus, sess: DBSession) -> bool:

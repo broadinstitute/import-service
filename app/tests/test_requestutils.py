@@ -1,7 +1,13 @@
 import pytest
 
+from app.db import model, session_ctx
 from app.util import exceptions
-from app.server.requestutils import _part_to_regex, _pattern_to_regex, expect_urlshape
+from app.server.routes import routes
+from app.server.requestutils import *
+from app.server.requestutils import _part_to_regex, _pattern_to_regex
+
+import flask
+import flask.testing
 
 
 def test_part_to_regex():
@@ -24,3 +30,24 @@ def test_expect_urlshape():
 
     with pytest.raises(exceptions.NotFoundException):
         expect_urlshape("/foo/<boo>/zoo", "foo/woo/")
+
+
+def test_pubsubify_excs(client: flask.testing.FlaskClient):
+    # pre-populate an import that will get error'd
+    with session_ctx() as sess:
+        new_import = model.Import("aa", "aa", "uuid", "aa@aa.aa", "gs://aa/aa", "pfb")
+        sess.add(new_import)
+
+    @pubsubify_excs
+    def ise_exc() -> flask.Response:
+        raise exceptions.ISvcException("a bad happened", imports=[new_import])
+
+    client.application.add_url_rule('/test_pubsubify_excs', view_func=ise_exc, methods=["GET"])
+
+    resp = client.get('/test_pubsubify_excs')
+    assert resp.status_code == 202
+
+    with session_ctx() as sess:
+        recovered_import: Import = Import.reacquire(new_import.id, sess)
+        assert recovered_import.status == model.ImportStatus.Error
+        assert recovered_import.error_message == "a bad happened"

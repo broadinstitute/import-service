@@ -53,7 +53,7 @@ def dbsession(_dbconn_internal: sqlalchemy.engine.Connection) -> Iterator[DBSess
     So until we come up with a better idea, we monkey patch the give me a database session"
     function called by application code. YIKES!!!!"""
     txn = _dbconn_internal.begin()
-    sess = Session(bind=_dbconn_internal)
+    sess = Session(bind=_dbconn_internal, expire_on_commit=False)
     db.get_session = lambda: sess
     yield sess
     sess.close()

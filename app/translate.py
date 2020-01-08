@@ -7,13 +7,14 @@ from app.db import db
 from app.db.model import *
 from app.translators import PFBToRawls
 from typing import Dict, IO
-from app.util import http
+from app.util import http, exceptions
 from app.util.json import StreamArray
 from app.util.exceptions import InvalidPathException
 from typing import Dict, Optional, IO
 
 from urllib.parse import urlparse
 import os
+import traceback
 
 from json import JSONEncoder
 
@@ -28,7 +29,7 @@ def translate(msg: Dict[str, str]) -> flask.Response:
     with db.session_ctx() as sess:
         # flip the status to Translating, and then get the row
         update_successful = Import.update_status_exclusively(import_id, ImportStatus.Pending, ImportStatus.Translating, sess)
-        import_details: Import = sess.query(Import).filter(Import.id == import_id).first()
+        import_details: Import = Import.reacquire(import_id, sess)
 
     if not update_successful:
         # this import wasn't in pending. most likely this means that the pubsub message we got was delivered twice,
@@ -43,19 +44,20 @@ def translate(msg: Dict[str, str]) -> flask.Response:
             try:
                 _stream_translate(pfb_file, dest_upsert, import_details.filetype)
             except Exception as e:
-                with db.session_ctx() as sess:
-                    sess.refresh(import_details)
-                    import_details.write_error("Translation failed. EID needs to go here")
-                    # FIXME
-                    # is there a better way to do this? we want to return some HTTP code to the pubsub recv endpoint
-                    # but that might require a new version of httpify_excs that handles errors differently.
-                return flask.make_response("oh no")
-            return flask.make_response("oh yes")
+                # Something went wrong with the translate. Raising an exception will fail the import.
+                # Over time we should be able to narrow down the kinds of exception we might get, and perhaps
+                # give users clearer messaging instead of logging them all.
+                eid = uuid.uuid4()
+                logging.warn(f"eid {eid}: \n{traceback.format_exc()}")
+                raise exceptions.ISvcException(f"Error translating file: {import_details.import_url}\n" + \
+                                               f"{e.__class__.__name__}\n" + \
+                                               f"eid: {str(eid)}")
+            return flask.make_response("ok")
 
 
 def _stream_translate(source: IO, dest: IO, filetype: str) -> None:
     translator = FILETYPE_TRANSLATORS[filetype]()
-    translated_gen = translator.translate(source)
+    translated_gen = translator.translate(source)  # doesn't actually translate, just returns a generator
 
     for chunk in JSONEncoder(indent=0).iterencode(StreamArray(translated_gen)):
         dest.write(chunk)
