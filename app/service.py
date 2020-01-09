@@ -31,7 +31,7 @@ schema_validator = jsonschema.Draft7Validator(NEW_IMPORT_SCHEMA)
 def handle(request: flask.Request) -> flask.Response:
     request_path = request.path
 
-    urlparams = httputils.expect_urlshape('/iservice/<ws_ns>/<ws_name>/import', request_path)
+    urlparams = httputils.expect_urlshape('/iservice/<ws_ns>/<ws_name>/imports', request_path)
 
     access_token = user_auth.extract_auth_token(request)
     user_info = sam.validate_user(access_token)
