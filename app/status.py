@@ -8,6 +8,7 @@ from app.auth import user_auth
 from app.db import db, model
 from app.db.model import ImportStatus
 from app.external import sam
+from app.util import exceptions
 
 
 def handle_get_import_status(request: flask.Request, ws_ns: str, ws_name: str, import_id: str) -> flask.Response:
@@ -25,7 +26,7 @@ def handle_get_import_status(request: flask.Request, ws_ns: str, ws_name: str, i
                 filter(model.Import.id == import_id).one()
             return flask.make_response((json.dumps({"id": imprt.id, "status": imprt.status.name}), 200))
     except NoResultFound:
-        return flask.make_response(f"Import {import_id} not found", 404)
+        raise exceptions.NotFoundException(message=f"Import {import_id} not found")
 
 
 def handle_list_import_status(request: flask.Request, ws_ns: str, ws_name: str) -> flask.Response:

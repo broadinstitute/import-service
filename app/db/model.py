@@ -2,7 +2,7 @@ import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, String, Enum
+from sqlalchemy import Column, DateTime, String
 from sqlalchemy.ext.declarative import declarative_base
 
 
@@ -49,7 +49,7 @@ class Import(Base):
         self.submitter = submitter
         self.import_url = import_url
         self.submit_time = datetime.now()
-        self.status = ImportStatus.Pending.name
+        self.status = ImportStatus.Pending
 
     def __repr__(self):
         # todo: replace with https://github.com/manicmaniac/sqlalchemy-repr
