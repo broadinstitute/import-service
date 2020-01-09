@@ -25,7 +25,7 @@ def handle_get_import_status(request: flask.Request, ws_ns: str, ws_name: str, i
                 filter(model.Import.id == import_id).one()
             return flask.make_response((json.dumps({"id": imprt.id, "status": imprt.status.name}), 200))
     except NoResultFound:
-        return flask.make_response(f"Import {import_id} either does not exist or you do not have access to view it", 404)
+        return flask.make_response(f"Import {import_id} not found", 404)
 
 
 def handle_list_import_status(request: flask.Request, ws_ns: str, ws_name: str) -> flask.Response:
