@@ -48,12 +48,21 @@ def handle(request: flask.Request) -> flask.Response:
         logging.info("Got malformed JSON.")
         raise exceptions.BadJsonException(ve.message)
 
+    inputpath = request_json["path"]
+
+    try:  # and validate the input's path
+        translate.validate_path(inputpath)
+    except Exception as e:
+        # catch any/all exceptions here for audit logging
+        logging.error(f"User {user_info.subject_id} {user_info.user_email} attempted to import from path {inputpath}")
+        raise e
+
     new_import = model.Import(
         workspace_name=urlparams["ws_name"],
         workspace_ns=urlparams["ws_ns"],
         workspace_uuid=workspace_uuid,
         submitter=user_info.user_email,
-        import_url=request_json["path"])
+        import_url=inputpath)
 
     with db.session_ctx() as sess:
         sess.add(new_import)
