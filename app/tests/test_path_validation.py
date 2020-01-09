@@ -79,3 +79,16 @@ def test_legal_netloc_in_path(client, netloc):
     payload = {"path": f"https://evil.bad/hide/{netloc}/in/path", "filetype": "pfb"}
     resp = client.post('/iservice/namespace/name/import', json=payload, headers=good_headers)
     assert resp.status_code == 400
+
+@pytest.mark.usefixtures(sam_valid_user, user_has_ws_access, pubsub_publish, "pubsub_fake_env")
+def test_audit_logging(client: flask.testing.FlaskClient, caplog):
+    payload = {"path": "https://illegal.domains/should/be/logged", "filetype": "pfb"}
+    resp = client.post('/iservice/namespace/name/import', json=payload, headers=good_headers)
+    assert resp.status_code == 400
+
+    basiclog = filter(lambda rec: rec.message == "Unrecognized netloc for PFB import: illegal.domains from https://illegal.domains/should/be/logged", caplog.records)
+    assert len(list(basiclog)) == 1
+
+    # if the sam_valid_user fixture changes, this assertion will also need to change
+    auditlog = filter(lambda rec: rec.message == "User 123456 hello@bees.com attempted to import from path https://illegal.domains/should/be/logged", caplog.records)
+    assert len(list(auditlog)) == 1
