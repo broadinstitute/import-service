@@ -24,9 +24,9 @@ pubsub_publish = testutils.fxpatch(
 
 @pytest.mark.usefixtures(sam_valid_user, user_has_ws_access, pubsub_publish, "pubsub_fake_env")
 def test_get_import_status(client):
-    import_id = client.post('/iservice/namespace/name/import', json=good_json, headers=good_headers).get_data(as_text=True)
+    import_id = client.post('/iservice/namespace/name/imports', json=good_json, headers=good_headers).get_data(as_text=True)
 
-    resp = client.get('/iservice/namespace/name/import/{}'.format(import_id), headers=good_headers)
+    resp = client.get('/iservice/namespace/name/imports/{}'.format(import_id), headers=good_headers)
     assert resp.status_code == 200
     assert resp.get_data(as_text=True) == json.dumps({'id': import_id, 'status': ImportStatus.Pending.name})
 
@@ -34,33 +34,33 @@ def test_get_import_status(client):
 @pytest.mark.usefixtures(sam_valid_user, user_has_ws_access, pubsub_publish, "pubsub_fake_env")
 def test_get_import_status_404(client):
     fake_id = "fake_id"
-    resp = client.get('/iservice/namespace/name/import/{}'.format(fake_id), headers=good_headers)
+    resp = client.get('/iservice/namespace/name/imports/{}'.format(fake_id), headers=good_headers)
     assert resp.status_code == 404
     assert fake_id in resp.get_data(as_text=True)
 
 
 @pytest.mark.usefixtures(sam_valid_user, user_has_ws_access, pubsub_publish, "pubsub_fake_env")
 def test_get_all_import_status(client):
-    import_id = client.post('/iservice/namespace/name/import', json=good_json, headers=good_headers).get_data(as_text=True)
+    import_id = client.post('/iservice/namespace/name/imports', json=good_json, headers=good_headers).get_data(as_text=True)
 
-    resp = client.get('/iservice/namespace/name/import', headers=good_headers)
+    resp = client.get('/iservice/namespace/name/imports', headers=good_headers)
     assert resp.status_code == 200
     assert resp.get_data(as_text=True) == json.dumps([{"id": import_id, "status": ImportStatus.Pending.name}])
 
 
 @pytest.mark.usefixtures(sam_valid_user, user_has_ws_access, pubsub_publish, "pubsub_fake_env")
 def test_get_all_running_when_none(client):
-    client.post('/iservice/namespace/name/import', json=good_json, headers=good_headers)
+    client.post('/iservice/namespace/name/imports', json=good_json, headers=good_headers)
 
-    resp = client.get('/iservice/namespace/name/import?running_only', headers=good_headers)
+    resp = client.get('/iservice/namespace/name/imports?running_only', headers=good_headers)
     assert resp.status_code == 200
     assert resp.get_data(as_text=True) == json.dumps([])
 
 
 @pytest.mark.usefixtures(sam_valid_user, user_has_ws_access, pubsub_publish, "pubsub_fake_env")
 def test_get_all_running_with_one(client):
-    client.post('/iservice/namespace/name/import', json=good_json, headers=good_headers)
-    import_id = client.post('/iservice/namespace/name/import', json=good_json, headers=good_headers).get_data(as_text=True)
+    client.post('/iservice/namespace/name/imports', json=good_json, headers=good_headers)
+    import_id = client.post('/iservice/namespace/name/imports', json=good_json, headers=good_headers).get_data(as_text=True)
 
     sess = db.get_session()
     sess.query(Import).filter(Import.id == import_id).update({Import.status: ImportStatus.Running})
@@ -68,6 +68,6 @@ def test_get_all_running_with_one(client):
     dbres = sess.query(Import).all()
     assert len(dbres) == 2
 
-    resp = client.get('/iservice/namespace/name/import?running_only', headers=good_headers)
+    resp = client.get('/iservice/namespace/name/imports?running_only', headers=good_headers)
     assert resp.status_code == 200
     assert resp.get_data(as_text=True) == json.dumps([{"id": import_id, "status": ImportStatus.Running.name}])
