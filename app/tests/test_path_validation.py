@@ -1,5 +1,4 @@
 import flask.testing
-import jsonschema
 import pytest
 
 from app.tests import testutils
@@ -8,11 +7,6 @@ from app.auth import userinfo
 from app.db.model import *
 
 
-def test_schema_valid():
-    jsonschema.Draft7Validator.check_schema(service.NEW_IMPORT_SCHEMA)
-
-
-good_json = {"path": "foo", "filetype": "pfb"}
 good_headers = {"Authorization": "Bearer ya29.blahblah"}
 
 sam_valid_user = testutils.fxpatch(
