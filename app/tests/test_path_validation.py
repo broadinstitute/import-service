@@ -2,7 +2,7 @@ import flask.testing
 import pytest
 
 from app.tests import testutils
-from app import service, translate
+from app import translate
 from app.auth import userinfo
 from app.db.model import *
 
