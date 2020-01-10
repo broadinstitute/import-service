@@ -17,8 +17,6 @@ def translate(attributes: Dict[str, str]) -> flask.Response:
 
 
 def pfb_to_rawls(attributes: Dict[str, str]) -> flask.Response:
-    # validate the path from attributes
-    validate_path(attributes.get("path"))
     return flask.make_response("ok")
 
 def validate_path(path: Optional[str]) -> bool:
