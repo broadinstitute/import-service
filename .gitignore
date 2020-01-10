@@ -106,6 +106,9 @@ venv.bak/
 # IJ
 .idea/
 
+# VSCode
+.vscode/
+
 # our things
 secrets.yaml
 app.yaml
