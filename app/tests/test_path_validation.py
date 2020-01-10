@@ -4,8 +4,6 @@ import pytest
 
 from app.tests import testutils
 from app import service, translate
-from app.util import exceptions
-from app.db import db
 from app.auth import userinfo
 from app.db.model import *
 
