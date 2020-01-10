@@ -87,5 +87,5 @@ def test_audit_logging(client: flask.testing.FlaskClient, caplog):
     assert resp.status_code == 400
 
     # if the sam_valid_user fixture changes, this assertion will also need to change
-    auditlog = filter(lambda rec: rec.message == "UserX 123456 hello@bees.com attempted to import from path https://illegal.domains/should/be/logged", caplog.records)
+    auditlog = filter(lambda rec: rec.message == "User 123456 hello@bees.com attempted to import from path https://illegal.domains/should/be/logged", caplog.records)
     assert list(auditlog), "Expected audit log message to exist if user specified illegal domain; did not find such message in log."
