@@ -17,6 +17,9 @@ def httpify_excs(some_func: Callable[..., flask.Response]):
         try:
             return some_func(*args, **kwargs)
         except ISvcException as hxc:
+            # If the exception holds any audit logs, log them
+            for logmsg in hxc.audit_logs:
+                logging.error(logmsg)
             # Some kind of exception we want to propagate up to the user.
             return flask.make_response(hxc.message, hxc.http_status)
         except Exception:

@@ -3,7 +3,7 @@ import jsonschema
 import pytest
 
 from app.tests import testutils
-from app import service
+from app import service, translate
 from app.util import exceptions
 from app.db import db
 from app.auth import userinfo
@@ -14,7 +14,7 @@ def test_schema_valid():
     jsonschema.Draft7Validator.check_schema(service.NEW_IMPORT_SCHEMA)
 
 
-good_json = {"path": "foo", "filetype": "pfb"}
+good_json = {"path": f"https://{translate.VALID_NETLOCS[0]}/some/path", "filetype": "pfb"}
 good_headers = {"Authorization": "Bearer ya29.blahblah"}
 
 sam_valid_user = testutils.fxpatch(
