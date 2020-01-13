@@ -15,7 +15,7 @@ class StreamyNoOpTranslator(Translator):
 class BadNoOpTranslator(Translator):
     """Badly-behaved no-op translator: does nothing, using lots of memory"""
     def translate(self, file_like: IO) -> Iterator[Dict[str, Any]]:
-        return [{line: line} for line in file_like]
+        return iter([{line: line} for line in file_like])
 
 
 def get_memory_usage_mb():

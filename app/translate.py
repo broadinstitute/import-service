@@ -52,6 +52,8 @@ def translate(msg: Dict[str, str]) -> flask.Response:
                 raise exceptions.ISvcException(f"Error translating file: {import_details.import_url}\n" + \
                                                f"{e.__class__.__name__}\n" + \
                                                f"eid: {str(eid)}")
+
+            # TODO: Publish a message to Rawls pubsub saying there's a new import ready.
             return flask.make_response("ok")
 
 
