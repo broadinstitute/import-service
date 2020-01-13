@@ -44,8 +44,6 @@ def test_pubsubify_excs(url_modifiable_client: flask.testing.FlaskClient):
     def ise_exc() -> flask.Response:
         raise exceptions.ISvcException("a bad happened", imports=[new_import])
 
-    # NOTE: If you're getting a test failure here saying "A setup function was called after the first request was handled",
-    # go to conftest.py and lower the scope of the client fixture to function.
     client.application.add_url_rule('/test_pubsubify_excs', view_func=ise_exc, methods=["GET"])
 
     resp = client.get('/test_pubsubify_excs')

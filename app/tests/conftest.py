@@ -26,11 +26,15 @@ def _test_client() -> flask.testing.FlaskClient:
 
 @pytest.fixture(scope="session")
 def client() -> flask.testing.FlaskClient:
+    """A FlaskClient fixture that's created once per test run. You should use this in most instances."""
     return _test_client()
 
 
 @pytest.fixture(scope="function")
 def url_modifiable_client() -> flask.testing.FlaskClient:
+    """A FlaskClient fixture that's recreated for every test function. You'll need this if you want to dynamically add
+    URLs in your test, otherwise previously running tests will have flipped a switch in the app that asserts because
+    you've already handled a request beforehand."""
     return _test_client()
 
 
