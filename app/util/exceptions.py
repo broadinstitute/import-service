@@ -2,7 +2,9 @@ from typing import List, Optional
 from app.auth.userinfo import UserInfo
 
 class ISvcException(Exception):
-    def __init__(self, message: str, http_status: int = 500, audit_logs: List[str] = []):
+    def __init__(self, message: str, http_status: int = 500, audit_logs: Optional[List[str]] = None):
+        if audit_logs is None:
+            audit_logs = []
         self.message = message
         self.http_status = http_status
         self.audit_logs = audit_logs
