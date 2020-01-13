@@ -5,7 +5,7 @@ from app.auth import service_auth
 from app.auth.userinfo import UserInfo
 from app.db import db
 from app.db.model import *
-from app.translators import PFBToRawls
+from app.translators import Translator, PFBToRawls
 from typing import Dict, IO
 from app.util import http, exceptions
 from app.util.json import StreamArray
@@ -42,7 +42,7 @@ def translate(msg: Dict[str, str]) -> flask.Response:
         with gcsfs.open(f'{os.environ.get("BATCH_UPSERT_BUCKET")}/{import_details.id}.rawlsUpsert', 'w+') as dest_upsert:
 
             try:
-                _stream_translate(pfb_file, dest_upsert, import_details.filetype)
+                _stream_translate(pfb_file, dest_upsert, translator = FILETYPE_TRANSLATORS[import_details.filetype]())
             except Exception as e:
                 # Something went wrong with the translate. Raising an exception will fail the import.
                 # Over time we should be able to narrow down the kinds of exception we might get, and perhaps
@@ -55,8 +55,7 @@ def translate(msg: Dict[str, str]) -> flask.Response:
             return flask.make_response("ok")
 
 
-def _stream_translate(source: IO, dest: IO, filetype: str) -> None:
-    translator = FILETYPE_TRANSLATORS[filetype]()
+def _stream_translate(source: IO, dest: IO, translator: Translator) -> None:
     translated_gen = translator.translate(source)  # doesn't actually translate, just returns a generator
 
     for chunk in JSONEncoder(indent=0).iterencode(StreamArray(translated_gen)):
