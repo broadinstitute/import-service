@@ -21,6 +21,11 @@ user_has_ws_access = testutils.fxpatch(
 pubsub_publish = testutils.fxpatch(
     "app.external.pubsub.publish")
 
+def assert_response_code_and_logs(resp, caplog, import_url):
+    assert resp.status_code == 400
+    # if the sam_valid_user fixture changes, this assertion will also need to change
+    auditlog = filter(lambda rec: rec.message == f"User 123456 hello@bees.com attempted to import from path {import_url}", caplog.records)
+    assert list(auditlog), "Expected audit log message to exist if user specified illegal domain; did not find such message in log."
 
 @pytest.mark.parametrize("netloc", translate.VALID_NETLOCS)
 @pytest.mark.usefixtures(sam_valid_user, user_has_ws_access, pubsub_publish, "pubsub_fake_env")
@@ -32,52 +37,54 @@ def test_legal_netlocs_simple(client, netloc):
     # db is updated, etc.
 
 @pytest.mark.usefixtures(sam_valid_user, user_has_ws_access, pubsub_publish, "pubsub_fake_env")
-def test_illegal_netloc_simple(client: flask.testing.FlaskClient):
+def test_illegal_netloc_simple(client: flask.testing.FlaskClient, caplog):
     payload = {"path": f"https://haxxor.evil.bad/some/valid/path", "filetype": "pfb"}
     resp = client.post('/iservice/namespace/name/import', json=payload, headers=good_headers)
-    assert resp.status_code == 400
+    assert_response_code_and_logs(resp, caplog, payload["path"])
+
+@pytest.mark.usefixtures(sam_valid_user, user_has_ws_access, pubsub_publish, "pubsub_fake_env")
+def test_unparsable_path(client: flask.testing.FlaskClient, caplog):
+    payload = {"path": f"https://[:-999/~~~~~~~~~~~", "filetype": "pfb"}
+    resp = client.post('/iservice/namespace/name/import', json=payload, headers=good_headers)
+    assert_response_code_and_logs(resp, caplog, payload["path"])
 
 @pytest.mark.parametrize("netloc", translate.VALID_NETLOCS)
 @pytest.mark.usefixtures(sam_valid_user, user_has_ws_access, pubsub_publish, "pubsub_fake_env")
-def test_subdomain_of_legal_netlocs(client, netloc):
+def test_subdomain_of_legal_netlocs(client, netloc, caplog):
     payload = {"path": f"https://hijacked.{netloc}/some/valid/path", "filetype": "pfb"}
     resp = client.post('/iservice/namespace/name/import', json=payload, headers=good_headers)
-    assert resp.status_code == 400
+    assert_response_code_and_logs(resp, caplog, payload["path"])
 
 @pytest.mark.parametrize("netloc", translate.VALID_NETLOCS)
 @pytest.mark.usefixtures(sam_valid_user, user_has_ws_access, pubsub_publish, "pubsub_fake_env")
-def test_legal_netloc_as_subdomain_of_bad_tld(client, netloc):
+def test_legal_netloc_as_subdomain_of_bad_tld(client, netloc, caplog):
     payload = {"path": f"https://{netloc}.evil/some/valid/path", "filetype": "pfb"}
     resp = client.post('/iservice/namespace/name/import', json=payload, headers=good_headers)
-    assert resp.status_code == 400
+    assert_response_code_and_logs(resp, caplog, payload["path"])
 
 @pytest.mark.parametrize("netloc", translate.VALID_NETLOCS)
 @pytest.mark.usefixtures(sam_valid_user, user_has_ws_access, pubsub_publish, "pubsub_fake_env")
-def test_legal_netloc_in_fragment(client, netloc):
+def test_legal_netloc_in_fragment(client, netloc, caplog):
     payload = {"path": f"https://evil.bad/some/valid/path#{netloc}", "filetype": "pfb"}
     resp = client.post('/iservice/namespace/name/import', json=payload, headers=good_headers)
-    assert resp.status_code == 400
+    assert_response_code_and_logs(resp, caplog, payload["path"])
 
 @pytest.mark.parametrize("netloc", translate.VALID_NETLOCS)
 @pytest.mark.usefixtures(sam_valid_user, user_has_ws_access, pubsub_publish, "pubsub_fake_env")
-def test_legal_netloc_in_query(client, netloc):
+def test_legal_netloc_in_query(client, netloc, caplog):
     payload = {"path": f"https://evil.bad/some/valid/path?q={netloc}", "filetype": "pfb"}
     resp = client.post('/iservice/namespace/name/import', json=payload, headers=good_headers)
-    assert resp.status_code == 400
+    assert_response_code_and_logs(resp, caplog, payload["path"])
 
 @pytest.mark.parametrize("netloc", translate.VALID_NETLOCS)
 @pytest.mark.usefixtures(sam_valid_user, user_has_ws_access, pubsub_publish, "pubsub_fake_env")
-def test_legal_netloc_in_path(client, netloc):
+def test_legal_netloc_in_path(client, netloc, caplog):
     payload = {"path": f"https://evil.bad/hide/{netloc}/in/path", "filetype": "pfb"}
     resp = client.post('/iservice/namespace/name/import', json=payload, headers=good_headers)
-    assert resp.status_code == 400
+    assert_response_code_and_logs(resp, caplog, payload["path"])
 
 @pytest.mark.usefixtures(sam_valid_user, user_has_ws_access, pubsub_publish, "pubsub_fake_env")
 def test_audit_logging(client: flask.testing.FlaskClient, caplog):
     payload = {"path": "https://illegal.domains/should/be/logged", "filetype": "pfb"}
     resp = client.post('/iservice/namespace/name/import', json=payload, headers=good_headers)
-    assert resp.status_code == 400
-
-    # if the sam_valid_user fixture changes, this assertion will also need to change
-    auditlog = filter(lambda rec: rec.message == "User 123456 hello@bees.com attempted to import from path https://illegal.domains/should/be/logged", caplog.records)
-    assert list(auditlog), "Expected audit log message to exist if user specified illegal domain; did not find such message in log."
+    assert_response_code_and_logs(resp, caplog, payload["path"])

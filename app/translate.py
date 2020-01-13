@@ -5,7 +5,7 @@ from typing import Dict, Optional
 from urllib.parse import urlparse
 
 from app.auth.userinfo import UserInfo
-from app.util.exceptions import ISvcException
+from app.util.exceptions import InvalidPathException
 
 VALID_FILETYPES = ["pfb"]
 
@@ -26,23 +26,21 @@ def validate_import_url(import_url: Optional[str], user_info: UserInfo) -> bool:
     safe and acceptable domains. Especially if we were to add authentication tokens to these outbound
     requests in the future, visiting arbitrary domains would allow malicious users to collect sensitive
     data. Therefore, we whitelist the domains we are willing to visit."""
-    try:
-        # json schema validation ensures that "import_url" exists, but we'll be safe
-        if import_url is None:
-            logging.info(f"Missing path from inbound translate request:")
-            raise ISvcException("Missing path to PFB", 400)
+    # json schema validation ensures that "import_url" exists, but we'll be safe
+    if import_url is None:
+        logging.info(f"Missing path from inbound translate request:")
+        raise InvalidPathException(import_url, user_info, "Missing path to PFB")
 
-        # parse path into url parts, verify the netloc is one that we allow
-        # we may want to validate netloc suffixes ("s3.amazonaws.com") instead of entire string matches someday.
+    try:
         parsedurl = urlparse(import_url)
-        if parsedurl.netloc in VALID_NETLOCS:
-            return True
-        else:
-            logging.warning(f"Unrecognized netloc for PFB import: {parsedurl.netloc} from {import_url}")
-            raise ISvcException("PFB cannot be imported from this domain.", 400)
     except Exception as e:
-        # catch any/all exceptions here for audit logging. On error, no matter what happened,
-        # we want to log the potentially-malicious attempt along with user information, then rethrow
-        # the original error.
-        logging.error(f"User {user_info.subject_id} {user_info.user_email} attempted to import from path {import_url}")
-        raise e
+        # catch any/all exceptions here so we can ensure audit logging
+        raise InvalidPathException(import_url, user_info, f"{e}")
+
+    # parse path into url parts, verify the netloc is one that we allow
+    # we may want to validate netloc suffixes ("s3.amazonaws.com") instead of entire string matches someday.
+    if parsedurl.netloc in VALID_NETLOCS:
+        return True
+    else:
+        logging.warning(f"Unrecognized netloc for PFB import: [{parsedurl.netloc}] from [{import_url}]")
+        raise InvalidPathException(import_url, user_info, "PFB cannot be imported from this domain.")
