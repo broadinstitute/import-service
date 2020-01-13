@@ -33,7 +33,7 @@ pubsub_publish = testutils.fxpatch(
 @pytest.mark.usefixtures(sam_valid_user, user_has_ws_access, pubsub_publish, "pubsub_fake_env")
 def test_golden_path(client):
     resp = client.post('/iservice/namespace/name/imports', json=good_json, headers=good_headers)
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     # response contains the job ID, check it's actually in the database
     sess = db.get_session()

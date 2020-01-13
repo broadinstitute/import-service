@@ -6,10 +6,9 @@ from app.auth.userinfo import UserInfo
 from app.db import db
 from app.db.model import *
 from app.translators import Translator, PFBToRawls
-from typing import Dict, IO
 from app.util import http, exceptions
 from app.util.json import StreamArray
-from app.util.exceptions import InvalidPathException
+
 from typing import Dict, Optional, IO
 
 from urllib.parse import urlparse
@@ -63,6 +62,7 @@ def _stream_translate(source: IO, dest: IO, translator: Translator) -> None:
     for chunk in JSONEncoder(indent=0).iterencode(StreamArray(translated_gen)):
         dest.write(chunk)
 
+
 def validate_import_url(import_url: Optional[str], user_info: UserInfo) -> bool:
     """Inspects the URI from which the user wants to import data. Because our service will make an
     outbound request to the user-supplied URI, we want to make sure that our service only visits
@@ -72,13 +72,13 @@ def validate_import_url(import_url: Optional[str], user_info: UserInfo) -> bool:
     # json schema validation ensures that "import_url" exists, but we'll be safe
     if import_url is None:
         logging.info(f"Missing path from inbound translate request:")
-        raise InvalidPathException(import_url, user_info, "Missing path to PFB")
+        raise exceptions.InvalidPathException(import_url, user_info, "Missing path to PFB")
 
     try:
         parsedurl = urlparse(import_url)
     except Exception as e:
         # catch any/all exceptions here so we can ensure audit logging
-        raise InvalidPathException(import_url, user_info, f"{e}")
+        raise exceptions.InvalidPathException(import_url, user_info, f"{e}")
 
     # parse path into url parts, verify the netloc is one that we allow
     # we may want to validate netloc suffixes ("s3.amazonaws.com") instead of entire string matches someday.
@@ -86,4 +86,4 @@ def validate_import_url(import_url: Optional[str], user_info: UserInfo) -> bool:
         return True
     else:
         logging.warning(f"Unrecognized netloc for PFB import: [{parsedurl.netloc}] from [{import_url}]")
-        raise InvalidPathException(import_url, user_info, "PFB cannot be imported from this domain.")
+        raise exceptions.InvalidPathException(import_url, user_info, "PFB cannot be imported from this domain.")

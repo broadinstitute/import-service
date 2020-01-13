@@ -16,7 +16,7 @@ from app import create_app
 from app.db import db, model, DBSession
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def client() -> flask.testing.FlaskClient:
     """Builds a Flask client wired up for unit tests. Created once per test invocation and reused thereafter."""
     app = create_app()

@@ -45,6 +45,9 @@ def pubsubify_excs(some_func: Callable[..., flask.Response]):
         try:
             return some_func(*args, **kwargs)
         except ISvcException as ise:
+            # If the exception holds any audit logs, log them
+            for logmsg in ise.audit_logs:
+                logging.error(logmsg)
 
             # mark the imports as errored with the associated message.
             with db.session_ctx() as sess:

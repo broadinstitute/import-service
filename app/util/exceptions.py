@@ -2,8 +2,9 @@ from typing import Optional, List
 from app.db.model import Import
 from app.auth.userinfo import UserInfo
 
+
 class ISvcException(Exception):
-    def __init__(self, message: str, http_status: int = 500, audit_logs: Optional[List[str]] = None, , imports: Optional[List[Import]] = None, retry_pubsub: bool = False):
+    def __init__(self, message: str, http_status: int = 500, imports: Optional[List[Import]] = None, audit_logs: Optional[List[str]] = None, retry_pubsub: bool = False):
         if audit_logs is None:
             audit_logs = []
         self.message = message
@@ -38,7 +39,8 @@ class MethodNotAllowedException(ISvcException):
     def __init__(self, method: str):
         super().__init__(f"Method Not Allowed: {method}", 405)
 
+
 class InvalidPathException(ISvcException):
     def __init__(self, import_url: Optional[str], user_info: UserInfo, hint: str):
         audit_logs = [f"User {user_info.subject_id} {user_info.user_email} attempted to import from path {import_url}"]
-        super().__init__(f"Path Not Allowed - {hint}: {import_url}", 400, audit_logs)
+        super().__init__(f"Path Not Allowed - {hint}: {import_url}", 400, audit_logs=audit_logs)

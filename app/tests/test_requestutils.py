@@ -37,6 +37,7 @@ def test_pubsubify_excs(client: flask.testing.FlaskClient):
     with session_ctx() as sess:
         new_import = model.Import("aa", "aa", "uuid", "aa@aa.aa", "gs://aa/aa", "pfb")
         sess.add(new_import)
+        sess.commit()
 
     @pubsubify_excs
     def ise_exc() -> flask.Response:
