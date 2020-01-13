@@ -19,7 +19,7 @@ def translate(attributes: Dict[str, str]) -> flask.Response:
 def pfb_to_rawls(attributes: Dict[str, str]) -> flask.Response:
     return flask.make_response("ok")
 
-def validate_path(path: Optional[str]) -> bool:
+def validate_import_url(path: Optional[str]) -> bool:
     """Inspects the URI from which the user wants to import data. Because our service will make an
     outbound request to the user-supplied URI, we want to make sure that our service only visits
     safe and acceptable domains. Especially if we were to add authentication tokens to these outbound
