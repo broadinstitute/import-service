@@ -72,8 +72,6 @@ def pubsubify_excs(some_func: Callable[..., flask.Response]):
 
     return catch_excs
 
-    pass
-
 
 def _part_to_regex(part: str) -> str:
     r"""Turns <foo> into (?P<foo>[\w\-]+)

@@ -34,14 +34,14 @@ else:
 
 @enum.unique
 class ImportStatus(enum.Enum):
-    """NOTE: enums are special python classes where all members are enum instances.
-    so doing ALL_STATUSES = [foo, bar, baz] will give you a new enum member call ALL_STATUSES,
-    which is definitely not what you want! hence these being functions, not members."""
     Pending = enum.auto()
     Translating = enum.auto()
     Error = enum.auto()
     Done = enum.auto()
 
+    # NOTE: enums are special python classes where all members are enum instances.
+    # so doing ALL_STATUSES = [foo, bar, baz] will give you a new enum member call ALL_STATUSES,
+    # which is definitely not what you want! hence these being functions, not members.
     @classmethod
     def all_statuses(cls):
         return {cls.Pending, cls.Translating, cls.Error, cls.Done}
@@ -55,6 +55,8 @@ class ImportStatus(enum.Enum):
         return cls.all_statuses() - cls.terminal_statuses()
 
 
+# This is mypy shenanigans so functions inside the Import class can return an instance of type Import.
+# It's basically a forward declaration of the type.
 ImportT = TypeVar('ImportT', bound='Import')
 
 
@@ -86,11 +88,14 @@ class Import(Base, ImportServiceTable):
 
     @classmethod
     def reacquire(cls, id: str, sess: DBSession) -> ImportT:
+        """Used for getting a real, active Import object after closing a session."""
         i: ImportT = sess.query(Import).filter(Import.id == id).one()
         return i
 
     @classmethod
     def update_status_exclusively(cls, id: str, current_status: ImportStatus, new_status: ImportStatus, sess: DBSession) -> bool:
+        """Given an object in status current_status, flip it to new_status and return True
+        only if someone didn't steal the object meanwhile."""
         update = Import.__table__.update() \
             .where(Import.id == id) \
             .where(Import.status == current_status) \
