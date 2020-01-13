@@ -28,7 +28,7 @@ def test_get_import_status(client):
 
     resp = client.get('/iservice/namespace/name/imports/{}'.format(import_id), headers=good_headers)
     assert resp.status_code == 200
-    assert resp.get_data(as_text=True) == json.dumps({'id': import_id, 'status': ImportStatus.Pending.name})
+    assert resp.get_json(force=True) == {'id': import_id, 'status': ImportStatus.Pending.name}
 
 
 @pytest.mark.usefixtures(sam_valid_user, user_has_ws_access, pubsub_publish, "pubsub_fake_env")
@@ -45,29 +45,29 @@ def test_get_all_import_status(client):
 
     resp = client.get('/iservice/namespace/name/imports', headers=good_headers)
     assert resp.status_code == 200
-    assert resp.get_data(as_text=True) == json.dumps([{"id": import_id, "status": ImportStatus.Pending.name}])
+    assert resp.get_json(force=True) == [{"id": import_id, "status": ImportStatus.Pending.name}]
 
 
 @pytest.mark.usefixtures(sam_valid_user, user_has_ws_access, pubsub_publish, "pubsub_fake_env")
 def test_get_all_running_when_none(client):
-    client.post('/iservice/namespace/name/imports', json=good_json, headers=good_headers)
+    # poke in one import that's in the Done state
+    with db.session_ctx() as sess:
+        new_import = Import("namespace", "name", "uuid", "hello@me.com", "http://path", "pfb")
+        new_import.status = ImportStatus.Done
+        sess.add(new_import)
+        sess.commit()
+        dbres = sess.query(Import).all()
+        assert len(dbres) == 1
 
     resp = client.get('/iservice/namespace/name/imports?running_only', headers=good_headers)
     assert resp.status_code == 200
-    assert resp.get_data(as_text=True) == json.dumps([])
+    assert resp.get_json(force=True) == []
 
 
 @pytest.mark.usefixtures(sam_valid_user, user_has_ws_access, pubsub_publish, "pubsub_fake_env")
 def test_get_all_running_with_one(client):
-    client.post('/iservice/namespace/name/imports', json=good_json, headers=good_headers)
     import_id = client.post('/iservice/namespace/name/imports', json=good_json, headers=good_headers).get_data(as_text=True)
-
-    sess = db.get_session()
-    sess.query(Import).filter(Import.id == import_id).update({Import.status: ImportStatus.Running})
-    sess.commit()
-    dbres = sess.query(Import).all()
-    assert len(dbres) == 2
 
     resp = client.get('/iservice/namespace/name/imports?running_only', headers=good_headers)
     assert resp.status_code == 200
-    assert resp.get_data(as_text=True) == json.dumps([{"id": import_id, "status": ImportStatus.Running.name}])
+    assert resp.get_json(force=True) == [{"id": import_id, "status": ImportStatus.Pending.name}]

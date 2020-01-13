@@ -34,9 +34,25 @@ else:
 
 @enum.unique
 class ImportStatus(enum.Enum):
+    """NOTE: enums are special python classes where all members are enum instances.
+    so doing ALL_STATUSES = [foo, bar, baz] will give you a new enum member call ALL_STATUSES,
+    which is definitely not what you want! hence these being functions, not members."""
     Pending = enum.auto()
     Translating = enum.auto()
     Error = enum.auto()
+    Done = enum.auto()
+
+    @classmethod
+    def all_statuses(cls):
+        return {cls.Pending, cls.Translating, cls.Error, cls.Done}
+
+    @classmethod
+    def terminal_statuses(cls):
+        return {cls.Error, cls.Done}
+
+    @classmethod
+    def running_statuses(cls):
+        return cls.all_statuses() - cls.terminal_statuses()
 
 
 ImportT = TypeVar('ImportT', bound='Import')

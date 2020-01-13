@@ -42,7 +42,7 @@ def handle_list_import_status(request: flask.Request, ws_ns: str, ws_name: str) 
         q = sess.query(model.Import).\
             filter(model.Import.workspace_namespace == ws_ns).\
             filter(model.Import.workspace_name == ws_name)
-        q = q.filter(model.Import.status == ImportStatus.Running) if running_only else q
+        q = q.filter(model.Import.status.in_(ImportStatus.running_statuses())) if running_only else q
         import_list = q.order_by(model.Import.submit_time.desc()).all()
         import_statuses = [{"id": imprt.id, "status": imprt.status.name} for imprt in import_list]
 
