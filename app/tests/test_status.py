@@ -1,12 +1,13 @@
 import json
 import pytest
 
+from app import translate
 from app.auth import userinfo
 from app.db import db
 from app.db.model import *
 from app.tests import testutils
 
-good_json = {"path": "foo", "filetype": "pfb"}
+good_json = {"path": f"https://{translate.VALID_NETLOCS[0]}/some/path", "filetype": "pfb"}
 good_headers = {"Authorization": "Bearer ya29.blahblah"}
 
 sam_valid_user = testutils.fxpatch(
