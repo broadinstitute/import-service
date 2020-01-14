@@ -1,4 +1,5 @@
 import os
+import logging
 from contextlib import contextmanager
 from typing import Iterator
 
@@ -41,6 +42,7 @@ def get_session() -> DBSession:
         )
 
         from . import model
+        logging.info("Creating new database tables...")
         model.Base.metadata.create_all(_db)
 
     if _session is None:

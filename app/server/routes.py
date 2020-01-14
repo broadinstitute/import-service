@@ -4,7 +4,7 @@ from typing import Dict, Callable
 
 from app import service, translate, status
 import app.auth.service_auth
-from app.server.requestutils import httpify_excs
+from app.server.requestutils import httpify_excs, pubsubify_excs
 
 routes = flask.Blueprint('import-service', __name__, '/')
 
@@ -33,7 +33,7 @@ def import_status_workspace(ws_ns, ws_name) -> flask.Response:
 # This particular URL, though weird, can be secured using GCP magic.
 # See https://cloud.google.com/pubsub/docs/push#authenticating_standard_and_urls
 @routes.route('/_ah/push-handlers/receive_messages', methods=['POST'])
-@httpify_excs
+@pubsubify_excs
 def pubsub_receive() -> flask.Response:
     app.auth.service_auth.verify_pubsub_jwt(flask.request)
 

@@ -38,7 +38,7 @@ def translate(msg: Dict[str, str]) -> flask.Response:
     with http.http_as_filelike(import_details.import_url) as pfb_file:
 
         gcsfs = GCSFileSystem(os.environ.get("PUBSUB_PROJECT"), token=service_auth.get_isvc_credential())
-        with gcsfs.open(f'{os.environ.get("BATCH_UPSERT_BUCKET")}/{import_details.id}.rawlsUpsert', 'w+') as dest_upsert:
+        with gcsfs.open(f'{os.environ.get("BATCH_UPSERT_BUCKET")}/{import_details.id}.rawlsUpsert', 'wb') as dest_upsert:
 
             try:
                 _stream_translate(pfb_file, dest_upsert, translator = FILETYPE_TRANSLATORS[import_details.filetype]())

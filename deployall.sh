@@ -16,6 +16,15 @@ gcloud pubsub subscriptions create task_chunk_subscription \
     "https://import-service-dot-broad-dsde-dev.appspot.com/_ah/push-handlers/receive_messages?token=$(cat token.secret)" \
     --ack-deadline 10
 
+
+gcloud pubsub subscriptions create task_chunk_subscription \
+    --topic task_chunk_topic \
+    --push-endpoint \
+    "https://import-service-dot-broad-dsde-dev.appspot.com/_ah/push-handlers/receive_messages?token=$(cat token.secret)" \
+    --ack-deadline 10 \
+    --push-auth-service-account="import-service-pubsub@broad-dsde-dev.iam.gserviceaccount.com" \
+    --push-auth-token-audience="importservice.dev.test.firecloud.org"
+
 echo ""
 echo ""
 
