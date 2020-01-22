@@ -27,7 +27,7 @@ user_has_ws_access = testutils.fxpatch(
 
 # replace the publish to google pub/sub with a no-op one
 pubsub_publish = testutils.fxpatch(
-    "app.external.pubsub.publish")
+    "app.external.pubsub.publish_self")
 
 
 @pytest.mark.usefixtures(sam_valid_user, user_has_ws_access, pubsub_publish, "pubsub_fake_env")

@@ -66,6 +66,6 @@ def handle(request: flask.Request) -> flask.Response:
         sess.commit()
         new_import_id = new_import.id
 
-    pubsub.publish({"action": "translate", "import_id": new_import_id})
+    pubsub.publish_self({"action": "translate", "import_id": new_import_id})
 
     return flask.make_response((str(new_import_id), 201))

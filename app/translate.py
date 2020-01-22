@@ -5,6 +5,7 @@ from app.auth import service_auth
 from app.auth.userinfo import UserInfo
 from app.db import db
 from app.db.model import *
+from app.external import pubsub
 from app.translators import Translator, PFBToRawls
 from app.util import http, exceptions
 from app.util.json import StreamArray
@@ -23,6 +24,7 @@ FILETYPE_TRANSLATORS = {"pfb": PFBToRawls}
 
 VALID_NETLOCS = ["gen3-pfb-export.s3.amazonaws.com", "storage.googleapis.com"]
 
+
 def translate(msg: Dict[str, str]) -> flask.Response:
     import_id = msg["import_id"]
     with db.session_ctx() as sess:
@@ -35,10 +37,12 @@ def translate(msg: Dict[str, str]) -> flask.Response:
         # and some other GAE instance has picked it up and is happily processing it. happy translating, friendo!
         return flask.make_response("ok")
 
+    dest_file = f'{os.environ.get("BATCH_UPSERT_BUCKET")}/{import_details.id}.rawlsUpsert'
+
     with http.http_as_filelike(import_details.import_url) as pfb_file:
 
         gcsfs = GCSFileSystem(os.environ.get("PUBSUB_PROJECT"), token=service_auth.get_isvc_credential())
-        with gcsfs.open(f'{os.environ.get("BATCH_UPSERT_BUCKET")}/{import_details.id}.rawlsUpsert', 'wb') as dest_upsert:
+        with gcsfs.open(dest_file, 'wb') as dest_upsert:
 
             try:
                 _stream_translate(pfb_file, dest_upsert, translator = FILETYPE_TRANSLATORS[import_details.filetype]())
@@ -52,8 +56,21 @@ def translate(msg: Dict[str, str]) -> flask.Response:
                                                f"{e.__class__.__name__}\n" + \
                                                f"eid: {str(eid)}")
 
-            # TODO: Publish a message to Rawls pubsub saying there's a new import ready.
-            return flask.make_response("ok")
+    # Tell Rawls to import the result.
+    pubsub.publish_rawls({
+        "workspaceNamespace": import_details.workspace_namespace,
+        "workspaceName": import_details.workspace_name,
+        "userEmail": import_details.submitter,
+        # "userSubjectId": do_we_really_though?,
+        "jobId": import_details.id,
+        "upsertFile": dest_file
+    })
+
+    with db.session_ctx() as sess:
+        # This should always succeed as we started this function by getting an exclusive lock on the import row.
+        Import.update_status_exclusively(import_id, ImportStatus.Translating, ImportStatus.Upserting, sess)
+
+    return flask.make_response("ok")
 
 
 def _stream_translate(source: IO, dest: IO, translator: Translator) -> None:

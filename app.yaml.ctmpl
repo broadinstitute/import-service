@@ -18,3 +18,6 @@ env_variables:
     PUBSUB_TOKEN: "{secrets.pubsub_token}"
     PUBSUB_ACCOUNT: "{secrets.pubsub_account}"
     PUBSUB_AUDIENCE: "{secrets.pubsub_audience}"
+
+    RAWLS_PUBSUB_PROJECT: "terra-arrow-{env}"
+    RAWLS_PUBSUB_TOPIC: "avro-import-topic"

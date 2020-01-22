@@ -36,6 +36,7 @@ else:
 class ImportStatus(enum.Enum):
     Pending = enum.auto()
     Translating = enum.auto()
+    Upserting = enum.auto()
     Error = enum.auto()
     Done = enum.auto()
 

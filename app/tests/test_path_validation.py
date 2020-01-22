@@ -19,7 +19,7 @@ user_has_ws_access = testutils.fxpatch(
 
 # replace the publish to google pub/sub with a no-op one
 pubsub_publish = testutils.fxpatch(
-    "app.external.pubsub.publish")
+    "app.external.pubsub.publish_self")
 
 def assert_response_code_and_logs(resp, caplog, import_url):
     assert resp.status_code == 400

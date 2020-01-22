@@ -28,7 +28,7 @@ def get_memory_usage_mb():
 
 def maybe_himem_work(numbers_path: str, translator: Translator):
     with open(numbers_path, 'r') as read_numbers:
-        with open(os.devnull, 'w') as dev_null:
+        with open(os.devnull, 'wb') as dev_null:
             translate._stream_translate(read_numbers, dev_null, translator)
 
 
