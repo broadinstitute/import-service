@@ -60,7 +60,7 @@ def _stream_translate(source: IO, dest: IO, translator: Translator) -> None:
     translated_gen = translator.translate(source)  # doesn't actually translate, just returns a generator
 
     for chunk in JSONEncoder(indent=0).iterencode(StreamArray(translated_gen)):
-        dest.write(chunk)
+        dest.write(chunk.encode())  # encodes as utf-8 by default
 
 
 def validate_import_url(import_url: Optional[str], user_info: UserInfo) -> bool:

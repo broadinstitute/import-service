@@ -5,7 +5,7 @@ class StreamArray(list):
     while still retaining the iterative nature of a generator.
 
     IE. It converts it to a list without having to exhaust the generator
-    and keep it's contents in memory.
+    and keep its contents in memory.
 
     Lifted from https://stackoverflow.com/a/45143995/2941784
     """

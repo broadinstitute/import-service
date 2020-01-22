@@ -15,9 +15,14 @@ class PFBToRawls(Translator):
         with PFBReader(file_like) as reader:
             schema = reader.schema
             enums = self.list_enums(schema)
-            result_gen = (self.translate_record(record, enums)
-                          for record in reader if record['name'] != 'Metadata')
-            return result_gen
+
+            # You might think that the following is equivalent:
+            # (self.translate_record(record,enums) for record in reader if record['name'] != 'Metadata')
+            # But that fails, and this doesn't, possibly because something upstream is reading the generator
+            # more than once.
+            for record in reader:
+                if record['name'] != 'Metadata':
+                    yield self.translate_record(record, enums)
 
     def translate_record(self, record, enums) -> Dict[str, Any]:
         entity_type = record['name']
