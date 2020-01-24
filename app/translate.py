@@ -50,25 +50,21 @@ def translate(msg: Dict[str, str]) -> flask.Response:
                 # Something went wrong with the translate. Raising an exception will fail the import.
                 # Over time we should be able to narrow down the kinds of exception we might get, and perhaps
                 # give users clearer messaging instead of logging them all.
-                eid = uuid.uuid4()
-                logging.warn(f"eid {eid}: \n{traceback.format_exc()}")
-                raise exceptions.ISvcException(f"Error translating file: {import_details.import_url}\n" + \
-                                               f"{e.__class__.__name__}\n" + \
-                                               f"eid: {str(eid)}")
+                # For now, this is a catch-all.
+                raise exceptions.FileTranslationException(import_details, e)
+
+    with db.session_ctx() as sess:
+        # This should always succeed as we started this function by getting an exclusive lock on the import row.
+        Import.update_status_exclusively(import_id, ImportStatus.Translating, ImportStatus.Upserting, sess)
 
     # Tell Rawls to import the result.
     pubsub.publish_rawls({
         "workspaceNamespace": import_details.workspace_namespace,
         "workspaceName": import_details.workspace_name,
         "userEmail": import_details.submitter,
-        # "userSubjectId": do_we_really_though?,
         "jobId": import_details.id,
         "upsertFile": dest_file
     })
-
-    with db.session_ctx() as sess:
-        # This should always succeed as we started this function by getting an exclusive lock on the import row.
-        Import.update_status_exclusively(import_id, ImportStatus.Translating, ImportStatus.Upserting, sess)
 
     return flask.make_response("ok")
 

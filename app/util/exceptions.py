@@ -1,10 +1,20 @@
-from typing import Optional, List
+import uuid
+import logging
+import traceback
+
+from typing import Optional, List, NamedTuple
 from app.db.model import Import
 from app.auth.userinfo import UserInfo
 
 
+class AuditLog(NamedTuple):
+
+    msg: str
+    loglevel: int  # one of the log levels [CRITICAL, ERROR, WARNING, INFO, DEBUG], not just your favourite int
+
+
 class ISvcException(Exception):
-    def __init__(self, message: str, http_status: int = 500, imports: Optional[List[Import]] = None, audit_logs: Optional[List[str]] = None, retry_pubsub: bool = False):
+    def __init__(self, message: str, http_status: int = 500, imports: Optional[List[Import]] = None, audit_logs: Optional[List[AuditLog]] = None, retry_pubsub: bool = False):
         if audit_logs is None:
             audit_logs = []
         self.message = message
@@ -42,5 +52,21 @@ class MethodNotAllowedException(ISvcException):
 
 class InvalidPathException(ISvcException):
     def __init__(self, import_url: Optional[str], user_info: UserInfo, hint: str):
-        audit_logs = [f"User {user_info.subject_id} {user_info.user_email} attempted to import from path {import_url}"]
+        audit_logs = [AuditLog(f"User {user_info.subject_id} {user_info.user_email} attempted to import from path {import_url}", logging.ERROR)]
         super().__init__(f"Path Not Allowed - {hint}: {import_url}", 400, audit_logs=audit_logs)
+
+
+class FileTranslationException(ISvcException):
+    def __init__(self, imprt: Import, exc: Exception):
+        eid = uuid.uuid4()
+        tb = exc.__traceback__
+
+        user_msg = f"Error translating file: {imprt.import_url}\n" + \
+                                       f"{exc.__class__.__name__}\n" + \
+                                       f"eid: {str(eid)}"
+
+        audit_logs = [AuditLog(f"Error translating import id: {imprt.id} \n" +
+                               f"file: {imprt.import_url} \n" +
+                               f"eid {eid}: \n" +
+                               f"{traceback.format_tb(tb)}", logging.WARN)]
+        super().__init__(user_msg, 500, audit_logs=audit_logs)

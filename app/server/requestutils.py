@@ -19,8 +19,8 @@ def httpify_excs(some_func: Callable[..., flask.Response]):
             return some_func(*args, **kwargs)
         except ISvcException as ise:
             # If the exception holds any audit logs, log them
-            for logmsg in ise.audit_logs:
-                logging.error(logmsg)
+            for alog in ise.audit_logs:
+                logging.log(alog.loglevel, alog.msg)
             # Some kind of exception we want to propagate up to the user.
             return flask.make_response(ise.message, ise.http_status)
         except Exception:
@@ -46,8 +46,8 @@ def pubsubify_excs(some_func: Callable[..., flask.Response]):
             return some_func(*args, **kwargs)
         except ISvcException as ise:
             # If the exception holds any audit logs, log them
-            for logmsg in ise.audit_logs:
-                logging.error(logmsg)
+            for alog in ise.audit_logs:
+                logging.log(alog.loglevel, alog.msg)
 
             # mark the imports as errored with the associated message.
             with db.session_ctx() as sess:
