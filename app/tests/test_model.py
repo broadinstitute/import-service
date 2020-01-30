@@ -14,8 +14,6 @@ def test_reacquire(fake_import: model.Import):
 
     with db.session_ctx() as sess2:
         reacquired: model.Import = model.Import.reacquire(fake_import.id, sess2)
-        print(fake_import)
-        print(reacquired)
         assert fake_import == reacquired
 
 

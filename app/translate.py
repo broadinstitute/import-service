@@ -54,17 +54,13 @@ def handle(msg: Dict[str, str]) -> flask.Response:
         # is probably a service account permissions issue.
         # Note that we open the import URL using urllib's urlopen, which raises subclasses of URLError,
         # so we're not at risk of confusing import failures with bucket write failures.
-        print("system exc")
         raise exceptions.SystemException([import_details], e)
     except Exception as e:
         # Something went wrong with the translate. Raising an exception will fail the import.
         # Over time we should be able to narrow down the kinds of exception we might get, and perhaps
         # give users clearer messaging instead of logging them all.
         # For now, this is a last-ditch catch-all.
-        print("file xlate exc")
         raise exceptions.FileTranslationException(import_details, e)
-
-    print("xlate success")
 
     with db.session_ctx() as sess:
         # This should always succeed as we started this function by getting an exclusive lock on the import row.
