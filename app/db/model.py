@@ -18,6 +18,15 @@ class ImportServiceTable:
     __table__: Table
 
 
+class EqMixin():
+    """If you make a SQLAlchemy row class inherit from this, then == will compare column values, not memory location"""
+    def __eq__(self, other):
+        if type(other) is type(self):
+            return all(self.__dict__[col] == other.__dict__[col] for col in self.__mapper__.attrs.keys())
+        else:
+            return NotImplemented
+
+
 # Mypy gets confused about whether sqlalchemy enum columns are strings or enums, see here:
 # https://github.com/dropbox/sqlalchemy-stubs/issues/114
 # This is the (gross) workaround. Keep an eye on the issue and get rid of it once it's fixed.
@@ -61,7 +70,7 @@ class ImportStatus(enum.Enum):
 ImportT = TypeVar('ImportT', bound='Import')
 
 
-class Import(Base, ImportServiceTable):
+class Import(ImportServiceTable, EqMixin, Base):
     __tablename__ = 'imports'
 
     id = Column(String(36), primary_key=True)

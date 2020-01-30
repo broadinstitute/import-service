@@ -1,6 +1,6 @@
 import unittest.mock as mock
 from contextlib import contextmanager
-from typing import Optional, Iterator, Any
+from typing import Dict, Optional, Iterator, Any
 
 import pytest
 
@@ -46,3 +46,11 @@ def fxpatch(target: str, **kwargs) -> str:
     import inspect
     inspect.stack()[1][0].f_globals[fxname] = hx_fixture
     return fxname
+
+
+def pubsub_json_body(attributes: Dict[str, str]) -> Dict[str, Any]:
+    return {
+        "message": {
+            "attributes": attributes,
+            "messageId": 1234546},
+        "subscription": "project/foo/subscriptions/bar"}

@@ -46,7 +46,7 @@ def pubsub_receive() -> flask.Response:
 def route_pubsub(action: str, attributes: Dict[str, str]) -> flask.Response:
     """Dispatcher for pubsub messages."""
     DISPATCH_LOOKUP: Dict[str, Callable[[Dict[str, str]], flask.Response]] = {
-        "translate": translate.translate
+        "translate": translate.handle
     }
 
     return DISPATCH_LOOKUP[action](attributes)

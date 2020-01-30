@@ -11,21 +11,22 @@ from app.util import http, exceptions
 from app.util.json import StreamArray
 
 from typing import Dict, Optional, IO
-
-from urllib.parse import urlparse
 import os
-import traceback
-
 from json import JSONEncoder
 
+from urllib.parse import urlparse
+
 from gcsfs.core import GCSFileSystem
+import gcsfs.utils
+import requests.exceptions
+
 
 FILETYPE_TRANSLATORS = {"pfb": PFBToRawls}
 
 VALID_NETLOCS = ["gen3-pfb-export.s3.amazonaws.com", "storage.googleapis.com"]
 
 
-def translate(msg: Dict[str, str]) -> flask.Response:
+def handle(msg: Dict[str, str]) -> flask.Response:
     import_id = msg["import_id"]
     with db.session_ctx() as sess:
         # flip the status to Translating, and then get the row
@@ -39,19 +40,31 @@ def translate(msg: Dict[str, str]) -> flask.Response:
 
     dest_file = f'{os.environ.get("BATCH_UPSERT_BUCKET")}/{import_details.id}.rawlsUpsert'
 
-    with http.http_as_filelike(import_details.import_url) as pfb_file:
+    try:
+        with http.http_as_filelike(import_details.import_url) as pfb_file:
 
-        gcsfs = GCSFileSystem(os.environ.get("PUBSUB_PROJECT"), token=service_auth.get_isvc_credential())
-        with gcsfs.open(dest_file, 'wb') as dest_upsert:
-
-            try:
+            gcs_project = GCSFileSystem(os.environ.get("PUBSUB_PROJECT"), token=service_auth.get_isvc_credential())
+            with gcs_project.open(dest_file, 'wb') as dest_upsert:
                 _stream_translate(pfb_file, dest_upsert, translator = FILETYPE_TRANSLATORS[import_details.filetype]())
-            except Exception as e:
-                # Something went wrong with the translate. Raising an exception will fail the import.
-                # Over time we should be able to narrow down the kinds of exception we might get, and perhaps
-                # give users clearer messaging instead of logging them all.
-                # For now, this is a catch-all.
-                raise exceptions.FileTranslationException(import_details, e)
+
+    except (FileNotFoundError, IOError, gcsfs.utils.HttpError, requests.exceptions.ProxyError) as e:
+        # These are errors thrown by the gcsfs library, see here:
+        #   https://github.com/dask/gcsfs/blob/d7b832e13de6b5b0df00eeb7454c6547bf30d7b9/gcsfs/core.py#L151
+        # Any of these indicate programmer error: import-service can't write to the batchUpsert json bucket, which
+        # is probably a service account permissions issue.
+        # Note that we open the import URL using urllib's urlopen, which raises subclasses of URLError,
+        # so we're not at risk of confusing import failures with bucket write failures.
+        print("system exc")
+        raise exceptions.SystemException([import_details], e)
+    except Exception as e:
+        # Something went wrong with the translate. Raising an exception will fail the import.
+        # Over time we should be able to narrow down the kinds of exception we might get, and perhaps
+        # give users clearer messaging instead of logging them all.
+        # For now, this is a last-ditch catch-all.
+        print("file xlate exc")
+        raise exceptions.FileTranslationException(import_details, e)
+
+    print("xlate success")
 
     with db.session_ctx() as sess:
         # This should always succeed as we started this function by getting an exclusive lock on the import row.

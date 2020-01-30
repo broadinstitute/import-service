@@ -34,6 +34,10 @@ def httpify_excs(some_func: Callable[..., flask.Response]):
     return catch_excs
 
 
+PUBSUB_STATUS_NOTOK = 202
+PUBSUB_STATUS_RETRY = 500
+
+
 def pubsubify_excs(some_func: Callable[..., flask.Response]):
     """Exception handler for pubsub endpoints. Turns exceptions into pubsub responses, and also errors in the db.
     Pubsub interprets the following HTTP status codes as a successful message ack: [102, 200, 201, 202, 204].
@@ -56,7 +60,7 @@ def pubsubify_excs(some_func: Callable[..., flask.Response]):
                     newi.write_error(ise.message)
 
             # Most exceptions just want to mark the import as error'd, but not retry the message delivery.
-            return flask.make_response(ise.message, 500 if ise.retry_pubsub else 202)
+            return flask.make_response(ise.message, PUBSUB_STATUS_RETRY if ise.retry_pubsub else PUBSUB_STATUS_NOTOK)
 
         except Exception:
             # Anything else is a definite programmer error.
@@ -68,7 +72,7 @@ def pubsubify_excs(some_func: Callable[..., flask.Response]):
             # NOTE: This will log callstack information and potentially user values.
             eid = uuid.uuid4()
             logging.error(f"eid {eid}:\n{traceback.format_exc()}")
-            return flask.make_response(f"Internal Server Error\nerror id: {eid}", 202)  # don't retry mystery errors
+            return flask.make_response(f"Internal Server Error\nerror id: {eid}", PUBSUB_STATUS_NOTOK)  # don't retry mystery errors
 
     return catch_excs
 

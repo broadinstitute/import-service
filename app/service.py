@@ -63,7 +63,6 @@ def handle(request: flask.Request) -> flask.Response:
 
     with db.session_ctx() as sess:
         sess.add(new_import)
-        sess.commit()
         new_import_id = new_import.id
 
     pubsub.publish_self({"action": "translate", "import_id": new_import_id})

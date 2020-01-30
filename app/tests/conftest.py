@@ -11,8 +11,11 @@ import flask.testing
 import pytest
 import sqlalchemy.engine
 import sqlalchemy.orm
+from typing import IO
+from unittest import mock
 
 from app import create_app
+from app.auth import service_auth
 from app.db import db, model, DBSession
 
 
@@ -74,6 +77,17 @@ def dbsession(_dbconn_internal: sqlalchemy.engine.Connection) -> Iterator[DBSess
 
 
 @pytest.fixture(scope="function")
+def fake_import() -> Iterator[model.Import]:
+    yield model.Import("aa", "aa", "uuid", "aa@aa.aa", "gs://aa/aa", "pfb")
+
+
+@pytest.fixture(scope="function")
+def incoming_valid_pubsub(monkeypatch) -> Iterator[None]:
+    monkeypatch.setattr(service_auth, "verify_pubsub_jwt", mock.MagicMock())
+    yield
+
+
+@pytest.fixture(scope="function")
 def pubsub_fake_env(monkeypatch) -> Iterator[None]:
     monkeypatch.setenv("PUBSUB_PROJECT", "pubsub-project")
     monkeypatch.setenv("PUBSUB_TOPIC", "pubsub-topic")
@@ -82,3 +96,9 @@ def pubsub_fake_env(monkeypatch) -> Iterator[None]:
     monkeypatch.setenv("PUBSUB_AUDIENCE", "aud")
     monkeypatch.setenv("PUBSUB_ACCOUNT", "sa@sa.org")
     yield
+
+
+@pytest.fixture(scope="function")
+def fake_pfb() -> Iterator[IO]:
+    with open("app/tests/empty.avro", 'rb') as out:
+        yield out

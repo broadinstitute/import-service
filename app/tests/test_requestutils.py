@@ -32,11 +32,11 @@ def test_expect_urlshape():
         expect_urlshape("/foo/<boo>/zoo", "foo/woo/")
 
 
-def test_pubsubify_excs(client_with_modifiable_routes: flask.testing.FlaskClient):
+def test_pubsubify_excs(fake_import: model.Import, client_with_modifiable_routes: flask.testing.FlaskClient):
     client = client_with_modifiable_routes
     # pre-populate an import that will get error'd
     with session_ctx() as sess:
-        new_import = model.Import("aa", "aa", "uuid", "aa@aa.aa", "gs://aa/aa", "pfb")
+        new_import = fake_import
         sess.add(new_import)
         sess.commit()
 
