@@ -1,7 +1,5 @@
 import flask
 import json
-import sqlalchemy
-from sqlalchemy import and_
 from sqlalchemy.orm.exc import NoResultFound
 
 from app.auth import user_auth

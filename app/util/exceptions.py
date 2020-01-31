@@ -14,12 +14,10 @@ class AuditLog(NamedTuple):
 
 class ISvcException(Exception):
     def __init__(self, message: str, http_status: int = 500, imports: Optional[List[Import]] = None, audit_logs: Optional[List[AuditLog]] = None, retry_pubsub: bool = False):
-        if audit_logs is None:
-            audit_logs = []
         self.message = message
         self.http_status = http_status
-        self.audit_logs = audit_logs
         self.retry_pubsub = retry_pubsub
+        self.audit_logs = audit_logs if audit_logs else []
         self.imports = imports if imports else []
 
 

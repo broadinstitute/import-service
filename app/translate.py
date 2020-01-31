@@ -36,6 +36,7 @@ def handle(msg: Dict[str, str]) -> flask.Response:
     if not update_successful:
         # this import wasn't in pending. most likely this means that the pubsub message we got was delivered twice,
         # and some other GAE instance has picked it up and is happily processing it. happy translating, friendo!
+        logging.info(f"Failed to update status exclusively for translating import {import_id}: expected Pending, got {import_details.status}. PubSub probably delivered this message twice.")
         return flask.make_response("ok")
 
     dest_file = f'{os.environ.get("BATCH_UPSERT_BUCKET")}/{import_details.id}.rawlsUpsert'
@@ -64,7 +65,7 @@ def handle(msg: Dict[str, str]) -> flask.Response:
 
     with db.session_ctx() as sess:
         # This should always succeed as we started this function by getting an exclusive lock on the import row.
-        Import.update_status_exclusively(import_id, ImportStatus.Translating, ImportStatus.Upserting, sess)
+        Import.update_status_exclusively(import_id, ImportStatus.Translating, ImportStatus.ReadyForUpsert, sess)
 
     # Tell Rawls to import the result.
     pubsub.publish_rawls({
