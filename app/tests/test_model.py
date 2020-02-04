@@ -17,6 +17,13 @@ def test_reacquire(fake_import: model.Import):
         assert fake_import == reacquired
 
 
+def test_truncate(fake_import: model.Import):
+    with db.session_ctx() as sess:
+        fake_import.error_message = "a" * 3000
+        sess.add(fake_import)
+        assert len(fake_import.error_message) == 2048
+
+
 def test_update_status_exclusively(fake_import: model.Import):
     # NOTE: ideally we'd like to test this in a multithreaded context, with different transactions modifying
     # the same row at the same time. but we've overridden the db session in tests to only ever return a single

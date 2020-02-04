@@ -17,7 +17,7 @@ from app.util.exceptions import BadPubSubTokenException
 IMPORT_SERVICE_SCOPES = [
     "https://www.googleapis.com/auth/userinfo.email",
     "https://www.googleapis.com/auth/userinfo.profile",
-    "https://www.googleapis.com/auth/devstorage.full_control"
+    "https://www.googleapis.com/auth/devstorage.read_write"
 ]
 
 

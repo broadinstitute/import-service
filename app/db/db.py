@@ -41,7 +41,7 @@ def get_session() -> DBSession:
             max_overflow=0
         )
 
-        from . import model
+        from app.db import model
         logging.info("Creating new database tables...")
         model.Base.metadata.create_all(_db)
 

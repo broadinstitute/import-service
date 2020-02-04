@@ -5,6 +5,7 @@ from datetime import datetime
 from sqlalchemy import Column, DateTime, String
 from sqlalchemy.schema import Table
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import validates
 from sqlalchemy_repr import RepresentableBase
 from app.db import DBSession
 
@@ -84,6 +85,15 @@ class Import(ImportServiceTable, EqMixin, Base):
     status = Column(Enum(ImportStatus), nullable=False)
     filetype = Column(String(10), nullable=False)
     error_message = Column(String(2048), nullable=True)
+
+    @validates('error_message')
+    def truncate(self, key, value):
+        """Truncates the value of any write to the columns named in the decorator."""
+        max_len = getattr(self.__class__, key).prop.columns[0].type.length
+        if value and len(value) > max_len:
+            return value[:max_len]
+        return value
+
 
     def __init__(self, workspace_name: str, workspace_ns: str, workspace_uuid: str, submitter: str, import_url: str, filetype: str):
         self.id = str(uuid.uuid4())
