@@ -75,31 +75,3 @@ def pubsubify_excs(some_func: Callable[..., flask.Response]):
             return flask.make_response(f"Internal Server Error\nerror id: {eid}", PUBSUB_STATUS_NOTOK)  # don't retry mystery errors
 
     return catch_excs
-
-
-def _part_to_regex(part: str) -> str:
-    r"""Turns <foo> into (?P<foo>[\w\-]+)
-    (side note: this docstring has to be a raw string with the r-prefix to prevent a DeprecationWarning)"""
-    if len(part) == 0:
-        return part
-    if part[0] == '<' and part[-1] == '>':
-        return r"(?P<" + part[1:-1] + r">[\w-]+)"
-    else:
-        return part
-
-
-def _pattern_to_regex(pattern: str) -> str:
-    return r'/'.join([_part_to_regex(part) for part in pattern.split('/')])
-
-
-def expect_urlshape(pattern: str, request_path: str) -> dict:
-    """Takes a pattern like "/foo/<boo>/woo" and tests the request path against it.
-    Returns {"boo": something} only if the request path matches the pattern and has no slashes in it."""
-    regex = _pattern_to_regex(pattern)
-
-    m = re.match(regex, request_path)
-    if m is None:
-        logging.info(f"couldn't match {request_path} against {pattern}")
-        raise NotFoundException()
-    else:
-        return m.groupdict()

@@ -9,21 +9,21 @@ from app.server.requestutils import httpify_excs, pubsubify_excs
 routes = flask.Blueprint('import-service', __name__, '/')
 
 
-@routes.route('/iservice/<path:rest>', methods=["POST"])
+@routes.route('/<ws_ns>/<ws_name>/imports', methods=["POST"])
 @httpify_excs
-def iservice(rest) -> flask.Response:
+def new_import(ws_ns, ws_name) -> flask.Response:
     """Accept an import request"""
-    return flask.make_response(service.handle(flask.request))
+    return flask.make_response(service.handle(flask.request, ws_ns, ws_name))
 
 
-@routes.route('/iservice/<ws_ns>/<ws_name>/imports/<import_id>', methods=["GET"])
+@routes.route('/<ws_ns>/<ws_name>/imports/<import_id>', methods=["GET"])
 @httpify_excs
 def import_status(ws_ns, ws_name, import_id) -> flask.Response:
     """Return the status of an import job"""
     return flask.make_response(status.handle_get_import_status(flask.request, ws_ns, ws_name, import_id))
 
 
-@routes.route('/iservice/<ws_ns>/<ws_name>/imports', methods=["GET"])
+@routes.route('/<ws_ns>/<ws_name>/imports', methods=["GET"])
 @httpify_excs
 def import_status_workspace(ws_ns, ws_name) -> flask.Response:
     """Return the status of import jobs in a workspace"""
