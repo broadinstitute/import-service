@@ -4,7 +4,7 @@ import logging
 
 from app import translate
 from app.util import exceptions
-from app.http import httputils
+from app.server import requestutils
 from app.db import db, model
 from app.external import sam, pubsub
 from app.auth import user_auth
@@ -18,7 +18,7 @@ NEW_IMPORT_SCHEMA = {
     },
     "filetype": {
       "type": "string",
-      "enum": translate.VALID_FILETYPES
+      "enum": list(translate.FILETYPE_TRANSLATORS.keys())
     }
   },
   "required": ["path", "filetype"]
@@ -31,7 +31,7 @@ schema_validator = jsonschema.Draft7Validator(NEW_IMPORT_SCHEMA)
 def handle(request: flask.Request) -> flask.Response:
     request_path = request.path
 
-    urlparams = httputils.expect_urlshape('/iservice/<ws_ns>/<ws_name>/imports', request_path)
+    urlparams = requestutils.expect_urlshape('/iservice/<ws_ns>/<ws_name>/imports', request_path)
 
     access_token = user_auth.extract_auth_token(request)
     user_info = sam.validate_user(access_token)
@@ -58,13 +58,13 @@ def handle(request: flask.Request) -> flask.Response:
         workspace_ns=urlparams["ws_ns"],
         workspace_uuid=workspace_uuid,
         submitter=user_info.user_email,
-        import_url=import_url)
+        import_url=import_url,
+        filetype=request_json["filetype"])
 
     with db.session_ctx() as sess:
         sess.add(new_import)
-        sess.commit()
         new_import_id = new_import.id
 
-    pubsub.publish({"action": "translate", "import_id": new_import_id})
+    pubsub.publish_self({"action": "translate", "import_id": new_import_id})
 
-    return flask.make_response((str(new_import_id), 200))
+    return flask.make_response((str(new_import_id), 201))

@@ -1,4 +1,5 @@
 import os
+import logging
 from contextlib import contextmanager
 from typing import Iterator
 
@@ -40,11 +41,18 @@ def get_session() -> DBSession:
             max_overflow=0
         )
 
-        from . import model
+        from app.db import model
+        logging.info("Creating new database tables...")
         model.Base.metadata.create_all(_db)
 
     if _session is None:
-        sessionmaker = sqlalchemy.orm.sessionmaker(bind=_db)
+        # NOTE on the use of expire_on_commit = False here.
+        # We often need to access attributes on an import object after a session is closed.
+        # By default, the session will "expire" the object on commit, which makes further attribute access throw an exception.
+        # See https://docs.sqlalchemy.org/en/13/orm/session_state_management.html for sqlalchemy object states.
+        # expire_on_commit = False disables this behaviour. We pair this with session.expunge_all() when closing a
+        # transaction, which detaches the object without invalidating access to its attributes.
+        sessionmaker = sqlalchemy.orm.sessionmaker(bind=_db, expire_on_commit=False)
         _session = sessionmaker()
 
     return _session
@@ -57,6 +65,7 @@ def session_ctx() -> Iterator[DBSession]:
     try:
         yield session
         session.commit()
+        session.expunge_all()  # see above NOTE in get_session.
     except:
         session.rollback()
         raise

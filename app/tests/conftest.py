@@ -11,18 +11,34 @@ import flask.testing
 import pytest
 import sqlalchemy.engine
 import sqlalchemy.orm
+from typing import IO
+from unittest import mock
 
 from app import create_app
-from app.db import db, model
+from app.auth import service_auth
+from app.db import db, model, DBSession
 
 
-@pytest.fixture(scope="session")
-def client() -> flask.testing.FlaskClient:
+def _test_client() -> flask.testing.FlaskClient:
     """Builds a Flask client wired up for unit tests. Created once per test invocation and reused thereafter."""
     app = create_app()
     app.debug = True
 
     return app.test_client()
+
+
+@pytest.fixture(scope="session")
+def client() -> flask.testing.FlaskClient:
+    """A FlaskClient fixture that's created once per test run. You should use this in most instances."""
+    return _test_client()
+
+
+@pytest.fixture(scope="function")
+def client_with_modifiable_routes() -> flask.testing.FlaskClient:
+    """A FlaskClient fixture that's recreated for every test function. You'll need this if you want to dynamically add
+    URL handlers in your test, otherwise previously running tests will have flipped a switch in the app that asserts
+    because you've already handled a request beforehand."""
+    return _test_client()
 
 
 _db = None
@@ -44,7 +60,7 @@ def _dbconn_internal() -> Iterator[sqlalchemy.engine.Connection]:
 
 
 @pytest.fixture(scope="function", autouse=True)
-def dbsession(_dbconn_internal: sqlalchemy.engine.Connection) -> Iterator[db.DBSession]:
+def dbsession(_dbconn_internal: sqlalchemy.engine.Connection) -> Iterator[DBSession]:
     """
     At the start of every test function, create a new session and put it in a transaction.
     This lets us roll back at the end of the test.
@@ -53,11 +69,22 @@ def dbsession(_dbconn_internal: sqlalchemy.engine.Connection) -> Iterator[db.DBS
     So until we come up with a better idea, we monkey patch the give me a database session"
     function called by application code. YIKES!!!!"""
     txn = _dbconn_internal.begin()
-    sess = Session(bind=_dbconn_internal)
+    sess = Session(bind=_dbconn_internal, expire_on_commit=False)
     db.get_session = lambda: sess
     yield sess
     sess.close()
     txn.rollback()
+
+
+@pytest.fixture(scope="function")
+def fake_import() -> Iterator[model.Import]:
+    yield model.Import("aa", "aa", "uuid", "aa@aa.aa", "gs://aa/aa", "pfb")
+
+
+@pytest.fixture(scope="function")
+def incoming_valid_pubsub(monkeypatch) -> Iterator[None]:
+    monkeypatch.setattr(service_auth, "verify_pubsub_jwt", mock.MagicMock())
+    yield
 
 
 @pytest.fixture(scope="function")
@@ -69,3 +96,9 @@ def pubsub_fake_env(monkeypatch) -> Iterator[None]:
     monkeypatch.setenv("PUBSUB_AUDIENCE", "aud")
     monkeypatch.setenv("PUBSUB_ACCOUNT", "sa@sa.org")
     yield
+
+
+@pytest.fixture(scope="function")
+def fake_pfb() -> Iterator[IO]:
+    with open("app/tests/empty.avro", 'rb') as out:
+        yield out

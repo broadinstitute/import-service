@@ -23,3 +23,9 @@ def test_patch_request():
 def test_fxpatch():
     from . import dummy
     assert dummy.dummy("test") == "funny"
+
+
+def test_pubsub_json_body():
+    result = testutils.pubsub_json_body({})
+    result["message"]["attributes"].update({"foo": "bar"})
+    assert testutils.pubsub_json_body({"foo": "bar"}) == result
