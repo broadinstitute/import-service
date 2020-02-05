@@ -27,6 +27,6 @@ def test_pubsubify_excs(fake_import: model.Import, client_with_modifiable_routes
     assert resp.status_code == 202
 
     with session_ctx() as sess:
-        recovered_import: Import = Import.reacquire(new_import.id, sess)
+        recovered_import: Import = Import.get(new_import.id, sess)
         assert recovered_import.status == model.ImportStatus.Error
         assert recovered_import.error_message == "a bad happened"

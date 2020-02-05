@@ -108,7 +108,7 @@ class Import(ImportServiceTable, EqMixin, Base):
         self.error_message = None
 
     @classmethod
-    def reacquire(cls, id: str, sess: DBSession) -> ImportT:
+    def get(cls, id: str, sess: DBSession) -> ImportT:
         """Used for getting a real, active Import object after closing a session."""
         i: ImportT = sess.query(Import).filter(Import.id == id).one()
         return i

@@ -56,7 +56,7 @@ def pubsubify_excs(some_func: Callable[..., flask.Response]):
             # mark the imports as errored with the associated message.
             with db.session_ctx() as sess:
                 for i in ise.imports:
-                    newi: Import = Import.reacquire(i.id, sess)
+                    newi: Import = Import.get(i.id, sess)
                     newi.write_error(ise.message)
 
             # Most exceptions just want to mark the import as error'd, but not retry the message delivery.
