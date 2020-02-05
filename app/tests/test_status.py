@@ -156,12 +156,6 @@ def test_fail_update_status_from_terminal(fake_import: Import, client):
         fake_import.status = ImportStatus.Done
         sess.add(fake_import)
 
-    with db.session_ctx() as sess3:
-        import pdb
-        pdb.set_trace()
-        imp = Import.get(fake_import.id, sess3)
-        print("hmm")
-
     resp = client.post("/_ah/push-handlers/receive_messages",
                        json=testutils.pubsub_json_body({"action": "status", "import_id": fake_import.id,
                                                         "current_status": "Pending",
