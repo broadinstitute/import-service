@@ -3,7 +3,7 @@ import jsonschema
 import pytest
 
 from app.tests import testutils
-from app import service, translate
+from app import new_import, translate
 from app.util import exceptions
 from app.db import db
 from app.auth import userinfo
@@ -11,7 +11,7 @@ from app.db.model import *
 
 
 def test_schema_valid():
-    jsonschema.Draft7Validator.check_schema(service.NEW_IMPORT_SCHEMA)
+    jsonschema.Draft7Validator.check_schema(new_import.NEW_IMPORT_SCHEMA)
 
 
 good_json = {"path": f"https://{translate.VALID_NETLOCS[0]}/some/path", "filetype": "pfb"}

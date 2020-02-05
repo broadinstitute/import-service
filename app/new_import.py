@@ -4,7 +4,6 @@ import logging
 
 from app import translate
 from app.util import exceptions
-from app.server import requestutils
 from app.db import db, model
 from app.external import sam, pubsub
 from app.auth import user_auth

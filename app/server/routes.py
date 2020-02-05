@@ -2,7 +2,7 @@ import flask
 import json
 from typing import Dict, Callable
 
-from app import service, translate, status
+from app import new_import, translate, status
 import app.auth.service_auth
 from app.server.requestutils import httpify_excs, pubsubify_excs
 
@@ -11,9 +11,9 @@ routes = flask.Blueprint('import-service', __name__, '/')
 
 @routes.route('/<ws_ns>/<ws_name>/imports', methods=["POST"])
 @httpify_excs
-def new_import(ws_ns, ws_name) -> flask.Response:
+def create_import(ws_ns, ws_name) -> flask.Response:
     """Accept an import request"""
-    return flask.make_response(service.handle(flask.request, ws_ns, ws_name))
+    return flask.make_response(new_import.handle(flask.request, ws_ns, ws_name))
 
 
 @routes.route('/<ws_ns>/<ws_name>/imports/<import_id>', methods=["GET"])
