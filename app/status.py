@@ -8,8 +8,6 @@ from app.db.model import ImportStatus
 from app.external import sam
 from app.util import exceptions
 
-from typing import Dict
-
 
 def handle_get_import_status(request: flask.Request, ws_ns: str, ws_name: str, import_id: str) -> flask.Response:
     access_token = user_auth.extract_auth_token(request)
