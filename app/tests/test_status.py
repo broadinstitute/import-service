@@ -4,6 +4,7 @@ from app import translate
 from app.auth import userinfo
 from app.db import db
 from app.db.model import *
+from app.server.requestutils import PUBSUB_STATUS_NOTOK
 from app.tests import testutils
 
 good_json = {"path": f"https://{translate.VALID_NETLOCS[0]}/some/path", "filetype": "pfb"}
@@ -73,3 +74,119 @@ def test_get_all_running_with_one(client):
     resp = client.get('/namespace/name/imports?running_only', headers=good_headers)
     assert resp.status_code == 200
     assert resp.get_json(force=True) == [{"id": import_id, "status": ImportStatus.Pending.name}]
+
+
+@pytest.mark.usefixtures("incoming_valid_pubsub")
+def test_good_update_status(fake_import, client):
+    """External service moves import from existing status to wherever."""
+    with db.session_ctx() as sess:
+        sess.add(fake_import)
+
+    resp = client.post("/_ah/push-handlers/receive_messages",
+                       json=testutils.pubsub_json_body({"action": "status", "import_id": fake_import.id,
+                                                        "current_status": "Pending",
+                                                        "new_status": "Upserting"}))
+
+    with db.session_ctx() as sess2:
+        imp: Import = Import.get(fake_import.id, sess2)
+        assert imp.status == ImportStatus.Upserting
+
+    assert resp.status_code == 200
+
+
+@pytest.mark.usefixtures("incoming_valid_pubsub")
+def test_fail_update_status_wrong_current(fake_import, client):
+    """External service attempts to move import from wrong current status to wherever."""
+    with db.session_ctx() as sess:
+        sess.add(fake_import)
+
+    resp = client.post("/_ah/push-handlers/receive_messages",
+                       json=testutils.pubsub_json_body({"action": "status", "import_id": fake_import.id,
+                                                        "current_status": "ReadyForUpsert",
+                                                        "new_status": "Upserting"}))
+
+    with db.session_ctx() as sess2:
+        imp: Import = Import.get(fake_import.id, sess2)
+        assert imp.status == ImportStatus.Pending  # unchanged
+
+    assert resp.status_code == 200
+
+
+@pytest.mark.usefixtures("incoming_valid_pubsub")
+def test_good_update_status_to_error_with_message(fake_import, client):
+    """External service moves import from wherever to Error, providing a message."""
+    with db.session_ctx() as sess:
+        sess.add(fake_import)
+
+    resp = client.post("/_ah/push-handlers/receive_messages",
+                       json=testutils.pubsub_json_body({"action": "status", "import_id": fake_import.id,
+                                                        "new_status": "Error",
+                                                        "error_message": "blah"}))
+
+    with db.session_ctx() as sess2:
+        imp: Import = Import.get(fake_import.id, sess2)
+        assert imp.status == ImportStatus.Error
+        assert "blah" in imp.error_message
+
+    assert resp.status_code == 200
+
+
+@pytest.mark.usefixtures("incoming_valid_pubsub")
+def test_good_update_status_to_error_no_message(fake_import, client):
+    """External service moves import from wherever to Error, providing no message."""
+    with db.session_ctx() as sess:
+        sess.add(fake_import)
+
+    resp = client.post("/_ah/push-handlers/receive_messages",
+                       json=testutils.pubsub_json_body({"action": "status", "import_id": fake_import.id,
+                                                        "new_status": "Error"}))
+
+    with db.session_ctx() as sess2:
+        imp: Import = Import.get(fake_import.id, sess2)
+        assert imp.status == ImportStatus.Error
+        assert imp.error_message == "External service set this import to Error"
+
+    assert resp.status_code == 200
+
+
+@pytest.mark.usefixtures("incoming_valid_pubsub")
+def test_fail_update_status_from_terminal(fake_import: Import, client):
+    """External service attempts to move import from terminal status, fails."""
+    with db.session_ctx() as sess:
+        fake_import.status = ImportStatus.Done
+        sess.add(fake_import)
+
+    with db.session_ctx() as sess3:
+        import pdb
+        pdb.set_trace()
+        imp = Import.get(fake_import.id, sess3)
+        print("hmm")
+
+    resp = client.post("/_ah/push-handlers/receive_messages",
+                       json=testutils.pubsub_json_body({"action": "status", "import_id": fake_import.id,
+                                                        "current_status": "Pending",
+                                                        "new_status": "Upserting"}))
+
+    with db.session_ctx() as sess2:
+        imp: Import = Import.get(fake_import.id, sess2)
+        assert imp.status == ImportStatus.Done  # unchanged
+
+    assert resp.status_code == PUBSUB_STATUS_NOTOK
+
+
+@pytest.mark.usefixtures("incoming_valid_pubsub")
+def test_fail_update_status_from_terminal_to_error(fake_import: Import, client):
+    """External service attempts to move import from terminal status, fails, even if the new status is Error."""
+    with db.session_ctx() as sess:
+        fake_import.status = ImportStatus.Done
+        sess.add(fake_import)
+
+    resp = client.post("/_ah/push-handlers/receive_messages",
+                       json=testutils.pubsub_json_body({"action": "status", "import_id": fake_import.id,
+                                                        "new_status": "Error"}))
+
+    with db.session_ctx() as sess2:
+        imp: Import = Import.get(fake_import.id, sess2)
+        assert imp.status == ImportStatus.Done  # unchanged
+
+    assert resp.status_code == PUBSUB_STATUS_NOTOK

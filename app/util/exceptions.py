@@ -3,7 +3,7 @@ import logging
 import traceback
 
 from typing import Optional, List, NamedTuple
-from app.db.model import Import
+from app.db.model import Import, ImportStatus
 from app.auth.userinfo import UserInfo
 
 
@@ -22,8 +22,9 @@ class ISvcException(Exception):
 
 
 class BadJsonException(ISvcException):
-    def __init__(self, message):
-        super().__init__(message, 400)
+    def __init__(self, message, audit_log: bool = True):
+        audit_logs = [AuditLog(message, logging.WARN)] if audit_log else None
+        super().__init__(message, 400, audit_logs=audit_logs)
 
 
 class BadPubSubTokenException(ISvcException):
@@ -83,3 +84,12 @@ class SystemException(ISvcException):
                                f"eid {eid}: \n" +
                                f"{''.join(traceback.format_tb(tb))}", logging.ERROR)]
         super().__init__(user_msg, 500, imprts, audit_logs=audit_logs)
+
+
+class TerminalStatusChangeException(ISvcException):
+    """An external service requested changing the state of an import, but the import was already in a terminal state."""
+    def __init__(self, import_id: str, requested_status: ImportStatus, current_terminal_status: ImportStatus):
+        eid = uuid.uuid4()
+        msg = f"Requested illegal status change on import {import_id} from terminal status {current_terminal_status} to {requested_status}"
+        audit_logs = [AuditLog(msg, logging.WARN)]
+        super().__init__(msg, 400, audit_logs=audit_logs)

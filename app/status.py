@@ -1,5 +1,6 @@
 import flask
 import json
+import logging
 from sqlalchemy.orm.exc import NoResultFound
 
 from app.auth import user_auth
@@ -45,3 +46,36 @@ def handle_list_import_status(request: flask.Request, ws_ns: str, ws_name: str) 
         import_statuses = [{"id": imprt.id, "status": imprt.status.name} for imprt in import_list]
 
         return flask.make_response((json.dumps(import_statuses), 200))
+
+
+def external_update_status(msg: Dict[str, str]) -> flask.Response:
+    """A trusted external service has told us to update the status for this import.
+    Change the status, but sanely."""
+    import_id = msg["import_id"]
+    new_status: ImportStatus = ImportStatus.from_string(msg["new_status"])
+
+    if new_status != ImportStatus.Error and "current_status" not in msg:
+        raise exceptions.BadJsonException(f"Missing current_status key from update status request for import {import_id}", audit_log = True)
+
+    update_successful = True
+    with db.session_ctx() as sess:
+        imp: model.Import = model.Import.get(import_id, sess)
+
+        # Quick summary:
+        #   If the import is in a terminal status, the caller did something bad.
+        #   If the caller is setting to error, ignore current status and jump straight there.
+        #   Otherwise update the status if the caller got the previous one correct.
+        if imp.status in ImportStatus.terminal_statuses():
+            raise exceptions.TerminalStatusChangeException(import_id, new_status, imp.status)
+
+        if new_status == ImportStatus.Error:
+            imp.write_error(msg.get("error_message", "External service set this import to Error"))
+
+        else:
+            current_status: ImportStatus = ImportStatus.from_string(msg["current_status"])
+            update_successful = model.Import.update_status_exclusively(import_id, current_status, new_status, sess)
+
+    if not update_successful:
+        logging.warning(f"Failed to update status for import {import_id}: expected {current_status}, got {imp.status}.")
+
+    return flask.make_response("ok")
