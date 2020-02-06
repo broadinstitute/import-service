@@ -155,23 +155,19 @@ zonk fixture cleanup
 
 If you had set the fixture scope to `"session"`, you'd only get the cleanup at the end of the test run.
 
-For testing in our project, we define two important fixtures: a Flask client that wraps all the HTTP cloud function endpoints, and a database session that rolls back after the test completes.
+#### Database fixtures
 
-# TODO keep going from here
+`conftest.py` defines the fixture `_db_internal()` which creates a sqlite in-memory database and [monkeypatches](https://stackoverflow.com/questions/5626193/what-is-monkey-patching) the database engine defined in the `db` module to point to the in-memory database, rather than requiring a real connection to a real database.
 
-#### The database session fixture
+The fixture `dbconnection()` creates a new connection to that database for every test function invocation. The parameter `autouse=True` in the fixture decorator says to create this fixture at the beginning of _every_ test function, not just where it's requested in the function parameters. The fixture ensures that the database is restored to its original (empty) state by dropping all the data.
 
-The fixture `dbsession()` in `conftest.py` creates a new database session for every test function invocation. The parameter `autouse=True` in the fixture decorator says to create this fixture at the beginning of _every_ test function, not just where it's requested in the function parameters. This is necessary because it [monkeypatches](https://stackoverflow.com/questions/5626193/what-is-monkey-patching) the `get_session()` function on the `db` module to return a single session whose lifetime is scoped to the test function.
-
-This means that not only tests, but application code run by tests, uses the same session for the duration of the test function. Anything that happens during that session, including any commits and new-session chicanery, happens inside a transaction associated with the database connection. Once the test function completes, the transaction is rolled back and the database is restored to its original (empty) state.
-
-You can see tests covering database behaviour in `functions/tests/test_db.py`.
+You can see tests covering database behaviour in `/app/tests/test_db.py`.
 
 ### Mocking objects
 
 Python testing makes heavy use of mocks, often replacing functions in modules to return a mock object with faked member variables.
 
-You can see some examples in `functions/test/test_sam.py`, where we use mocking to patch the call to `requests.get` to fake an HTTP response without making one for real. If you're feeling brave, `functions/test/test_auth.py` mocks functions on both the Rawls and Sam modules, making some function calls return exceptions and others return predefined values.
+You can see some examples in `/app/tests/test_sam.py`, where we use mocking to patch the call to `requests.get` to fake an HTTP response without making one for real. If you're feeling brave, `/app/tests/test_user_auth.py` mocks functions on both the Rawls and Sam modules, making some function calls return exceptions and others return predefined values.
 
 Figuring out how to refer to the function you want to patch depends on how your imports are organized. Let's say we want to mock `bar.expensive()` in this examples:
 
@@ -197,9 +193,9 @@ def somefunc():
 
 You would need to patch `foo.expensive`, because you've now imported the function call `expensive` directly into the scope of `foo`.
 
-This can take a bit of trial and error to figure out -- and sometimes changing your import statements. The top of `functions/common/auth.py` used to say `from .rawls import *`, but that made it difficult to patch the functions in `rawls`. So I ended up doing `from ..common import rawls`, which made life easier.
-
 For more information on this, see [Where to patch](https://docs.python.org/3/library/unittest.mock.html#where-to-patch) in the documentation for the `mock` library. A better understanding of the difference between `mock.patch()` and `mock.patch.object()` might also help clean the code up; [here](https://stackoverflow.com/questions/29152170/what-is-the-difference-between-mock-patch-object-and-mock-patch) is a starting point if you want to go down that rabbithole.
+
+Being consistent in how you define your imports helps. As good practice, write your import statements starting from the top level of the project, i.e. `import app.foo.bar` instead of `import .foo.bar`.
 
 ## Type hinting
 
@@ -228,24 +224,6 @@ If this happens you can add a new section in `mypy.ini` with an `ignore-missing-
 
 ## Deployment and smoke testing
 
-Run `./deployall.sh`. You will need a copy of `secrets.yaml` in the root of the repo, which is not checked in because it's full of secrets. `secrets.conf` is the to-be-templated version, though the secrets aren't stored in vault and there's no templating mechanism built yet. Ask Hussein if you want the secrets.
+Run `./deployall.sh`. You will need a copy of `app.yaml` in the root of the repo, which is not checked in because it's full of secrets. `app.yaml.ctmpl` is the to-be-templated version, though the secrets aren't stored in vault and there's no templating mechanism built yet. Ask Hussein if you want the secrets.
 
-Secrets are passed in to the Cloud Function as environment variables. Otherwise the deploy script just registers the two functions with their corresponding HTTP and pubsub triggers and turns the timeout up to the max.
-
-In lieu of a proper set of integration tests, there's a very simple smoke test script. Running `./smoketest.sh` will first ping the import service, then put a message on the import task's pubsub queue. It will prompt you to visually check its output.
-
-You'll need to be `gcloud auth login`'d to your `@broadinstitute.org` account for both the deployment and smoke test scripts, as both work in `broad-dsde-dev`.
-
-# Things still to do
-
-This list is separate to the tasks outlined in [the epic](https://broadworkbench.atlassian.net/browse/AS-128), and is very code-oriented.
-
-* Hook up the auth code to the HTTP function so we can authorize users (Hussein hopes to have this done before vaca)
-* CI
-* Figure out how to stream files to/from GCS buckets without localizing them
-* Figure out how to chunk PFBs
-* Use [sqlalchemy-repr](https://github.com/manicmaniac/sqlalchemy-repr) to avoid the gross `__repr__` definition in database model classes (low prio)
-
-More involved:
-* Move to GAE
-* Use [Alembic](https://pypi.org/project/alembic/) for database migrations
+Secrets are passed into GAE as environment variables. The deploy script creates the pubsub topics and subscriptions necessary and deploys the app. You'll need to be `gcloud auth login`'d to your `@broadinstitute.org` account to run it, as it works in `broad-dsde-dev`.
