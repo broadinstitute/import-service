@@ -1,68 +1,68 @@
 # Walkthrough
 
-This is a Python 3.7 project containing two Google Cloud Functions. My focus so far has been on building out the structure of the project to make later development go smoothly. As a result, this walkthrough will touch on a lot of separate pieces -- hopefully in a way that you don't have to think about them too much in future :)
+This is a Python 3.7 project containing a Google App Engine application, which is also a [Flask](https://flask.palletsprojects.com/) application.
 
 I strongly advise you to keep the GitHub repo (or your IDE) open while reading this, so you can refer to the code in context. Additionally, terminal code in this walkthrough assumes you've set up your Python virtualenvironment as described in the [readme](README.md), so if you haven't done that and see `(venv) $` in some code snippet, you'll need to do that if you want to follow along.
 
 #### What does this do?
 
-Please read the tech doc [here](https://docs.google.com/document/d/1MeL9J5UqhtCg6SLD2Z9S_SsX3L9jYlZnSpfn2HJptc8/edit#).
+It accepts an import request through HTTP (a path to a gen3 .pfb file), translates it to the Rawls batchUpsert format, and then passes that file on to Rawls to import into the user's chosen workspace.
 
-At the time of writing, there are two Google Cloud Functions:
-
-1. The "import service", an HTTP function which accepts some placeholder JSON (that will ultimately be an import request) and saves a new import job to the database;
-2. An "import task", a background function triggered from a Pub/Sub message. It looks up a job ID (provided in the Pub/Sub message) in the database.
-
-Neither of these are in their final forms; I wanted to get an example of each working before fleshing them out.
+The tech doc [here](https://docs.google.com/document/d/1MeL9J5UqhtCg6SLD2Z9S_SsX3L9jYlZnSpfn2HJptc8/edit#) is out of date but gives some sense of its place within the Terra ecosystem.
 
 ### Finding your way around
 
 A very high-level summary of what you can find in this repo:
 
-`main.py` is the entrypoint file for all cloud functions in this repo. Each function in this file corresponds to a single deployed cloud function.
+`main.py` is the entrypoint. All it does is create the Flask app.
 
-The implementation of each cloud function can be found in its corresponding module, e.g. the import service is in `functions/service.py`.
+Pretty much everything else lives under `/app`. The files directly inside the `/app` directory are the main business logic of the service.
 
-Code shared across multiple cloud functions is in `functions/common/`.
+The other important file is `/app/server/routes.py`. This lists the application's endpoints, dispatching out to other classes to actually handle the requests.
 
-Tests live in `functions/tests/`. The special file `functions/conftest.py` is pytest's configuration and fixture-definition file.
+Tests live in `app/tests/`. The special file `app/tests/conftest.py` is pytest's configuration and fixture-definition file.
+
+
+| directory | description |
+|-----|------------------------------------------------------------------------------|
+| `/app/auth` | Holds authn/z code for both the application's service account, and the user. |
+| `/app/db`  | Database and table definitions.   |
+| `/app/external`  | Functions that call other GCP and Terra services.  |
+| `/app/server`  | Code handling incoming requests to this application. |
+| `/app/translators`  | Code to translate between various filetypes (e.g. pfb to Rawls batchUpsert). |
+| `/app/util`  | Utilities, like exception classes. |
+
 
 At the root of the repo, you can also find:
 
 * The Python requirements file
 * Shell scripts for type linting, unit testing, deployment, and smoke testing (`*.sh`)
 * Initialization files for mypy (the type linter) and pytest (the test framework)
-* `secrets.conf`, a placeholder template-ish file that, when filled in, should be turned into `secrets.yaml`.
+* `app.yaml.ctmpl`, a placeholder template-ish file that, when filled in, should be turned into `app.yaml`.
 
 # Code walkthrough
 
+## Route handling `/app/server/routes.py`
+
+Each function in this file corresponds to one endpoint that the application exposes. It handles URL parsing but mainly dispatches messages out to other modules. The decorator `@httpify_excs` catches any exceptions the code throws and turns them into their appropriate non-200 HTTP return values. If the code is trying to operate on a particular import, the exception has the option to set the import to its `Error` state and populate a message. This code lives in `/app/server/requestutils.py`.
+
+The special route `/_ah/push-handlers/receive_messages` is the endpoint that GCP Pub/Sub hits in the service's [push subscription](https://cloud.google.com/pubsub/docs/push). We expect that all incoming messages store their information only in message attributes, not the message's bytes-data. We switch on the `action` key to determine which handler gets the message. The decorator `@pubsubify_excs` is the pubsub version of `@httpify_excs`; it's slightly different since Google will retry pubsub message delivery based on the returned HTTP status code.
+
 ## Handlers
 
-#### The Cloud Functions entrypoint `main.py`
+#### Creating new imports `/app/new_import.py`
 
-Google's implementation of HTTP Cloud Functions is... funny. Under the hood, HTTP functions are a [Flask](https://flask.palletsprojects.com/) app, but the app setup and routing are hidden from you. When deploying the Cloud Function, you specify a function in `main.py` that acts as the entrypoint for an incoming HTTP request. From the point of view of the code, that function is called out of nowhere, with a `flask.Request` object as a parameter. Want Flask to process the request for you in some way, e.g. extracting parameters `foo` and `bar` from the URL `/api/<foo>/<bar>/doSomething`? Tough. You have to it yourself.
+This is the handler for creating new imports. It does the following:
 
-In order to keep this project unit-testable, we try to escape the grip of Cloud Functions as soon as possible. Both functions (both HTTP and background) defined in `main.py` thus call out to a handler in a different module as soon as possible. We then test the handlers and rely on integration testing to make sure the Cloud Function hookup works correctly.
-
-There are two functions defined in `main.py`:
-
-`iservice` is the import service, an HTTP Cloud Function. The decorator `@httpify_excs` catches any exceptions the code throws and turns them into their appropriate non-200 HTTP return values. The deployment script (`deployall.sh`) has it triggered by an HTTP call to `/iservice`.
-
-`taskchunk` is a sample "import task", which at this point is just a sample [Background Cloud Function triggered by Pub/Sub](https://cloud.google.com/functions/docs/writing/background#cloud-pubsub-example). It expects all its inputs to come from the Pub/Sub message attributes (a key-value map), and passes that on to the handler.
-
-#### The import service `functions/service.py`
-
-This is the handler for the import service. HTTP Cloud Functions accept all HTTP method types, and pass all calls to any URL under the registered path to your single deployed handler. So if you've deployed your cloud function at `/iservice`, it will receive HTTP calls at `GET /iservice` but also `POST /iservice/beep/1/boop/blorp` and everything in between.
-
-This handler does the following:
-
-* checks to see that the incoming request is a `POST`
+* extracts the user's auth token and calls Sam as them to see if they're a real user
+* calls Rawls with the requested workspace to see if the user has permission to import entities (aka workspace-write)
 * validates the incoming JSON body against a schema using the `jsonschema` library
 * creates a new UUID to represent the import request
 * saves a new row in the database to represent that import, with the UUID
+* puts a message on the import service Pub/Sub queue to translate the new file
 * returns the UUID in the HTTP response
 
-#### A background function `functions/chunk_task.py`
+#### File translation `/app/translate.py`
 
 This is a placeholder background function. When it grows up it wants to be the "chunk" import task, but for now it pulls a parameter out of the Pub/Sub message and looks it up in the database. Because background functions don't return anything, it just logs the result, which you can see in the Cloud Function logs in the GCP console.
 
