@@ -31,7 +31,7 @@ def handle(msg: Dict[str, str]) -> flask.Response:
     with db.session_ctx() as sess:
         # flip the status to Translating, and then get the row
         update_successful = Import.update_status_exclusively(import_id, ImportStatus.Pending, ImportStatus.Translating, sess)
-        import_details: Import = Import.reacquire(import_id, sess)
+        import_details: Import = Import.get(import_id, sess)
 
     if not update_successful:
         # this import wasn't in pending. most likely this means that the pubsub message we got was delivered twice,

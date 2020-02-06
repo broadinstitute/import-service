@@ -51,3 +51,22 @@ def test_db_session_ctx_close(fake_import: model.Import):
     # on session close, see https://bit.ly/33S307r )
     all_imports = db.get_session().query(model.Import).all()
     assert len(all_imports) == 1
+
+
+def test_raise_inside_session(fake_import: model.Import):
+    """Throwing an exception inside a session should leave the rest of the database as-is.
+    This seems obvious, but there was a bug in the old version of our database test harness where raising an exception
+    inside a session_ctx rolled back all database work done inside the test function."""
+    with db.session_ctx() as sess:
+        sess.add(fake_import)
+        sess.commit()
+
+    try:
+        with db.session_ctx() as sess2:
+            raise NotImplementedError
+    except NotImplementedError:
+        pass
+
+    with db.session_ctx() as sess3:
+        imp: model.Import = model.Import.get(fake_import.id, sess3)
+        assert imp is not None

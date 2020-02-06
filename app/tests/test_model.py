@@ -13,7 +13,7 @@ def test_reacquire(fake_import: model.Import):
         sess.add(fake_import)
 
     with db.session_ctx() as sess2:
-        reacquired: model.Import = model.Import.reacquire(fake_import.id, sess2)
+        reacquired: model.Import = model.Import.get(fake_import.id, sess2)
         assert fake_import == reacquired
 
 

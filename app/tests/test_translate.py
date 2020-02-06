@@ -136,7 +136,7 @@ def test_golden_path(fake_import, fake_publish_rawls, client):
 
     # import should be updated to next step
     with db.session_ctx() as sess:
-        imp: model.Import = model.Import.reacquire(fake_import.id, sess)
+        imp: model.Import = model.Import.get(fake_import.id, sess)
         assert imp.status == model.ImportStatus.ReadyForUpsert
 
     # rawls should have been told to do something
@@ -157,7 +157,7 @@ def test_forbidden_pfb(fake_import, fake_publish_rawls, client):
 
     # import should be set to error
     with db.session_ctx() as sess:
-        imp: model.Import = model.Import.reacquire(fake_import.id, sess)
+        imp: model.Import = model.Import.get(fake_import.id, sess)
         assert imp.status == model.ImportStatus.Error
         assert "Forbidden" in imp.error_message
 
@@ -178,7 +178,7 @@ def test_junk_pfb(fake_import, fake_publish_rawls, client):
 
     # import should be set to error
     with db.session_ctx() as sess:
-        imp: model.Import = model.Import.reacquire(fake_import.id, sess)
+        imp: model.Import = model.Import.get(fake_import.id, sess)
         assert imp.status == model.ImportStatus.Error
         assert "Error translating file" in imp.error_message
 
@@ -201,7 +201,7 @@ def test_bad_gcs(fake_import, fake_publish_rawls, client):
 
     # import should be set to error
     with db.session_ctx() as sess:
-        imp: model.Import = model.Import.reacquire(fake_import.id, sess)
+        imp: model.Import = model.Import.get(fake_import.id, sess)
         assert imp.status == model.ImportStatus.Error
         assert "System error" in imp.error_message
 
