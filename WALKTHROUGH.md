@@ -64,40 +64,54 @@ This is the handler for creating new imports. It does the following:
 
 #### File translation `/app/translate.py`
 
-This is a placeholder background function. When it grows up it wants to be the "chunk" import task, but for now it pulls a parameter out of the Pub/Sub message and looks it up in the database. Because background functions don't return anything, it just logs the result, which you can see in the Cloud Function logs in the GCP console.
+Handles translation of files from one type to another. Ultimately, this grabs the file from the path the user provided, opens a file-like object to GCS to put the translated batchUpsert file, and then does the translation. Classes to translate between formats live in `/app/translators/`.
 
-## Utilities
+It is important that everything here streams, as GAE VMs have a 2GB memory limit:
+* Streaming down the file from the source, which under the hood uses [urllib.request.urlopen](https://docs.python.org/3/library/urllib.request.html#urllib.request.urlopen).
+* Streaming the translation. The actual translation function `PFBToRawls.translate()` returns an iterator that yields new elements from each record in the read PFB. The underlying `pypfb` library also streams over the file.
+* Converting the individual batchUpsert objects to JSON uses the [iterencode](https://docs.python.org/3/library/json.html#json.JSONEncoder.iterencode) function of Python's native json library.
+* `gcsfs` library gives a file-like object that can be incrementally written to.
 
-There's more to this codebase than three files! A lot of it is either working behind the scenes, or just not hooked up yet. Come with me as we discover the hairy internals...
+My use of the word "stream" here isn't really Pythonic vocabulary. [Iterators, generators, and generator expressions](https://anandology.com/python-practice-book/iterators.html) can be strung together to do entire transformations element-wise. That link has more information, but if you see `for x in foo`, `yield`, or parens where you might expect to see square brackets in a list comprehension, like `(x for x in foo)` -- then you're in iterator-land, and you can chain operations on them together without keeping the entire collection in memory.
+
+Once the translation is complete it sends a pubsub message to Rawls to import the batchUpsert file.
+
+#### Status handling `/app/status.py`
+
+This handles getting the status for existing imports. It also provides a pubsub message that "trusted external services" (i.e. Rawls, which is the only other SA allowed to write to the import service's pubsub queue) can send to update the status of an import.
+
+
+## The guts
 
 ### Database
 
-This project uses [SQLAlchemy](https://docs.sqlalchemy.org/en/13/) as its database library. SQLAlchemy was chosen because it's the example Google uses when [showing you how to connect to Cloud SQL from Cloud Functions](https://cloud.google.com/sql/docs/mysql/connect-functions#connecting_to); no further research was done. It seems to be popular in the Python community.
+This project uses [SQLAlchemy](https://docs.sqlalchemy.org/en/13/) as its database library. SQLAlchemy was chosen because it's the example Google uses when [showing you how to connect to Cloud SQL from Python](https://cloud.google.com/sql/docs/mysql/connect-functions#connecting_to); no further research was done. It seems to be popular in the Python community.
 
 SQLAlchemy is an [ORM](https://stackoverflow.com/questions/1279613/what-is-an-orm-how-does-it-work-and-how-should-i-use-one). You probably want to read their [tutorial](https://docs.sqlalchemy.org/en/13/orm/tutorial.html) at some point, though I would stop after you've finished reading the "Querying" section.
 
-**Modelling data** `functions/common/model.py`
+**Modelling data** `/app/db/model.py`
 
-Like Scala's Slick library, SQLAlchemy lets you map database rows into classes defined in your code. You can see the mapping for the `Import` class (and corresponding table) in `functions/common/model.py`. The class members define table columns and their types; the `__init__()` constructor creates an instance of the object which you can later add to the database. There's an example of that in the import service.
+Like Scala's Slick library, SQLAlchemy lets you map database rows into classes defined in your code. You can see the mapping for the `Import` class (and corresponding table) in `/app/db/model.py`. The class members define table columns and their types; the `__init__()` constructor creates an instance of the object which you can later add to the database.
 
-**Connection and transaction management** `functions/common/db.py`
+**Connection and transaction management** `/app/db/db.py`
 
-Google recommends [keeping expensive things in global variables so they can be reused across repeated Cloud Function invocations](https://cloud.google.com/functions/docs/bestpractices/tips#use_global_variables_to_reuse_objects_in_future_invocations). In practice, this means we store both the database connection information and a session object globally. However, reusing the session object across multiple Cloud Function invocations can result in some _very_ strange behaviour if you're not careful to commit your transaction and close the session before the Cloud Function returns. Application code should avoid calling `db.get_session()` directly and instead use `with db.session_ctx() as session`, which will handle cleanup for you.
+GAE maintains global variables across repeated invocations that use the same VM, so you can skip doing expensive setup operations by leaving thigns there. We do this with spinning up the database engine. To get hold of a database session so you can do queries, you should generally use `with db.session_ctx() as session`, which will automatically commit for you once the `with` block completes, and rollback if there's an exception.
 
-Note also that tucked away in the definition of `get_session()` is a call to `model.Base.metadata.create_all()`. This is what creates the database tables if they don't exist. To my knowledge it does _not_ handle migrations if the table exists but columns are modified (think Liquibase); at some point in the future it's worth looking into the [Alembic](https://pypi.org/project/alembic/) library for that.
+Note also that tucked away in the definition of `get_session()` is a call to `model.Base.metadata.create_all()`. This is what creates the database tables if they don't exist. It does _not_ handle migrations if the table exists but columns are modified (think Liquibase); we have an [open ticket](https://broadworkbench.atlassian.net/browse/AS-184) to incorporate some library to do that, probably [Alembic](https://pypi.org/project/alembic/).
 
 **Warning: SQLAlchemy can be weird**
 
 SQLAlchemy's behaviour can be confusing to people coming from Scala's Slick. In particular, it adds objects to the database lazily, not when you ask it to. This means that if you tell it to add a `Foo` object, and then call `session.execute("SQL select * from foos")`, you might not get back what you expect. See the [Gotchas](GOTCHAS.md#sqlalchemy) for the correct way to do this, as well as some other gotchas you should definitely know.
 
 
-### Auth\[n/z\] `functions/common/auth.py`
+### Auth\[n/z\] `/app/auth/*.py`
 
-This is still very WIP and hasn't been hooked up to anything yet. The intention here is to allow HTTP Cloud Functions to extract the OAuth bearer token from the header of incoming requests and use it to ask Rawls and Sam if the user has access to the workspace.
+`service_auth.py` allows you to get both OAuth access tokens and `Credentials` objects to use in the Google Cloud client libraries for Python, using the import service's service account. `user_auth.py` covers finding out if the user is allowed to do things, usually by borrowing the access token they sent in their request to identify as them to Rawls.
 
-### Exception handling `functions/common/httputils.py`, `functions/common/exceptions.py`
 
-Failures raise exceptions which are caught by the `@httpify_excs` decorator used in `main.py`. This decorator is defined at `functions/common/httputils.py`: you can see it takes a function, calls it, catches any exceptions, and returns an HTTP response with that exception's status code. The exception classes are defined in `functions/common/exceptions.py`.
+### Exception handling `/app/server/requestutils.py`, `/app/util/exceptions.py`
+
+Failures raise exceptions which are caught by the `@httpify_excs` decorator used in `routes.py`. This decorator is defined at `/app/server/requestutils.py`: you can see it takes a function, calls it, catches any exceptions, and returns an HTTP response with that exception's status code. Same goes for `@pubsubify_excs` as described above. The exception classes are defined in `/app/util/exceptions.py`.
 
 ## Testing
 
@@ -143,17 +157,7 @@ If you had set the fixture scope to `"session"`, you'd only get the cleanup at t
 
 For testing in our project, we define two important fixtures: a Flask client that wraps all the HTTP cloud function endpoints, and a database session that rolls back after the test completes.
 
-#### The Flask client fixture
-
-If you open `functions/tests/test_service.py` you'll see that some of the test functions take a parameter `client`, and then use it to make requests. This is fixture `client()` in `conftest.py`. This fixture is run once per test run (`scope="session"` in the `@pytest.fixture` decorator), and does the following:
-
-* Creates a Flask app in debug mode
-* Registers each HTTP function in `main.py` as an endpoint in the Flask app
-* Returns a test client pointing to that app
-
-I mentioned earlier that Google's implementation of HTTP Cloud Functions uses Flask without giving developers proper access to it. In a sane Flask project, we'd have created routes using `@app.route()` [as per normal Flask procedure](https://flask.palletsprojects.com/en/1.1.x/quickstart/#routing), and would simply be able to call `app.test_client()` to get a test client that uses the same routing.
-
-Unfortunately, Google hides the underlying Flask app and its routing from us, so we have to create an entirely new Flask app for testing, hack in the route handlers ourselves, and try to mimic the behaviour of Cloud Functions as much as possible. This silliness is a good reason to move this project to Google App Engine in the future, but that's not an immediate requirement -- the grossness is at least handled in the fixture.
+# TODO keep going from here
 
 #### The database session fixture
 
