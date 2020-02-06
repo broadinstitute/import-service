@@ -2,6 +2,7 @@ import flask
 import json
 import logging
 from sqlalchemy.orm.exc import NoResultFound
+from typing import Dict
 
 from app.auth import user_auth
 from app.db import db, model
