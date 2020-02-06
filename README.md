@@ -40,6 +40,4 @@ You should make mypy happy before opening a PR. Note that errors in some modules
 
 ### Deployment
 
-Run `./deployall.sh`. You will need a copy of `secrets.yaml` in the root of the repo, which is not checked in because it's full of secrets. `secrets.conf` is the to-be-templated version, though the secrets aren't stored in vault and there's no templating mechanism built yet. Ask Hussein if you want the secrets.
-
-To smoke test a deployment, run `./smoketest.sh`. This will do a few things and prompts you to visually check the output to see if it looks right.
+Run `./deployall.sh`. You will need a copy of `app.yaml` in the root of the repo, which is not checked in because it's full of secrets. `app.yaml.ctmpl` is the to-be-templated version, though the secrets aren't stored in vault and there's no templating mechanism built yet. Ask Hussein if you want the secrets.
