@@ -129,7 +129,7 @@ def test_golden_path(fake_import, fake_publish_rawls, client):
         sess.add(fake_import)
 
     resp = client.post("/_ah/push-handlers/receive_messages",
-                       json=testutils.pubsub_json_body({"action":"translate", "import_id":fake_import.id}))
+                       json=testutils.pubsub_json_body({"action":"translate", "importId":fake_import.id}))
 
     # result should be OK
     assert resp.status_code == 200
@@ -150,7 +150,7 @@ def test_forbidden_pfb(fake_import, fake_publish_rawls, client):
         sess.add(fake_import)
 
     resp = client.post("/_ah/push-handlers/receive_messages",
-                       json=testutils.pubsub_json_body({"action":"translate", "import_id":fake_import.id}))
+                       json=testutils.pubsub_json_body({"action":"translate", "importId":fake_import.id}))
 
     # result should be not-OK
     assert resp.status_code == requestutils.PUBSUB_STATUS_NOTOK
@@ -171,7 +171,7 @@ def test_junk_pfb(fake_import, fake_publish_rawls, client):
             sess.add(fake_import)
 
     resp = client.post("/_ah/push-handlers/receive_messages",
-                       json=testutils.pubsub_json_body({"action":"translate", "import_id":fake_import.id}))
+                       json=testutils.pubsub_json_body({"action":"translate", "importId":fake_import.id}))
 
     # result should be not-OK
     assert resp.status_code == requestutils.PUBSUB_STATUS_NOTOK
@@ -194,7 +194,7 @@ def test_bad_gcs(fake_import, fake_publish_rawls, client):
         sess.add(fake_import)
 
     resp = client.post("/_ah/push-handlers/receive_messages",
-                       json=testutils.pubsub_json_body({"action":"translate", "import_id":fake_import.id}))
+                       json=testutils.pubsub_json_body({"action":"translate", "importId":fake_import.id}))
 
     # result should be not-OK
     assert resp.status_code == requestutils.PUBSUB_STATUS_NOTOK

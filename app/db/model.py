@@ -66,6 +66,13 @@ class ImportStatus(enum.Enum):
     def running_statuses(cls):
         return cls.all_statuses() - cls.terminal_statuses()
 
+    @classmethod
+    def from_string(cls, name: str):
+        try:
+            return ImportStatus[name]
+        except KeyError:
+            raise NotImplementedError(f"Unknown ImportStatus enum {name}")
+
 
 # This is mypy shenanigans so functions inside the Import class can return an instance of type Import.
 # It's basically a forward declaration of the type.
