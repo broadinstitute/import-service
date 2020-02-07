@@ -166,21 +166,3 @@ def test_fail_update_status_from_terminal(fake_import: Import, client):
         assert imp.status == ImportStatus.Done  # unchanged
 
     assert resp.status_code == PUBSUB_STATUS_NOTOK
-
-
-@pytest.mark.usefixtures("incoming_valid_pubsub")
-def test_fail_update_status_from_terminal_to_error(fake_import: Import, client):
-    """External service attempts to move import from terminal status, fails, even if the new status is Error."""
-    with db.session_ctx() as sess:
-        fake_import.status = ImportStatus.Done
-        sess.add(fake_import)
-
-    resp = client.post("/_ah/push-handlers/receive_messages",
-                       json=testutils.pubsub_json_body({"action": "status", "import_id": fake_import.id,
-                                                        "new_status": "Error"}))
-
-    with db.session_ctx() as sess2:
-        imp: Import = Import.get(fake_import.id, sess2)
-        assert imp.status == ImportStatus.Done  # unchanged
-
-    assert resp.status_code == PUBSUB_STATUS_NOTOK

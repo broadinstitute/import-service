@@ -63,23 +63,25 @@ def external_update_status(msg: Dict[str, str]) -> flask.Response:
     with db.session_ctx() as sess:
         imp: model.Import = model.Import.get(import_id, sess)
 
-        # Quick summary:
-        #   If the caller is setting to error, ignore current status and jump straight there.
-        #   If the import is already in a terminal status, the caller did something bad.
-        #   Otherwise update the status if the caller got the previous one correct.
-        if new_status == ImportStatus.Error:
-            imp.write_error(msg.get("error_message", "External service set this import to Error"))
+        # Only think about updating if the statuses are different.
+        if new_status != imp.status:
+            # Quick summary:
+            #   If the caller is setting to error, ignore current status and jump straight there.
+            #   If the import is already in a terminal status, the caller did something bad.
+            #   Otherwise update the status if the caller got the previous one correct.
+            if new_status == ImportStatus.Error:
+                imp.write_error(msg.get("error_message", "External service set this import to Error"))
 
-        elif imp.status in ImportStatus.terminal_statuses():
-            if new_status != imp.status:
+            elif imp.status in ImportStatus.terminal_statuses():
                 raise exceptions.TerminalStatusChangeException(import_id, new_status, imp.status)
-            # else probably a pubsub double delivery, don't stress about it
 
+            else:
+                current_status: ImportStatus = ImportStatus.from_string(msg["current_status"])
+                update_successful = model.Import.update_status_exclusively(import_id, current_status, new_status, sess)
         else:
-            current_status: ImportStatus = ImportStatus.from_string(msg["current_status"])
-            update_successful = model.Import.update_status_exclusively(import_id, current_status, new_status, sess)
+            logging.info(f"Attempt to move import {import_id}: from {imp.status} to {imp.status}. Likely pub/sub double delivery.")
 
     if not update_successful:
-        logging.info(f"Failed to update status for import {import_id}: expected {current_status}, got {imp.status}. Possible pub/sub double delivery.")
+        logging.warning(f"Failed to update status for import {import_id}: expected {current_status}, got {imp.status}.")
 
     return flask.make_response("ok")
