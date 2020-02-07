@@ -1,5 +1,6 @@
 import flask
 import json
+import humps
 from typing import Dict, Callable
 
 from app import new_import, translate, status
@@ -40,7 +41,8 @@ def pubsub_receive() -> flask.Response:
     envelope = json.loads(flask.request.data.decode('utf-8'))
     attributes = envelope['message']['attributes']
 
-    return route_pubsub(attributes["action"], attributes)
+    # humps.decamelize turns camelCase to snake_case in dict keys
+    return route_pubsub(attributes["action"], humps.decamelize(attributes))
 
 
 def route_pubsub(action: str, attributes: Dict[str, str]) -> flask.Response:
