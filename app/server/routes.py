@@ -31,6 +31,13 @@ def import_status_workspace(ws_ns, ws_name) -> flask.Response:
     return status.handle_list_import_status(flask.request, ws_ns, ws_name)
 
 
+# Dispatcher for pubsub messages.
+pubsub_dispatch: Dict[str, Callable[[Dict[str, str]], flask.Response]] = {
+    "translate": translate.handle,
+    "status": status.external_update_status
+}
+
+
 # This particular URL, though weird, can be secured using GCP magic.
 # See https://cloud.google.com/pubsub/docs/push#authenticating_standard_and_urls
 @routes.route('/_ah/push-handlers/receive_messages', methods=['POST'])
@@ -42,14 +49,4 @@ def pubsub_receive() -> flask.Response:
     attributes = envelope['message']['attributes']
 
     # humps.decamelize turns camelCase to snake_case in dict keys
-    return route_pubsub(attributes["action"], humps.decamelize(attributes))
-
-
-def route_pubsub(action: str, attributes: Dict[str, str]) -> flask.Response:
-    """Dispatcher for pubsub messages."""
-    DISPATCH_LOOKUP: Dict[str, Callable[[Dict[str, str]], flask.Response]] = {
-        "translate": translate.handle,
-        "status": status.external_update_status
-    }
-
-    return DISPATCH_LOOKUP[action](attributes)
+    return pubsub_dispatch[attributes["action"]](humps.decamelize(attributes))
