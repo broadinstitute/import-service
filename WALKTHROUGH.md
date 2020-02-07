@@ -78,7 +78,7 @@ Once the translation is complete it sends a pubsub message to Rawls to import th
 
 #### Status handling `/app/status.py`
 
-This handles getting the status for existing imports. It also provides a pubsub message that "trusted external services" (i.e. Rawls, which is the only other SA allowed to write to the import service's pubsub queue) can send to update the status of an import.
+This handles getting the status for existing imports. It also accepts a pubsub message that "trusted external services" (i.e. Rawls, which is the only other SA allowed to write to the import service's pubsub queue) can send to update the status of an import.
 
 
 ## The guts
