@@ -2,7 +2,6 @@ requests==2.22.0
 setuptools==42.0.2
 wheel==0.33.6
 Flask==1.1.1
-flask-compress==1.4.0
 Werkzeug==0.16.0
 MarkupSafe==1.1.1
 Jinja2==2.10.3
