@@ -40,6 +40,7 @@ def test_golden_path(client):
     dbres = sess.query(Import).filter(Import.id == resp.get_data(as_text=True)).all()
     assert len(dbres) == 1
     assert dbres[0].id == str(resp.get_data(as_text=True))
+    assert resp.headers["Content-Type"] == "application/json"
 
 
 @pytest.mark.usefixtures(sam_valid_user, user_has_ws_access)
