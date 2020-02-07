@@ -1,5 +1,6 @@
 import flask
 import json
+import humps
 from typing import Dict, Callable
 
 from app import new_import, translate, status
@@ -13,21 +14,28 @@ routes = flask.Blueprint('import-service', __name__, '/')
 @httpify_excs
 def create_import(ws_ns, ws_name) -> flask.Response:
     """Accept an import request"""
-    return flask.make_response(new_import.handle(flask.request, ws_ns, ws_name))
+    return new_import.handle(flask.request, ws_ns, ws_name)
 
 
 @routes.route('/<ws_ns>/<ws_name>/imports/<import_id>', methods=["GET"])
 @httpify_excs
 def import_status(ws_ns, ws_name, import_id) -> flask.Response:
     """Return the status of an import job"""
-    return flask.make_response(status.handle_get_import_status(flask.request, ws_ns, ws_name, import_id))
+    return status.handle_get_import_status(flask.request, ws_ns, ws_name, import_id)
 
 
 @routes.route('/<ws_ns>/<ws_name>/imports', methods=["GET"])
 @httpify_excs
 def import_status_workspace(ws_ns, ws_name) -> flask.Response:
     """Return the status of import jobs in a workspace"""
-    return flask.make_response(status.handle_list_import_status(flask.request, ws_ns, ws_name))
+    return status.handle_list_import_status(flask.request, ws_ns, ws_name)
+
+
+# Dispatcher for pubsub messages.
+pubsub_dispatch: Dict[str, Callable[[Dict[str, str]], flask.Response]] = {
+    "translate": translate.handle,
+    "status": status.external_update_status
+}
 
 
 # This particular URL, though weird, can be secured using GCP magic.
@@ -40,14 +48,5 @@ def pubsub_receive() -> flask.Response:
     envelope = json.loads(flask.request.data.decode('utf-8'))
     attributes = envelope['message']['attributes']
 
-    return route_pubsub(attributes["action"], attributes)
-
-
-def route_pubsub(action: str, attributes: Dict[str, str]) -> flask.Response:
-    """Dispatcher for pubsub messages."""
-    DISPATCH_LOOKUP: Dict[str, Callable[[Dict[str, str]], flask.Response]] = {
-        "translate": translate.handle,
-        "status": status.external_update_status
-    }
-
-    return DISPATCH_LOOKUP[action](attributes)
+    # humps.decamelize turns camelCase to snake_case in dict keys
+    return pubsub_dispatch[attributes["action"]](humps.decamelize(attributes))

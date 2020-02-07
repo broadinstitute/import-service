@@ -15,7 +15,7 @@ from typing import IO
 from unittest import mock
 
 from app import create_app
-from app.auth import service_auth
+from app.auth import service_auth, userinfo
 from app.db import db, model
 
 
@@ -87,3 +87,23 @@ def pubsub_fake_env(monkeypatch) -> Iterator[None]:
 def fake_pfb() -> Iterator[IO]:
     with open("app/tests/empty.avro", 'rb') as out:
         yield out
+
+
+@pytest.fixture(scope="function")
+def sam_valid_user(monkeypatch):
+    """Makes us think that the current user is valid in Sam."""
+    monkeypatch.setattr("app.external.sam.validate_user",
+                        mock.MagicMock(return_value=userinfo.UserInfo("123456", "hello@bees.com", True)))
+
+
+@pytest.fixture(scope="function")
+def user_has_ws_access(monkeypatch):
+    """Makes us think that the user has access to the workspace in Rawls."""
+    monkeypatch.setattr("app.auth.user_auth.workspace_uuid_with_auth",
+                        mock.MagicMock(return_value="some-uuid"))
+
+
+@pytest.fixture(scope="function")
+def pubsub_publish(monkeypatch):
+    """Replace the publish to google pub/sub with a no-op one"""
+    monkeypatch.setattr("app.external.pubsub.publish_self", mock.MagicMock())
