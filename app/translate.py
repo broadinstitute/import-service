@@ -27,7 +27,7 @@ VALID_NETLOCS = ["gen3-pfb-export.s3.amazonaws.com", "storage.googleapis.com"]
 
 
 def handle(msg: Dict[str, str]) -> flask.Response:
-    import_id = msg["import_id"]
+    import_id = msg["importId"]
     with db.session_ctx() as sess:
         # flip the status to Translating, and then get the row
         update_successful = Import.update_status_exclusively(import_id, ImportStatus.Pending, ImportStatus.Translating, sess)

@@ -83,9 +83,9 @@ def test_good_update_status(fake_import, client):
         sess.add(fake_import)
 
     resp = client.post("/_ah/push-handlers/receive_messages",
-                       json=testutils.pubsub_json_body({"action": "status", "import_id": fake_import.id,
-                                                        "current_status": "Pending",
-                                                        "new_status": "Upserting"}))
+                       json=testutils.pubsub_json_body({"action": "status", "importId": fake_import.id,
+                                                        "currentStatus": "Pending",
+                                                        "newStatus": "Upserting"}))
 
     with db.session_ctx() as sess2:
         imp: Import = Import.get(fake_import.id, sess2)
@@ -101,9 +101,9 @@ def test_fail_update_status_wrong_current(fake_import, client):
         sess.add(fake_import)
 
     resp = client.post("/_ah/push-handlers/receive_messages",
-                       json=testutils.pubsub_json_body({"action": "status", "import_id": fake_import.id,
-                                                        "current_status": "ReadyForUpsert",
-                                                        "new_status": "Upserting"}))
+                       json=testutils.pubsub_json_body({"action": "status", "importId": fake_import.id,
+                                                        "currentStatus": "ReadyForUpsert",
+                                                        "newStatus": "Upserting"}))
 
     with db.session_ctx() as sess2:
         imp: Import = Import.get(fake_import.id, sess2)
@@ -119,9 +119,9 @@ def test_good_update_status_to_error_with_message(fake_import, client):
         sess.add(fake_import)
 
     resp = client.post("/_ah/push-handlers/receive_messages",
-                       json=testutils.pubsub_json_body({"action": "status", "import_id": fake_import.id,
-                                                        "new_status": "Error",
-                                                        "error_message": "blah"}))
+                       json=testutils.pubsub_json_body({"action": "status", "importId": fake_import.id,
+                                                        "newStatus": "Error",
+                                                        "errorMessage": "blah"}))
 
     with db.session_ctx() as sess2:
         imp: Import = Import.get(fake_import.id, sess2)
@@ -138,8 +138,8 @@ def test_good_update_status_to_error_no_message(fake_import, client):
         sess.add(fake_import)
 
     resp = client.post("/_ah/push-handlers/receive_messages",
-                       json=testutils.pubsub_json_body({"action": "status", "import_id": fake_import.id,
-                                                        "new_status": "Error"}))
+                       json=testutils.pubsub_json_body({"action": "status", "importId": fake_import.id,
+                                                        "newStatus": "Error"}))
 
     with db.session_ctx() as sess2:
         imp: Import = Import.get(fake_import.id, sess2)
@@ -157,9 +157,9 @@ def test_fail_update_status_from_terminal(fake_import: Import, client):
         sess.add(fake_import)
 
     resp = client.post("/_ah/push-handlers/receive_messages",
-                       json=testutils.pubsub_json_body({"action": "status", "import_id": fake_import.id,
-                                                        "current_status": "Pending",
-                                                        "new_status": "Upserting"}))
+                       json=testutils.pubsub_json_body({"action": "status", "importId": fake_import.id,
+                                                        "currentStatus": "Pending",
+                                                        "newStatus": "Upserting"}))
 
     with db.session_ctx() as sess2:
         imp: Import = Import.get(fake_import.id, sess2)

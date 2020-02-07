@@ -53,10 +53,10 @@ def external_update_status(msg: Dict[str, str]) -> flask.Response:
     """A trusted external service has told us to update the status for this import.
     Change the status, but sanely.
     It's possible that pub/sub might deliver this message more than once, so we need to account for that too."""
-    import_id = msg["import_id"]
-    new_status: ImportStatus = ImportStatus.from_string(msg["new_status"])
+    import_id = msg["importId"]
+    new_status: ImportStatus = ImportStatus.from_string(msg["newStatus"])
 
-    if new_status != ImportStatus.Error and "current_status" not in msg:
+    if new_status != ImportStatus.Error and "currentStatus" not in msg:
         raise exceptions.BadJsonException(f"Missing current_status key from update status request for import {import_id}", audit_log = True)
 
     update_successful = True
@@ -70,13 +70,13 @@ def external_update_status(msg: Dict[str, str]) -> flask.Response:
             #   If the import is already in a terminal status, the caller did something bad.
             #   Otherwise update the status if the caller got the previous one correct.
             if new_status == ImportStatus.Error:
-                imp.write_error(msg.get("error_message", "External service set this import to Error"))
+                imp.write_error(msg.get("errorMessage", "External service set this import to Error"))
 
             elif imp.status in ImportStatus.terminal_statuses():
                 raise exceptions.TerminalStatusChangeException(import_id, new_status, imp.status)
 
             else:
-                current_status: ImportStatus = ImportStatus.from_string(msg["current_status"])
+                current_status: ImportStatus = ImportStatus.from_string(msg["currentStatus"])
                 update_successful = model.Import.update_status_exclusively(import_id, current_status, new_status, sess)
         else:
             logging.info(f"Attempt to move import {import_id}: from {imp.status} to {imp.status}. Likely pub/sub double delivery.")
