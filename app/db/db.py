@@ -11,7 +11,7 @@ DBSession = sqlalchemy.orm.session.Session
 db_user = os.environ.get("DB_USER")
 db_pass = os.environ.get("DB_PASS")
 db_name = os.environ.get("DB_NAME")
-cloud_sql_connection_name = os.environ.get("CLOUD_SQL_CONNECTION_NAME")
+sql_connection_name = os.environ.get("CLOUD_SQL_CONNECTION_NAME")
 
 # Store the db so it can be reused between GAE invocations.
 _db = None
@@ -24,15 +24,16 @@ def get_session() -> DBSession:
         _db = sqlalchemy.create_engine(
             # Equivalent URL:
             # mysql+pymysql://<db_user>:<db_pass>@/<db_name>?unix_socket=/cloudsql/<cloud_sql_instance_name>
-            sqlalchemy.engine.url.URL(
-                drivername='mysql+pymysql',
-                username=db_user,
-                password=db_pass,
-                database=db_name,
-                query={
-                    'unix_socket': '/cloudsql/{}'.format(cloud_sql_connection_name)
-                }
-            ),
+            #sqlalchemy.engine.url.URL(
+            #    drivername='mysql+pymysql',
+            #    username=db_user,
+            #    password=db_pass,
+            #    database=db_name,
+            #    query={
+            #        'unix_socket': '/cloudsql/{}'.format(cloud_sql_connection_name)
+            #    }
+            #),
+            sql_connection_name, #TODO: make sure we can still support cloudsql
             pool_size=1,
             max_overflow=0
         )
