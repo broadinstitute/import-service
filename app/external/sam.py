@@ -87,3 +87,12 @@ def admin_get_pet_token(google_project: str, user_email: str) -> str:
     else:
         logging.debug(f"Got {resp.status_code} from Sam while trying to get pet key for {google_project}/{user_email}: {resp.text}")
         raise ISvcException(resp.text, resp.status_code)
+
+
+def check_health() -> bool:
+    resp = requests.get(f"{os.environ.get('SAM_URL')}/status")
+
+    if resp.ok:
+        return True
+    else:
+        return False
