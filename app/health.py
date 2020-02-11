@@ -17,8 +17,9 @@ def handle_health_check() -> flask.Response:
     rawls_health = rawls.check_health()
     db_health = check_health()
 
+    isvc_health = all([sam_health, rawls_health, db_health])
 
-    return flask.make_response((json.dumps({"db": db_health, "rawls": rawls_health, "sam": sam_health}), 200))
+    return flask.make_response((json.dumps({"ok": isvc_health, "subsystems": {"db": db_health, "rawls": rawls_health, "sam": sam_health}}), 200))
 
 
 def check_health() -> bool:
