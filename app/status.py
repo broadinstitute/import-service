@@ -2,7 +2,7 @@ import flask
 import json
 import logging
 from sqlalchemy.orm.exc import NoResultFound
-from typing import Dict
+from typing import Dict, List
 
 from app.auth import user_auth
 from app.db import db, model
@@ -11,7 +11,7 @@ from app.external import sam
 from app.util import exceptions
 
 
-def handle_get_import_status(request: flask.Request, ws_ns: str, ws_name: str, import_id: str) -> flask.Response:
+def handle_get_import_status(request: flask.Request, ws_ns: str, ws_name: str, import_id: str) -> model.ImportStatusResponse:
     access_token = user_auth.extract_auth_token(request)
     sam.validate_user(access_token)
 
@@ -24,12 +24,12 @@ def handle_get_import_status(request: flask.Request, ws_ns: str, ws_name: str, i
                 filter(model.Import.workspace_namespace == ws_ns).\
                 filter(model.Import.workspace_name == ws_name).\
                 filter(model.Import.id == import_id).one()
-            return flask.make_response((json.dumps({"id": imprt.id, "status": imprt.status.name}), 200))
+            return imprt.to_status_response()
     except NoResultFound:
         raise exceptions.NotFoundException(message=f"Import {import_id} not found")
 
 
-def handle_list_import_status(request: flask.Request, ws_ns: str, ws_name: str) -> flask.Response:
+def handle_list_import_status(request: flask.Request, ws_ns: str, ws_name: str) -> List[model.ImportStatusResponse]:
     running_only = "running_only" in request.args
 
     access_token = user_auth.extract_auth_token(request)
@@ -44,12 +44,12 @@ def handle_list_import_status(request: flask.Request, ws_ns: str, ws_name: str) 
             filter(model.Import.workspace_name == ws_name)
         q = q.filter(model.Import.status.in_(ImportStatus.running_statuses())) if running_only else q
         import_list = q.order_by(model.Import.submit_time.desc()).all()
-        import_statuses = [{"id": imprt.id, "status": imprt.status.name} for imprt in import_list]
+        import_statuses = [imprt.to_status_response() for imprt in import_list]
 
-        return flask.make_response((json.dumps(import_statuses), 200))
+        return import_statuses
 
 
-def external_update_status(msg: Dict[str, str]) -> flask.Response:
+def external_update_status(msg: Dict[str, str]) -> model.ImportStatusResponse:
     """A trusted external service has told us to update the status for this import.
     Change the status, but sanely.
     It's possible that pub/sub might deliver this message more than once, so we need to account for that too."""
@@ -84,4 +84,5 @@ def external_update_status(msg: Dict[str, str]) -> flask.Response:
     if not update_successful:
         logging.warning(f"Failed to update status for import {import_id}: expected {current_status}, got {imp.status}.")
 
-    return flask.make_response("ok")
+    # This goes back to Pub/Sub, nobody reads it
+    return model.ImportStatusResponse(import_id, new_status.name)

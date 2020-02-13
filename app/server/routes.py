@@ -1,34 +1,46 @@
 import flask
+from flask_restx import Api, Resource
 import json
 import humps
-from typing import Dict, Callable
+from typing import Dict, Callable, Any
 
 from app import new_import, translate, status, health
+from app.db import model
 import app.auth.service_auth
 from app.server.requestutils import httpify_excs, pubsubify_excs
 
 routes = flask.Blueprint('import-service', __name__, '/')
+api = Api(routes, version='1.0', title='Import Service',
+          description='import service')
+
+ns = api.namespace('/', description='import handling')
 
 
-@routes.route('/<ws_ns>/<ws_name>/imports', methods=["POST"])
-@httpify_excs
-def create_import(ws_ns, ws_name) -> flask.Response:
-    """Accept an import request"""
-    return new_import.handle(flask.request, ws_ns, ws_name)
+import_status_response_model = ns.model("ImportStatusResponse", model.ImportStatusResponse.get_model())
 
 
-@routes.route('/<ws_ns>/<ws_name>/imports/<import_id>', methods=["GET"])
-@httpify_excs
-def import_status(ws_ns, ws_name, import_id) -> flask.Response:
-    """Return the status of an import job"""
-    return status.handle_get_import_status(flask.request, ws_ns, ws_name, import_id)
+@ns.route('/<ws_ns>/<ws_name>/imports/<import_id>')
+class SpecificImport(Resource):
+    @httpify_excs
+    @ns.marshal_with(import_status_response_model)
+    def get(self, ws_ns, ws_name, import_id):
+        """Return status for this import."""
+        return status.handle_get_import_status(flask.request, ws_ns, ws_name, import_id)
 
 
-@routes.route('/<ws_ns>/<ws_name>/imports', methods=["GET"])
-@httpify_excs
-def import_status_workspace(ws_ns, ws_name) -> flask.Response:
-    """Return the status of import jobs in a workspace"""
-    return status.handle_list_import_status(flask.request, ws_ns, ws_name)
+@ns.route('/<ws_ns>/<ws_name>/imports')
+class Imports(Resource):
+    @httpify_excs
+    @ns.marshal_with(import_status_response_model, 201)
+    def post(self, ws_ns, ws_name):
+        """Accept an import request."""
+        return new_import.handle(flask.request, ws_ns, ws_name), 201
+
+    @httpify_excs
+    @ns.marshal_with(import_status_response_model, 200)
+    def get(self, ws_ns, ws_name):
+        """Return all imports in the workspace."""
+        return status.handle_list_import_status(flask.request, ws_ns, ws_name)
 
 
 @routes.route('/health', methods=["GET"])
@@ -38,7 +50,7 @@ def health_check() -> flask.Response:
 
 
 # Dispatcher for pubsub messages.
-pubsub_dispatch: Dict[str, Callable[[Dict[str, str]], flask.Response]] = {
+pubsub_dispatch: Dict[str, Callable[[Dict[str, str]], Any]] = {
     "translate": translate.handle,
     "status": status.external_update_status
 }
@@ -46,13 +58,16 @@ pubsub_dispatch: Dict[str, Callable[[Dict[str, str]], flask.Response]] = {
 
 # This particular URL, though weird, can be secured using GCP magic.
 # See https://cloud.google.com/pubsub/docs/push#authenticating_standard_and_urls
-@routes.route('/_ah/push-handlers/receive_messages', methods=['POST'])
-@pubsubify_excs
-def pubsub_receive() -> flask.Response:
-    app.auth.service_auth.verify_pubsub_jwt(flask.request)
+# Note we use @routes.route here to make a route handler but not Swagger.
+@ns.route('/_ah/push-handlers/receive_messages', doc=False)
+class PubSub(Resource):
+    @pubsubify_excs
+    @ns.marshal_with(import_status_response_model, 200)
+    def post(self) -> flask.Response:
+        app.auth.service_auth.verify_pubsub_jwt(flask.request)
 
-    envelope = json.loads(flask.request.data.decode('utf-8'))
-    attributes = envelope['message']['attributes']
+        envelope = json.loads(flask.request.data.decode('utf-8'))
+        attributes = envelope['message']['attributes']
 
-    # humps.decamelize turns camelCase to snake_case in dict keys
-    return pubsub_dispatch[attributes["action"]](humps.decamelize(attributes))
+        # humps.decamelize turns camelCase to snake_case in dict keys
+        return pubsub_dispatch[attributes["action"]](humps.decamelize(attributes))

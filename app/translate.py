@@ -26,7 +26,7 @@ FILETYPE_TRANSLATORS = {"pfb": PFBToRawls}
 VALID_NETLOCS = ["gen3-pfb-export.s3.amazonaws.com", "storage.googleapis.com"]
 
 
-def handle(msg: Dict[str, str]) -> flask.Response:
+def handle(msg: Dict[str, str]) -> ImportStatusResponse:
     import_id = msg["import_id"]
     with db.session_ctx() as sess:
         # flip the status to Translating, and then get the row
@@ -37,7 +37,7 @@ def handle(msg: Dict[str, str]) -> flask.Response:
         # this import wasn't in pending. most likely this means that the pubsub message we got was delivered twice,
         # and some other GAE instance has picked it up and is happily processing it. happy translating, friendo!
         logging.info(f"Failed to update status exclusively for translating import {import_id}: expected Pending, got {import_details.status}. PubSub probably delivered this message twice.")
-        return flask.make_response("ok")
+        return flask.make_response(import_details.to_status_response())
 
     dest_file = f'{os.environ.get("BATCH_UPSERT_BUCKET")}/{import_details.id}.rawlsUpsert'
 
@@ -76,7 +76,7 @@ def handle(msg: Dict[str, str]) -> flask.Response:
         "upsertFile": dest_file
     })
 
-    return flask.make_response("ok")
+    return ImportStatusResponse(import_id, ImportStatus.ReadyForUpsert.name)
 
 
 def _stream_translate(source: IO, dest: IO, translator: Translator) -> None:

@@ -27,7 +27,7 @@ NEW_IMPORT_SCHEMA = {
 schema_validator = jsonschema.Draft7Validator(NEW_IMPORT_SCHEMA)
 
 
-def handle(request: flask.Request, ws_ns: str, ws_name: str) -> flask.Response:
+def handle(request: flask.Request, ws_ns: str, ws_name: str) -> model.ImportStatusResponse:
     access_token = user_auth.extract_auth_token(request)
     user_info = sam.validate_user(access_token)
 
@@ -62,4 +62,4 @@ def handle(request: flask.Request, ws_ns: str, ws_name: str) -> flask.Response:
 
     pubsub.publish_self({"action": "translate", "import_id": new_import_id})
 
-    return flask.make_response((str(new_import_id), 201))
+    return new_import.to_status_response()

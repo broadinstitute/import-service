@@ -9,6 +9,9 @@ from sqlalchemy.orm import validates
 from sqlalchemy_repr import RepresentableBase
 from app.db import DBSession
 
+from flask_restx import fields
+from typing import NamedTuple, Dict
+
 Base = declarative_base(cls=RepresentableBase)  # sqlalchemy magic base class.
 
 
@@ -74,6 +77,24 @@ class ImportStatus(enum.Enum):
             raise NotImplementedError(f"Unknown ImportStatus enum {name}")
 
 
+# Raw is the flask-restx base class for "a json-serializable field".
+ModelDefinition = Dict[str, Type[fields.Raw]]
+
+
+# Note: this should really be a namedtuple but for https://github.com/noirbizarre/flask-restplus/issues/364
+# This is an easy fix in flask-restx if we decide to go this route.
+class ImportStatusResponse:
+    def __init__(self, id: str, status: str):
+        self.id = id
+        self.status = status
+
+    @classmethod
+    def get_model(cls) -> ModelDefinition:
+        return {
+            "id": fields.String,
+            "status": fields.String }
+
+
 # This is mypy shenanigans so functions inside the Import class can return an instance of type Import.
 # It's basically a forward declaration of the type.
 ImportT = TypeVar('ImportT', bound='Import')
@@ -100,7 +121,6 @@ class Import(ImportServiceTable, EqMixin, Base):
         if value and len(value) > max_len:
             return value[:max_len]
         return value
-
 
     def __init__(self, workspace_name: str, workspace_ns: str, workspace_uuid: str, submitter: str, import_url: str, filetype: str):
         self.id = str(uuid.uuid4())
@@ -134,3 +154,6 @@ class Import(ImportServiceTable, EqMixin, Base):
     def write_error(self, msg: str) -> None:
         self.error_message = msg
         self.status = ImportStatus.Error
+
+    def to_status_response(self) -> ImportStatusResponse:
+        return ImportStatusResponse(self.id, self.status.name)
