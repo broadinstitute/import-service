@@ -10,6 +10,8 @@ WORKDIR /app
 
 RUN pip install -r requirements.txt
 
+RUN pip install gunicorn
+
 COPY . /app
 
 EXPOSE 8080
