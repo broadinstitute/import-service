@@ -32,3 +32,9 @@ def check_workspace_iam_action(workspace_namespace: str, workspace_name: str, ac
         # just pass the error upwards
         logging.info(f"Got {resp.status_code} from Rawls for {workspace_namespace}/{workspace_name}: {resp.text}")
         raise ISvcException(resp.text, resp.status_code)
+
+
+def check_health() -> bool:
+    resp = requests.get(f"{os.environ.get('RAWLS_URL')}/status")
+
+    return resp.ok

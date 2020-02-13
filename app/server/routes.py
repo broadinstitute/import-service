@@ -3,7 +3,7 @@ import json
 import humps
 from typing import Dict, Callable
 
-from app import new_import, translate, status
+from app import new_import, translate, status, health
 import app.auth.service_auth
 from app.server.requestutils import httpify_excs, pubsubify_excs
 
@@ -29,6 +29,12 @@ def import_status(ws_ns, ws_name, import_id) -> flask.Response:
 def import_status_workspace(ws_ns, ws_name) -> flask.Response:
     """Return the status of import jobs in a workspace"""
     return status.handle_list_import_status(flask.request, ws_ns, ws_name)
+
+
+@routes.route('/health', methods=["GET"])
+@httpify_excs
+def health_check() -> flask.Response:
+    return health.handle_health_check()
 
 
 # Dispatcher for pubsub messages.
