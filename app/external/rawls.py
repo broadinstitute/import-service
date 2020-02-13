@@ -37,8 +37,4 @@ def check_workspace_iam_action(workspace_namespace: str, workspace_name: str, ac
 def check_health() -> bool:
     resp = requests.get(f"{os.environ.get('RAWLS_URL')}/status")
 
-    if resp.ok:
-        return True
-
-    else:
-        return False
+    return resp.ok

@@ -92,7 +92,4 @@ def admin_get_pet_token(google_project: str, user_email: str) -> str:
 def check_health() -> bool:
     resp = requests.get(f"{os.environ.get('SAM_URL')}/status")
 
-    if resp.ok:
-        return True
-    else:
-        return False
+    return resp.ok
