@@ -10,11 +10,31 @@ from app.server.requestutils import httpify_excs, pubsubify_excs
 routes = flask.Blueprint('import-service', __name__, '/')
 
 
-@routes.route('/<ws_ns>/<ws_name>/imports', methods=["POST"])
+@routes.route('/<workspace_namespace>/<workspace_name>/imports', methods=["POST"])
 @httpify_excs
-def create_import(ws_ns, ws_name) -> flask.Response:
-    """Accept an import request"""
-    return new_import.handle(flask.request, ws_ns, ws_name)
+def create_import(workspace_namespace, workspace_name) -> flask.Response:
+    """Accept an import request.
+    ---
+    parameters:
+      - name: workspace_namespace
+        in: path
+        schema:
+          type: string
+        required: true
+      - name: workspace_name
+        in: path
+        schema:
+          type: string
+        required: true
+      - name: import_request
+        in: body
+        schema:
+          $ref: '#/definitions/import_request'
+    responses:
+      201:
+        description: it's all good
+    """
+    return new_import.handle(flask.request, workspace_namespace, workspace_name)
 
 
 @routes.route('/<ws_ns>/<ws_name>/imports/<import_id>', methods=["GET"])

@@ -7,6 +7,9 @@ from app.util import exceptions
 from app.db import db, model
 from app.external import sam, pubsub
 from app.auth import user_auth
+from app.server.swagger import swagger
+
+import flasgger.base
 
 NEW_IMPORT_SCHEMA = {
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -22,7 +25,6 @@ NEW_IMPORT_SCHEMA = {
   },
   "required": ["path", "filetype"]
 }
-
 
 schema_validator = jsonschema.Draft7Validator(NEW_IMPORT_SCHEMA)
 
