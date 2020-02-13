@@ -58,7 +58,6 @@ pubsub_dispatch: Dict[str, Callable[[Dict[str, str]], Any]] = {
 
 # This particular URL, though weird, can be secured using GCP magic.
 # See https://cloud.google.com/pubsub/docs/push#authenticating_standard_and_urls
-# Note we use @routes.route here to make a route handler but not Swagger.
 @ns.route('/_ah/push-handlers/receive_messages', doc=False)
 class PubSub(Resource):
     @pubsubify_excs
