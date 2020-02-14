@@ -37,11 +37,35 @@ def create_import(workspace_namespace, workspace_name) -> flask.Response:
     return new_import.handle(flask.request, workspace_namespace, workspace_name)
 
 
-@routes.route('/<ws_ns>/<ws_name>/imports/<import_id>', methods=["GET"])
+@routes.route('/<workspace_namespace>/<workspace_name>/imports/<import_id>', methods=["GET"])
 @httpify_excs
-def import_status(ws_ns, ws_name, import_id) -> flask.Response:
-    """Return the status of an import job"""
-    return status.handle_get_import_status(flask.request, ws_ns, ws_name, import_id)
+def import_status(workspace_namespace, workspace_name, import_id) -> flask.Response:
+    """Return the status of an import job.
+    ---
+    parameters:
+      - name: workspace_namespace
+        in: path
+        schema:
+          type: string
+        required: true
+      - name: workspace_name
+        in: path
+        schema:
+          type: string
+        required: true
+      - name: import_id
+        in: path
+        schema:
+          type: string
+    responses:
+      200:
+        description: here's the status
+        content:
+          application/json:
+            schema:
+              $ref: '#/definitions/import_status'
+    """
+    return status.handle_get_import_status(flask.request, workspace_namespace, workspace_name, import_id)
 
 
 @routes.route('/<ws_ns>/<ws_name>/imports', methods=["GET"])

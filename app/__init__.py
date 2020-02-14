@@ -9,7 +9,17 @@ def create_app() -> flask.Flask:
     app.register_blueprint(routes.routes)
     app.config["SWAGGER"] = {
         'openapi': '3.0.2',
-        'definitions': {"import_request": NEW_IMPORT_SCHEMA}  # TODO: come up with a way of finding all these
+        'definitions': { # TODO: a saner way of consolidating all these
+            "import_request": NEW_IMPORT_SCHEMA,
+            "import_status" : {
+                "type": "object",
+                "properties": {
+                    "id": { "type": "string" },
+                    "status": { "type": "string" }
+                },
+                "required": ["id", "status"]
+            }
+        }
     }
     swagger.init_app(app)
     return app
