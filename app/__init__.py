@@ -3,9 +3,9 @@ from app.server import routes, json_response
 from app.server.swagger import swagger
 from app.new_import import NEW_IMPORT_SCHEMA
 
+
 def create_app() -> flask.Flask:
     app = flask.Flask(__name__)
-    #app.response_class = json_response.JsonResponse
     app.register_blueprint(routes.routes)
     app.config["SWAGGER"] = {
         'openapi': '3.0.2',
@@ -22,4 +22,5 @@ def create_app() -> flask.Flask:
         }
     }
     swagger.init_app(app)
+    app.after_request(json_response.fixup_mimetype)
     return app
