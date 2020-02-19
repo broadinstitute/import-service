@@ -32,7 +32,7 @@ new_import_model = ns.model("NewImport",
                              {"path": fields.String(required=True),
                               "filetype": fields.String(enum=list(translate.FILETYPE_TRANSLATORS.keys()), required=True)})
 import_status_response_model = ns.model("ImportStatusResponse", model.ImportStatusResponse.get_model())
-health_response_model = ns.model("HealthResponse", health.HealthResponse.get_model())
+health_response_model = ns.model("HealthResponse", health.HealthResponse.get_model(api))
 
 
 @ns.route('/<workspace_project>/<workspace_name>/imports/<import_id>')
@@ -68,6 +68,7 @@ class Imports(Resource):
 @ns.route('/health')
 class Health(Resource):
     @httpify_excs
+    @api.doc(security=None)
     @ns.marshal_with(health_response_model, code=200)
     def get(self):
         """Return whether we and all dependent subsystems are healthy."""

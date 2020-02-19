@@ -7,22 +7,24 @@ from app.external import sam, rawls
 class HealthResponse:
     def __init__(self, db_health: bool, rawls_health: bool, sam_health: bool):
         self.ok = all([db_health, rawls_health, sam])
-        self.subsystems = {
-            "db": db_health,
-            "rawls": rawls_health,
-            "sam": sam_health
-        }
+        self.db = db_health
+        self.rawls = rawls_health
+        self.sam = sam_health
 
     @classmethod
-    def get_model(cls) -> model.ModelDefinition:
+    def get_model(cls, api) -> model.ModelDefinition:
         subsystem_fields = {
-            "db": fields.Boolean,
-            "rawls": fields.Boolean,
-            "sam": fields.Boolean
+            "db": fields.Boolean(attribute='db'),
+            "rawls": fields.Boolean(attribute='rawls'),
+            "sam": fields.Boolean(attribute='sam')
         }
         return {
             "ok": fields.Boolean,
-            "subsystems": fields.Nested(subsystem_fields)
+            "subsystems": fields.Nested(api.model('SubsystemModel', {
+                "db": fields.Boolean,
+                "rawls": fields.Boolean,
+                "sam": fields.Boolean
+            }))
         }
 
 
