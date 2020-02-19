@@ -6,7 +6,7 @@ from app.external import sam, rawls
 
 class HealthResponse:
     def __init__(self, db_health: bool, rawls_health: bool, sam_health: bool):
-        self.ok = all([db_health, rawls_health, sam])
+        self.ok = all([db_health, rawls_health, sam_health])
         self.subsystems = {
             "db": db_health,
             "rawls": rawls_health,
