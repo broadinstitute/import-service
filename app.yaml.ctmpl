@@ -9,6 +9,8 @@ env_variables:
     RAWLS_URL: "{env.rawls_url}"
     SAM_URL: "{env.sam_url}"
 
+    SWAGGER_OAUTH_CLIENT_ID: "{env.oauth_id}"
+
     IMPORT_SVC_SA_EMAIL: "{env.import_svc_sa_email}"
     BATCH_UPSERT_BUCKET: "import-service-batchupsert-{env}"
 

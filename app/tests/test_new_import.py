@@ -9,10 +9,6 @@ from app.db import db
 from app.db.model import *
 
 
-def test_schema_valid():
-    jsonschema.Draft7Validator.check_schema(new_import.NEW_IMPORT_SCHEMA)
-
-
 good_json = {"path": f"https://{translate.VALID_NETLOCS[0]}/some/path", "filetype": "pfb"}
 good_headers = {"Authorization": "Bearer ya29.blahblah", "Accept": "application/json"}
 
