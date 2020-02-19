@@ -32,6 +32,7 @@ new_import_model = ns.model("NewImport",
                              {"path": fields.String(required=True),
                               "filetype": fields.String(enum=list(translate.FILETYPE_TRANSLATORS.keys()), required=True)})
 import_status_response_model = ns.model("ImportStatusResponse", model.ImportStatusResponse.get_model())
+health_response_model = ns.model("HealthResponse", health.HealthResponse.get_model())
 
 
 @ns.route('/<workspace_project>/<workspace_name>/imports/<import_id>')
@@ -64,10 +65,13 @@ class Imports(Resource):
         return status.handle_list_import_status(flask.request, workspace_project, workspace_name)
 
 
-@routes.route('/health', methods=["GET"])
-@httpify_excs
-def health_check() -> flask.Response:
-    return health.handle_health_check()
+@ns.route('/health')
+class Health(Resource):
+    @httpify_excs
+    @ns.marshal_with(health_response_model, code=200)
+    def get(self):
+        """Return whether we and all dependent subsystems are healthy."""
+        return health.handle_health_check(), 200
 
 
 # Dispatcher for pubsub messages.

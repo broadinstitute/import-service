@@ -1,25 +1,37 @@
-import flask
-import json
-import logging
-from sqlalchemy.orm.exc import NoResultFound
-from typing import Dict
+from flask_restx import fields
 
-from app.auth import user_auth
 from app.db import db, model
-from app.db.model import ImportStatus
 from app.external import sam, rawls
-from app.util import exceptions
 
 
-def handle_health_check() -> flask.Response:
+class HealthResponse:
+    def __init__(self, db_health: bool, rawls_health: bool, sam_health: bool):
+        self.ok = all([db_health, rawls_health, sam])
+        self.subsystems = {
+            "db": db_health,
+            "rawls": rawls_health,
+            "sam": sam_health
+        }
 
+    @classmethod
+    def get_model(cls) -> model.ModelDefinition:
+        subsystem_fields = {
+            "db": fields.Boolean,
+            "rawls": fields.Boolean,
+            "sam": fields.Boolean
+        }
+        return {
+            "ok": fields.Boolean,
+            "subsystems": fields.Nested(subsystem_fields)
+        }
+
+
+def handle_health_check() -> HealthResponse:
     sam_health = sam.check_health()
     rawls_health = rawls.check_health()
     db_health = check_health()
 
-    isvc_health = all([sam_health, rawls_health, db_health])
-
-    return flask.make_response((json.dumps({"ok": isvc_health, "subsystems": {"db": db_health, "rawls": rawls_health, "sam": sam_health}}), 200))
+    return HealthResponse(db_health, rawls_health, sam_health)
 
 
 def check_health() -> bool:
