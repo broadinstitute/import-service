@@ -9,12 +9,8 @@ from app.db import db
 from app.db.model import *
 
 
-def test_schema_valid():
-    jsonschema.Draft7Validator.check_schema(new_import.NEW_IMPORT_SCHEMA)
-
-
 good_json = {"path": f"https://{translate.VALID_NETLOCS[0]}/some/path", "filetype": "pfb"}
-good_headers = {"Authorization": "Bearer ya29.blahblah"}
+good_headers = {"Authorization": "Bearer ya29.blahblah", "Accept": "application/json"}
 
 
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
@@ -24,9 +20,10 @@ def test_golden_path(client):
 
     # response contains the job ID, check it's actually in the database
     sess = db.get_session()
-    dbres = sess.query(Import).filter(Import.id == resp.get_data(as_text=True)).all()
+    id = resp.json["id"]
+    dbres = sess.query(Import).filter(Import.id == id).all()
     assert len(dbres) == 1
-    assert dbres[0].id == str(resp.get_data(as_text=True))
+    assert dbres[0].id == id
     assert resp.headers["Content-Type"] == "application/json"
 
 

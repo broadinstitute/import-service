@@ -15,11 +15,11 @@ good_headers = {"Authorization": "Bearer ya29.blahblah"}
 def test_get_import_status(client):
     new_import_resp = client.post('/namespace/name/imports', json=good_json, headers=good_headers)
     assert new_import_resp.status_code == 201
-    import_id = new_import_resp.get_data(as_text=True)
+    import_id = new_import_resp.json["id"]
 
-    resp = client.get('/namespace/name/imports/{}'.format(import_id), headers=good_headers)
+    resp = client.get(f'/namespace/name/imports/{import_id}', headers=good_headers)
     assert resp.status_code == 200
-    assert resp.get_json(force=True) == {'id': import_id, 'status': ImportStatus.Pending.name}
+    assert resp.json == {'id': import_id, 'status': ImportStatus.Pending.name}
 
 
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
@@ -32,11 +32,11 @@ def test_get_import_status_404(client):
 
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
 def test_get_all_import_status(client):
-    import_id = client.post('/namespace/name/imports', json=good_json, headers=good_headers).get_data(as_text=True)
+    import_id = client.post('/namespace/name/imports', json=good_json, headers=good_headers).json["id"]
 
     resp = client.get('/namespace/name/imports', headers=good_headers)
     assert resp.status_code == 200
-    assert resp.get_json(force=True) == [{"id": import_id, "status": ImportStatus.Pending.name}]
+    assert resp.json == [{"id": import_id, "status": ImportStatus.Pending.name}]
 
 
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
@@ -52,16 +52,16 @@ def test_get_all_running_when_none(client):
 
     resp = client.get('/namespace/name/imports?running_only', headers=good_headers)
     assert resp.status_code == 200
-    assert resp.get_json(force=True) == []
+    assert resp.json == []
 
 
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
 def test_get_all_running_with_one(client):
-    import_id = client.post('/namespace/name/imports', json=good_json, headers=good_headers).get_data(as_text=True)
+    import_id = client.post('/namespace/name/imports', json=good_json, headers=good_headers).json["id"]
 
     resp = client.get('/namespace/name/imports?running_only', headers=good_headers)
     assert resp.status_code == 200
-    assert resp.get_json(force=True) == [{"id": import_id, "status": ImportStatus.Pending.name}]
+    assert resp.json == [{"id": import_id, "status": ImportStatus.Pending.name}]
 
 
 @pytest.mark.usefixtures("incoming_valid_pubsub")
