@@ -20,13 +20,12 @@ else:
     logging.basicConfig(format="%(module)s.%(funcName)s: %(message)s", level=logging.INFO)
 
 
+app = create_app()
+
 # FiaB instances of this service live inside the Broad network and thus PubSub can't push notifications to the REST
 # handler. Setting PULL_PUBSUB will disable the REST handler and spin up a thread that pulls messages from PubSub instead.
 if os.environ.get("PULL_PUBSUB", False):
     import threading
     from app.external import pubsub_pull
-    pubsub_pull_thread = threading.Thread(target=pubsub_pull.loop)
+    pubsub_pull_thread = threading.Thread(target=pubsub_pull.loop, args=(app,))
     pubsub_pull_thread.start()
-
-
-app = create_app()

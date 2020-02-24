@@ -12,9 +12,9 @@ def test_unpack_camelcase(fake_import, client, monkeypatch):
     def fake_endpoint(msg: Dict[str, str]) -> flask.Response:
         return flask.make_response(msg["should_be_snake"])
 
-    new_dispatcher = copy.deepcopy(app.server.routes.pubsub_dispatch)
+    new_dispatcher = copy.deepcopy(app.server.routes._pubsub_dispatch)
     new_dispatcher.update({"cameltest": fake_endpoint})
-    monkeypatch.setattr(app.server.routes, 'pubsub_dispatch', new_dispatcher)
+    monkeypatch.setattr(app.server.routes, '_pubsub_dispatch', new_dispatcher)
 
     # conversion should work
     resp = client.post("/_ah/push-handlers/receive_messages",

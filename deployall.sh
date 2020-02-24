@@ -19,6 +19,14 @@ gcloud pubsub subscriptions create import-service-notify-subscription \
     --push-auth-service-account="import-service-pubsub@broad-dsde-dev.iam.gserviceaccount.com" \
     --push-auth-token-audience="importservice.dev.test.firecloud.org"
 
+
+# Pull subscription for FiaBs.
+gcloud pubsub subscriptions create import-service-notify-pull \
+    --topic import-service-notify \
+    "https://import-service-dot-broad-dsde-dev.appspot.com/_ah/push-handlers/receive_messages?token=$(cat token.secret)" \
+    --ack-deadline 600
+
+
 echo ""
 echo ""
 

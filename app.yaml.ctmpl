@@ -9,7 +9,7 @@ env_variables:
     IMPORT_SVC_SA_EMAIL: "{env.import_svc_sa_email}"
     BATCH_UPSERT_BUCKET: "import-service-batchupsert-{env}"
 
-    PULL_PUBSUB: "{true if fiab else false}"
+    PULL_PUBSUB: "{True if fiab else False}"
 
     PUBSUB_PROJECT: "{env.project}"
     PUBSUB_TOPIC: "task_chunk_topic"
