@@ -8,9 +8,6 @@ import sqlalchemy.orm
 
 DBSession = sqlalchemy.orm.session.Session
 
-db_user = os.environ.get("DB_USER")
-db_pass = os.environ.get("DB_PASS")
-db_name = os.environ.get("DB_NAME")
 db_connection_name = os.environ.get("DB_CONNECTION_NAME")
 
 # Store the db so it can be reused between GAE invocations.
