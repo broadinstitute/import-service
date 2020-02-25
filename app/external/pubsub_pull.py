@@ -1,6 +1,7 @@
 import flask
 import logging
 import traceback
+import time
 
 from app.external import pubsub
 from app.server import routes
@@ -20,6 +21,7 @@ def loop(app: flask.Flask):
         except Exception:
             # Catch-all for nasty surprises. If this thread dies, we stop polling.
             logging.error(f"Exception in pubsub_pull thread:\n{traceback.format_exc()}")
+        time.sleep(5)
 
 
 def poll(app: flask.Flask):
