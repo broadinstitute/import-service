@@ -14,6 +14,15 @@ def _get_publisher_client() -> pubsub_v1.PublisherClient:
     return _publisher_client
 
 
+def create_topic() -> None:
+    client = _get_publisher_client()
+    topic_path = client.topic_path(os.environ.get("PUBSUB_PROJECT"), os.environ.get("PUBSUB_TOPIC"))
+    try:
+        client.create_topic(topic_path)
+    except Exception:
+        pass  # it's fine if the topic already exists.
+
+
 def publish_self(data: Dict[str, str]) -> None:
     """Publish the data (as attributes, not in the message body) to ourselves using pub/sub."""
     client = _get_publisher_client()

@@ -26,6 +26,7 @@ app = create_app()
 # handler. Setting PULL_PUBSUB will disable the REST handler and spin up a thread that pulls messages from PubSub instead.
 if os.environ.get("PULL_PUBSUB", False):
     import threading
-    from app.external import pubsub_pull
+    from app.external import pubsub, pubsub_pull
+    pubsub.create_topic()
     pubsub_pull_thread = threading.Thread(target=pubsub_pull.loop, args=(app,))
     pubsub_pull_thread.start()
