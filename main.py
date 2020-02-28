@@ -28,6 +28,6 @@ pull_pubsub = os.environ.get("PULL_PUBSUB", False)
 if pull_pubsub == "true" or pull_pubsub == "True":
     import threading
     from app.external import pubsub, pubsub_pull
-    pubsub.create_topic()
+    pubsub.create_topic_and_sub()
     pubsub_pull_thread = threading.Thread(target=pubsub_pull.loop, args=(app,))
     pubsub_pull_thread.start()

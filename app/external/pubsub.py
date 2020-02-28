@@ -1,6 +1,5 @@
 from google.cloud import pubsub_v1
-import google.cloud.pubsub_v1.types
-import os
+import os, contextlib
 from typing import Dict, List, Optional
 
 _publisher_client: Optional[pubsub_v1.PublisherClient] = None
@@ -14,13 +13,17 @@ def _get_publisher_client() -> pubsub_v1.PublisherClient:
     return _publisher_client
 
 
-def create_topic() -> None:
-    client = _get_publisher_client()
-    topic_path = client.topic_path(os.environ.get("PUBSUB_PROJECT"), os.environ.get("PUBSUB_TOPIC"))
-    try:
-        client.create_topic(topic_path)
-    except Exception:
-        pass  # it's fine if the topic already exists.
+def create_topic_and_sub() -> None:
+    pubclient = _get_publisher_client()
+    subclient = _get_subscriber_client()
+    topic_path = pubclient.topic_path(os.environ.get("PUBSUB_PROJECT"), os.environ.get("PUBSUB_TOPIC"))
+    sub_path = subclient.subscription_path(os.environ.get("PUBSUB_PROJECT"), os.environ.get("PUBSUB_SUBSCRIPTION"))
+
+    with contextlib.suppress(Exception): # it's fine if the topic already exists.
+        pubclient.create_topic(topic_path)
+
+    with contextlib.suppress(Exception): # it's fine if the subscription already exists.
+        subclient.create_subscription(sub_path, topic_path)
 
 
 def publish_self(data: Dict[str, str]) -> None:
