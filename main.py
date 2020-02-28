@@ -24,7 +24,8 @@ app = create_app()
 
 # FiaB instances of this service live inside the Broad network and thus PubSub can't push notifications to the REST
 # handler. Setting PULL_PUBSUB will disable the REST handler and spin up a thread that pulls messages from PubSub instead.
-if os.environ.get("PULL_PUBSUB", False):
+pull_pubsub = os.environ.get("PULL_PUBSUB", False)
+if pull_pubsub == "true" or pull_pubsub == "True":
     import threading
     from app.external import pubsub, pubsub_pull
     pubsub.create_topic()
