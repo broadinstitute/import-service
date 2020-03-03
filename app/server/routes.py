@@ -9,7 +9,7 @@ from app.db import model
 import app.auth.service_auth
 from app.server.requestutils import httpify_excs, pubsubify_excs
 
-routes = flask.Blueprint('import-service', __name__, '/')
+routes = flask.Blueprint('import-service', __name__)
 
 authorizations = {
     'Bearer': {

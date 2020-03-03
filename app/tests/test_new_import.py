@@ -30,7 +30,7 @@ def test_golden_path(client):
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access")
 def test_wrong_path(client: flask.testing.FlaskClient):
     resp = client.post('/imports')
-    assert resp.status_code == 405
+    assert resp.status_code == 404
 
 
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access")
