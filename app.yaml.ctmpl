@@ -15,7 +15,7 @@ env_variables:
     PUBSUB_TOPIC: "task_chunk_topic"
     PUBSUB_SUBSCRIPTION: "task_chunk_subscription"
     PUBSUB_TOKEN: "{secrets.pubsub_token}"
-    PUBSUB_ACCOUNT: "{secrets.pubsub_account}"
+    PUBSUB_ACCOUNT: "{secrets.import_svc_sa_email}"
     PUBSUB_AUDIENCE: "{secrets.pubsub_audience}"
 
     RAWLS_PUBSUB_PROJECT: "terra-arrow-{env}"
