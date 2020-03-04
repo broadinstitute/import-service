@@ -75,24 +75,25 @@ class Health(Resource):
         return health.handle_health_check(), 200
 
 
-# Dispatcher for pubsub messages.
-pubsub_dispatch: Dict[str, Callable[[Dict[str, str]], Any]] = {
-    "translate": translate.handle,
-    "status": status.external_update_status
-}
-
-
 # This particular URL, though weird, can be secured using GCP magic.
 # See https://cloud.google.com/pubsub/docs/push#authenticating_standard_and_urls
 @ns.route('/_ah/push-handlers/receive_messages', doc=False)
 class PubSub(Resource):
     @pubsubify_excs
     @ns.marshal_with(import_status_response_model, code=200)
-    def post(self) -> flask.Response:
+    def post(self):
         app.auth.service_auth.verify_pubsub_jwt(flask.request)
 
         envelope = json.loads(flask.request.data.decode('utf-8'))
-        attributes = envelope['message']['attributes']
+        return pubsub_dispatch(envelope["message"]["attributes"])
 
-        # humps.decamelize turns camelCase to snake_case in dict keys
-        return pubsub_dispatch[attributes["action"]](humps.decamelize(attributes))
+
+# Dispatcher for pubsub messages.
+_pubsub_dispatch: Dict[str, Callable[[Dict[str, str]], Any]] = {
+    "translate": translate.handle,
+    "status": status.external_update_status
+}
+
+
+def pubsub_dispatch(attributes: dict):
+    return _pubsub_dispatch[attributes["action"]](humps.decamelize(attributes))

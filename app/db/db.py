@@ -21,7 +21,8 @@ def get_session() -> DBSession:
         _db = sqlalchemy.create_engine(
             db_connection_name,
             pool_size=1,
-            max_overflow=0
+            max_overflow=0,
+            pool_pre_ping=True  # before doing things, send a "ping" request to the db to make sure the connection didn't drop
         )
 
         from app.db import model
