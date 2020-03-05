@@ -1,6 +1,7 @@
 runtime: python37
 service: import-service
 env_variables:
+    # Note the password here needs to be URL encoded.
     DB_CONNECTION_NAME: "{secrets.db_connection_name}"
 
     RAWLS_URL: "{env.rawls_url}"

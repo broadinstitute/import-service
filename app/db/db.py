@@ -8,7 +8,7 @@ import sqlalchemy.orm
 
 DBSession = sqlalchemy.orm.session.Session
 
-db_connection_name = os.environ.get("DB_CONNECTION_NAME")
+db_connection_name = os.environ.get("CLOUD_SQL_CONNECTION_NAME")
 
 # Store the db so it can be reused between GAE invocations.
 _db = None
