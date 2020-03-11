@@ -60,6 +60,8 @@ class Imports(Resource):
 
     @httpify_excs
     @ns.marshal_with(import_status_response_model, code=200, as_list=True)
+    @api.doc(params={'running_only': {'in':'query', 'type': 'boolean', 'default':False,
+       'description': "Return only running imports. Adding the query parameter ?running_only with no assigned value will assume true."}})
     def get(self, workspace_project, workspace_name):
         """Return all imports in the workspace."""
         return status.handle_list_import_status(flask.request, workspace_project, workspace_name)
