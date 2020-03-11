@@ -19,7 +19,7 @@ def test_get_import_status(client):
 
     resp = client.get(f'/namespace/name/imports/{import_id}', headers=good_headers)
     assert resp.status_code == 200
-    assert resp.json == {'id': import_id, 'status': ImportStatus.Pending.name}
+    assert resp.json == {'id': import_id, 'status': ImportStatus.Pending.name, 'error_message': None}
 
 
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
@@ -31,12 +31,15 @@ def test_get_import_status_404(client):
 
 
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
-def test_get_all_import_status(client):
-    import_id = client.post('/namespace/name/imports', json=good_json, headers=good_headers).json["id"]
+def test_get_all_import_status(fake_import, client):
+    with db.session_ctx() as sess:
+        fake_import.status = ImportStatus.Error
+        fake_import.error_message = "broke"
+        sess.add(fake_import)
 
-    resp = client.get('/namespace/name/imports', headers=good_headers)
+    resp = client.get('/aa/aa/imports', headers=good_headers)
     assert resp.status_code == 200
-    assert resp.json == [{"id": import_id, "status": ImportStatus.Pending.name}]
+    assert resp.json == [{"id": fake_import.id, "status": ImportStatus.Error.name, 'error_message': "broke"}]
 
 
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
@@ -61,7 +64,7 @@ def test_get_all_running_with_one(client):
 
     resp = client.get('/namespace/name/imports?running_only', headers=good_headers)
     assert resp.status_code == 200
-    assert resp.json == [{"id": import_id, "status": ImportStatus.Pending.name}]
+    assert resp.json == [{"id": import_id, "status": ImportStatus.Pending.name, "error_message": None}]
 
 
 @pytest.mark.usefixtures("incoming_valid_pubsub")

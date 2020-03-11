@@ -76,7 +76,7 @@ def handle(msg: Dict[str, str]) -> ImportStatusResponse:
         "upsertFile": dest_file
     })
 
-    return ImportStatusResponse(import_id, ImportStatus.ReadyForUpsert.name)
+    return ImportStatusResponse(import_id, ImportStatus.ReadyForUpsert.name, None)
 
 
 def _stream_translate(source: IO, dest: IO, translator: Translator) -> None:

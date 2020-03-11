@@ -10,7 +10,7 @@ from sqlalchemy_repr import RepresentableBase
 from app.db import DBSession
 
 from flask_restx import fields
-from typing import NamedTuple, Dict
+from typing import Optional, Dict
 
 Base = declarative_base(cls=RepresentableBase)  # sqlalchemy magic base class.
 
@@ -84,15 +84,17 @@ ModelDefinition = Dict[str, Type[fields.Raw]]
 # Note: this should really be a namedtuple but for https://github.com/noirbizarre/flask-restplus/issues/364
 # This is an easy fix in flask-restx if we decide to go this route.
 class ImportStatusResponse:
-    def __init__(self, id: str, status: str):
+    def __init__(self, id: str, status: str, error_message: Optional[str]):
         self.id = id
         self.status = status
+        self.error_message = error_message
 
     @classmethod
     def get_model(cls) -> ModelDefinition:
         return {
             "id": fields.String,
-            "status": fields.String }
+            "status": fields.String,
+            "error_message": fields.String }
 
 
 # This is mypy shenanigans so functions inside the Import class can return an instance of type Import.
@@ -156,4 +158,4 @@ class Import(ImportServiceTable, EqMixin, Base):
         self.status = ImportStatus.Error
 
     def to_status_response(self) -> ImportStatusResponse:
-        return ImportStatusResponse(self.id, self.status.name)
+        return ImportStatusResponse(self.id, self.status.name, self.error_message)
