@@ -6,7 +6,7 @@ from app.external import sam, pubsub
 from app.auth import user_auth
 
 
-def handle(request: flask.Request, ws_ns: str, ws_name: str) -> model.ImportStatusResponse:
+def handle(request: flask.Request, ws_ns: str, ws_name: str) -> model.NewImportResponse:
     access_token = user_auth.extract_auth_token(request)
     user_info = sam.validate_user(access_token)
 
