@@ -20,7 +20,7 @@ def test_golden_path(client):
 
     # response contains the job ID, check it's actually in the database
     sess = db.get_session()
-    id = resp.json["id"]
+    id = resp.json["jobId"]
     dbres = sess.query(Import).filter(Import.id == id).all()
     assert len(dbres) == 1
     assert dbres[0].id == id

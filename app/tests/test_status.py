@@ -15,11 +15,11 @@ good_headers = {"Authorization": "Bearer ya29.blahblah"}
 def test_get_import_status(client):
     new_import_resp = client.post('/namespace/name/imports', json=good_json, headers=good_headers)
     assert new_import_resp.status_code == 201
-    import_id = new_import_resp.json["id"]
+    import_id = new_import_resp.json["jobId"]
 
     resp = client.get(f'/namespace/name/imports/{import_id}', headers=good_headers)
     assert resp.status_code == 200
-    assert resp.json == {'id': import_id, 'status': ImportStatus.Pending.name, 'error_message': None}
+    assert resp.json == {'jobId': import_id, 'status': ImportStatus.Pending.name, 'message': None}
 
 
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
@@ -39,7 +39,7 @@ def test_get_all_import_status(fake_import, client):
 
     resp = client.get('/aa/aa/imports', headers=good_headers)
     assert resp.status_code == 200
-    assert resp.json == [{"id": fake_import.id, "status": ImportStatus.Error.name, 'error_message': "broke"}]
+    assert resp.json == [{"jobId": fake_import.id, "status": ImportStatus.Error.name, 'message': "broke"}]
 
 
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
@@ -60,11 +60,11 @@ def test_get_all_running_when_none(client):
 
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
 def test_get_all_running_with_one(client):
-    import_id = client.post('/namespace/name/imports', json=good_json, headers=good_headers).json["id"]
+    import_id = client.post('/namespace/name/imports', json=good_json, headers=good_headers).json["jobId"]
 
     resp = client.get('/namespace/name/imports?running_only', headers=good_headers)
     assert resp.status_code == 200
-    assert resp.json == [{"id": import_id, "status": ImportStatus.Pending.name, "error_message": None}]
+    assert resp.json == [{"jobId": import_id, "status": ImportStatus.Pending.name, "message": None}]
 
 
 @pytest.mark.usefixtures("incoming_valid_pubsub")
