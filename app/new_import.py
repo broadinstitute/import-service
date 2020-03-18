@@ -6,7 +6,7 @@ from app.external import sam, pubsub
 from app.auth import user_auth
 
 
-def handle(request: flask.Request, ws_ns: str, ws_name: str) -> model.NewImportResponse:
+def handle(request: flask.Request, ws_ns: str, ws_name: str) -> model.ImportStatusResponse:
     access_token = user_auth.extract_auth_token(request)
     user_info = sam.validate_user(access_token)
 
@@ -36,4 +36,4 @@ def handle(request: flask.Request, ws_ns: str, ws_name: str) -> model.NewImportR
 
     pubsub.publish_self({"action": "translate", "import_id": new_import_id})
 
-    return new_import.to_new_import_response(import_url, ws_ns, ws_name)
+    return new_import.to_status_response()

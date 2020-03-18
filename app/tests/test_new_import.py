@@ -25,10 +25,6 @@ def test_golden_path(client):
     assert len(dbres) == 1
     assert dbres[0].id == id
     assert resp.headers["Content-Type"] == "application/json"
-    assert resp.json["workspace"]["namespace"] == "mynamespace"
-    assert resp.json["workspace"]["name"] == "myname"
-    assert resp.json["url"] == good_json["path"]
-
 
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access")
 def test_wrong_path(client: flask.testing.FlaskClient):

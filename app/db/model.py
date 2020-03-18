@@ -96,32 +96,6 @@ class ImportStatusResponse:
             "status": fields.String,
             "message": fields.String }
 
-# For backwards compatibility, new-import requests return a different response payload
-# than get-import-status requests.
-class WorkspaceSpec:
-    def __init__(self, namespace: str, name: str):
-        self.namespace = namespace
-        self.name = name
-
-    @classmethod
-    def get_model(cls) -> ModelDefinition:
-        return {
-            "namespace": fields.String,
-            "name": fields.String }
-
-class NewImportResponse:
-    def __init__(self, url: str, jobId: str, workspace: WorkspaceSpec):
-        self.url = url
-        self.jobId = jobId
-        self.workspace = workspace
-
-    @classmethod
-    def get_model(cls, api) -> ModelDefinition:
-        return {
-            "url": fields.String,
-            "jobId": fields.String,
-            "workspace": fields.Nested(api.model("workspace", WorkspaceSpec.get_model())) }
-
 # This is mypy shenanigans so functions inside the Import class can return an instance of type Import.
 # It's basically a forward declaration of the type.
 ImportT = TypeVar('ImportT', bound='Import')
@@ -184,6 +158,3 @@ class Import(ImportServiceTable, EqMixin, Base):
 
     def to_status_response(self) -> ImportStatusResponse:
         return ImportStatusResponse(self.id, self.status.name, self.error_message)
-
-    def to_new_import_response(self, url: str, namespace: str, name: str) -> NewImportResponse:
-        return NewImportResponse(url, self.id, WorkspaceSpec(namespace, name))
