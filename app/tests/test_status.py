@@ -19,7 +19,7 @@ def test_get_import_status(client):
 
     resp = client.get(f'/namespace/name/imports/{import_id}', headers=good_headers)
     assert resp.status_code == 200
-    assert resp.json == {'jobId': import_id, 'status': ImportStatus.Pending.name, 'message': None}
+    assert resp.json == {'jobId': import_id, 'status': ImportStatus.Pending.name}
 
 
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
@@ -64,7 +64,7 @@ def test_get_all_running_with_one(client):
 
     resp = client.get('/namespace/name/imports?running_only', headers=good_headers)
     assert resp.status_code == 200
-    assert resp.json == [{"jobId": import_id, "status": ImportStatus.Pending.name, "message": None}]
+    assert resp.json == [{"jobId": import_id, "status": ImportStatus.Pending.name}]
 
 
 @pytest.mark.usefixtures("incoming_valid_pubsub")
