@@ -32,6 +32,7 @@ new_import_model = ns.model("NewImport",
                              {"path": fields.String(required=True),
                               "filetype": fields.String(enum=list(translate.FILETYPE_TRANSLATORS.keys()), required=True)})
 import_status_response_model = ns.model("ImportStatusResponse", model.ImportStatusResponse.get_model())
+new_import_response_model = ns.model("NewImportResponse", model.NewImportResponse.get_model())
 health_response_model = ns.model("HealthResponse", health.HealthResponse.get_model(api))
 
 
@@ -53,7 +54,7 @@ class SpecificImport(Resource):
 class Imports(Resource):
     @httpify_excs
     @ns.expect(new_import_model, validate=True)
-    @ns.marshal_with(import_status_response_model, code=201)
+    @ns.marshal_with(new_import_response_model, code=201)
     def post(self, workspace_project, workspace_name):
         """Accept an import request."""
         return new_import.handle(flask.request, workspace_project, workspace_name), 201

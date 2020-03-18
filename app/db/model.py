@@ -96,6 +96,19 @@ class ImportStatusResponse:
             "status": fields.String,
             "message": fields.String }
 
+# For backwards compatibility, new-import requests return a different response payload
+# than get-import-status requests.
+class NewImportResponse:
+    def __init__(self, url: str, jobId: str):
+        self.url = url
+        self.jobId = jobId
+
+    @classmethod
+    def get_model(cls) -> ModelDefinition:
+        return {
+            "url": fields.String,
+            "jobId": fields.String }
+
 
 # This is mypy shenanigans so functions inside the Import class can return an instance of type Import.
 # It's basically a forward declaration of the type.
@@ -159,3 +172,6 @@ class Import(ImportServiceTable, EqMixin, Base):
 
     def to_status_response(self) -> ImportStatusResponse:
         return ImportStatusResponse(self.id, self.status.name, self.error_message)
+
+    def to_new_import_response(self, url: str, namespace: str, name: str) -> NewImportResponse:
+        return NewImportResponse(url, self.id)
