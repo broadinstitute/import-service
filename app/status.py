@@ -30,7 +30,9 @@ def handle_get_import_status(request: flask.Request, ws_ns: str, ws_name: str, i
 
 
 def handle_list_import_status(request: flask.Request, ws_ns: str, ws_name: str) -> List[model.ImportStatusResponse]:
-    running_only = "running_only" in request.args
+    # in the case where someone specifies ?running_only rather than ?running_only=true, assume true
+    # this also means that ?running_only=boom is interpreted as true, but that seems okay to me
+    running_only = request.args.get("running_only", "False").lower() != "false"
 
     access_token = user_auth.extract_auth_token(request)
     sam.validate_user(access_token)
@@ -85,4 +87,4 @@ def external_update_status(msg: Dict[str, str]) -> model.ImportStatusResponse:
         logging.warning(f"Failed to update status for import {import_id}: expected {current_status}, got {imp.status}.")
 
     # This goes back to Pub/Sub, nobody reads it
-    return model.ImportStatusResponse(import_id, new_status.name)
+    return model.ImportStatusResponse(import_id, new_status.name, None)
