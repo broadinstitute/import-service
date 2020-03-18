@@ -32,7 +32,7 @@ new_import_model = ns.model("NewImport",
                              {"path": fields.String(required=True),
                               "filetype": fields.String(enum=list(translate.FILETYPE_TRANSLATORS.keys()), required=True)})
 import_status_response_model = ns.model("ImportStatusResponse", model.ImportStatusResponse.get_model())
-new_import_response_model = ns.model("NewImportResponse", model.NewImportResponse.get_model())
+new_import_response_model = ns.model("NewImportResponse", model.NewImportResponse.get_model(api))
 health_response_model = ns.model("HealthResponse", health.HealthResponse.get_model(api))
 
 
