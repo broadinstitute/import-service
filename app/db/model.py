@@ -84,18 +84,17 @@ ModelDefinition = Dict[str, Type[fields.Raw]]
 # Note: this should really be a namedtuple but for https://github.com/noirbizarre/flask-restplus/issues/364
 # This is an easy fix in flask-restx if we decide to go this route.
 class ImportStatusResponse:
-    def __init__(self, id: str, status: str, error_message: Optional[str]):
-        self.id = id
+    def __init__(self, jobId: str, status: str, message: Optional[str]):
+        self.jobId = jobId
         self.status = status
-        self.error_message = error_message
+        self.message = message
 
     @classmethod
     def get_model(cls) -> ModelDefinition:
         return {
-            "id": fields.String,
+            "jobId": fields.String,
             "status": fields.String,
-            "error_message": fields.String }
-
+            "message": fields.String }
 
 # This is mypy shenanigans so functions inside the Import class can return an instance of type Import.
 # It's basically a forward declaration of the type.

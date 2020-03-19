@@ -41,7 +41,7 @@ health_response_model = ns.model("HealthResponse", health.HealthResponse.get_mod
 @ns.param('import_id', 'Import id')
 class SpecificImport(Resource):
     @httpify_excs
-    @ns.marshal_with(import_status_response_model)
+    @ns.marshal_with(import_status_response_model, skip_none=True)
     def get(self, workspace_project, workspace_name, import_id):
         """Return status for this import."""
         return status.handle_get_import_status(flask.request, workspace_project, workspace_name, import_id)
@@ -53,13 +53,13 @@ class SpecificImport(Resource):
 class Imports(Resource):
     @httpify_excs
     @ns.expect(new_import_model, validate=True)
-    @ns.marshal_with(import_status_response_model, code=201)
+    @ns.marshal_with(import_status_response_model, code=201, skip_none=True)
     def post(self, workspace_project, workspace_name):
         """Accept an import request."""
         return new_import.handle(flask.request, workspace_project, workspace_name), 201
 
     @httpify_excs
-    @ns.marshal_with(import_status_response_model, code=200, as_list=True)
+    @ns.marshal_with(import_status_response_model, code=200, as_list=True, skip_none=True)
     @api.doc(params={'running_only': {'in':'query', 'type': 'boolean', 'default':False,
        'description': "Return only running imports. Adding the query parameter ?running_only with no assigned value will assume true."}})
     def get(self, workspace_project, workspace_name):
@@ -82,7 +82,7 @@ class Health(Resource):
 @ns.route('/_ah/push-handlers/receive_messages', doc=False)
 class PubSub(Resource):
     @pubsubify_excs
-    @ns.marshal_with(import_status_response_model, code=200)
+    @ns.marshal_with(import_status_response_model, code=200, skip_none=True)
     def post(self):
         app.auth.service_auth.verify_pubsub_jwt(flask.request)
 

@@ -16,6 +16,7 @@ def handle(request: flask.Request, ws_ns: str, ws_name: str) -> model.ImportStat
     # make sure the user is allowed to import to this workspace
     workspace_uuid = user_auth.workspace_uuid_with_auth(ws_ns, ws_name, access_token, "write")
 
+    # TODO: AS-155: change to "url"?
     import_url = request_json["path"]
 
     # and validate the input's path

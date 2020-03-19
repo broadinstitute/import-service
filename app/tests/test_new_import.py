@@ -15,17 +15,16 @@ good_headers = {"Authorization": "Bearer ya29.blahblah", "Accept": "application/
 
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
 def test_golden_path(client):
-    resp = client.post('/namespace/name/imports', json=good_json, headers=good_headers)
+    resp = client.post('/mynamespace/myname/imports', json=good_json, headers=good_headers)
     assert resp.status_code == 201
 
     # response contains the job ID, check it's actually in the database
     sess = db.get_session()
-    id = resp.json["id"]
+    id = resp.json["jobId"]
     dbres = sess.query(Import).filter(Import.id == id).all()
     assert len(dbres) == 1
     assert dbres[0].id == id
     assert resp.headers["Content-Type"] == "application/json"
-
 
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access")
 def test_wrong_path(client: flask.testing.FlaskClient):
