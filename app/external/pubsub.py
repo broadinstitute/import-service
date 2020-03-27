@@ -1,5 +1,6 @@
 from google.cloud import pubsub_v1
 import os, contextlib
+from app.auth import service_auth
 from typing import Dict, List, Optional
 
 _publisher_client: Optional[pubsub_v1.PublisherClient] = None
@@ -9,7 +10,7 @@ _subscriber_client: Optional[pubsub_v1.SubscriberClient] = None
 def _get_publisher_client() -> pubsub_v1.PublisherClient:
     global _publisher_client
     if _publisher_client is None:
-        _publisher_client = pubsub_v1.PublisherClient()
+        _publisher_client = pubsub_v1.PublisherClient(credentials=service_auth.get_isvc_credential())
     return _publisher_client
 
 
@@ -31,7 +32,7 @@ def publish_self(data: Dict[str, str]) -> None:
     client = _get_publisher_client()
     topic_path = client.topic_path(os.environ.get("PUBSUB_PROJECT"), os.environ.get("PUBSUB_TOPIC"))
     future = client.publish(topic_path, b'', **data)
-    future.result()  # wait on the future so we know it's done
+    future.result()
 
 
 def publish_rawls(data: Dict[str, str]) -> None:
@@ -45,7 +46,7 @@ def publish_rawls(data: Dict[str, str]) -> None:
 def _get_subscriber_client() -> pubsub_v1.SubscriberClient:
     global _subscriber_client
     if _subscriber_client is None:
-        _subscriber_client = pubsub_v1.SubscriberClient()
+        _subscriber_client = pubsub_v1.SubscriberClient(credentials=service_auth.get_isvc_credential())
     return _subscriber_client
 
 
