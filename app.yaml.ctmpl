@@ -1,23 +1,34 @@
 runtime: python37
-service: import-service
+service: default
+
+# see https://cloud.google.com/appengine/docs/standard/#instance_classes if we ever need to bump memory limits
+# instance_class: F4_HIGHMEM
+
+# in the ctmpl below, the token "vault" means secret/dsde/firecloud/<env>/import-service/
+# vault/foo.bar means vault read secret/dsde/firecloud/<env>/import-service/foo and look for the "bar" key
+# Note that you DON'T have to cover FiaB here, since on FiaB import-service is deployed using Docker and
+# environment variables in its docker-compose.
+
 env_variables:
-    # Note the password here needs to be URL encoded.
-    DB_CONNECTION_NAME: "{secrets.db_connection_name}"
+ CLOUD_SQL_CONNECTION_NAME: "mysql+pymysql://{vault/mysql/user.username}:{vault/mysql/user.password}@/isvc?unix_socket=/cloudsql/terra-importservice-{env}:us-central1:{vault/mysql/instance_details.instance_name}"
 
-    RAWLS_URL: "{env.rawls_url}"
-    SAM_URL: "{env.sam_url}"
+ PULL_PUBSUB: "False"
 
-    IMPORT_SVC_SA_EMAIL: "{env.import_svc_sa_email}"
-    BATCH_UPSERT_BUCKET: "import-service-batchupsert-{env}"
+ RAWLS_URL: "https://rawls.dsde-{env}.broadinstitute.org"
+ SAM_URL: "https://sam.dsde-{env}.broadinstitute.org"
 
-    PULL_PUBSUB: "{True if fiab else False}"
+ IMPORT_SVC_SA_EMAIL: "import-service@terra-importservice-{env}.iam.gserviceaccount.com"
+ BATCH_UPSERT_BUCKET: "import-service-batchupsert-{env}"
 
-    PUBSUB_PROJECT: "{env.project}"
-    PUBSUB_TOPIC: "task_chunk_topic"
-    PUBSUB_SUBSCRIPTION: "task_chunk_subscription"
-    PUBSUB_TOKEN: "{secrets.pubsub_token}"
-    PUBSUB_ACCOUNT: "{secrets.import_svc_sa_email}"
-    PUBSUB_AUDIENCE: "{secrets.pubsub_audience}"
+ PUBSUB_PROJECT: "terra-importservice-{env}"
+ PUBSUB_TOPIC: "import-service-notify"
+ PUBSUB_SUBSCRIPTION: "import-service-notify-push"
+ PUBSUB_TOKEN: {vault/pubsub.secret_token}
+ PUBSUB_ACCOUNT: "import-service@terra-importservice-{env}.iam.gserviceaccount.com"
 
-    RAWLS_PUBSUB_PROJECT: "terra-arrow-{env}"
-    RAWLS_PUBSUB_TOPIC: "avro-import-topic"
+ # TODO: this needs to match the Terraform'd tfvars for the environment.
+ # expect it to be importservice.firecloud.org for production and importservice.<env>.test.firecloud.org otherwise
+ PUBSUB_AUDIENCE: "importservice.dev.test.firecloud.org"
+
+ RAWLS_PUBSUB_PROJECT: "broad-dsde-{env}"
+ RAWLS_PUBSUB_TOPIC: "rawls-async-import-topic-{env}"
