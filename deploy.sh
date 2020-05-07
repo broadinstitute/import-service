@@ -59,3 +59,12 @@ docker run -v $PWD:/app \
   -e ENVIRONMENT=${ENVIRONMENT} \
   -e ENV=dev \
    $DSDE_TOOLBOX_DOCKER_IMG render-templates.sh
+
+# deploy the app to the specified project
+docker run -v $PWD/app.yaml:/app/app.yaml \
+    #-v $PWD/config.ini:/app/config.ini \
+    -v $PWD/import-service-account.json:/app/import-service-account.json \
+    -e GOOGLE_PROJECT=${GOOGLE_PROJECT} \
+    --entrypoint "/bin/bash" \
+    ${IMPORT_SERVICE_IMAGE} \
+    -c "gcloud auth activate-service-account --key-file=import-service-account.json && gcloud -q app deploy app.yaml --project=$GOOGLE_PROJECT && gcloud -q app deploy cron.yaml --project=$GOOGLE_PROJECT"
