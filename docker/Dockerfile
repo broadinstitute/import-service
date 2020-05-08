@@ -1,8 +1,8 @@
 FROM python:3.7.4
 
 RUN apt-get update -y && \
-    apt-get install -y python-pip python-dev
-
+    apt-get install -y -qq --no-install-recommends wget tar build-essential openssh-client python-openssl python-pip python-dev && \
+    && apt-get clean
 # We copy just the requirements.txt first to leverage Docker cache
 COPY ./requirements.txt /app/requirements.txt
 
