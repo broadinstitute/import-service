@@ -61,7 +61,7 @@ docker run -v $PWD:/app \
    $DSDE_TOOLBOX_DOCKER_IMG render-templates.sh
 
 # deploy the app to the specified project
-docker run -v $PWD/app.yaml:/app/app.yaml
+docker run -v $PWD/app.yaml:/app/app.yaml \
   -v $PWD/import-service-account.json:/app/import-service-account.json \
   -e GOOGLE_PROJECT=${GOOGLE_PROJECT} \
   --entrypoint "/bin/bash" \
