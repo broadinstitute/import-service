@@ -2,10 +2,9 @@ FROM python:3.7.4
 
 RUN apt-get update -y && \
     apt-get install -y -qq --no-install-recommends wget tar build-essential openssh-client python-openssl python-pip python-dev && \
-    && apt-get clean
-# We copy just the requirements.txt first to leverage Docker cache
-COPY ./requirements.txt /app/requirements.txt
+    apt-get clean
 
+COPY requirements.txt /app/requirements.txt
 
 ENV HOME /
 ENV CLOUDSDK_PYTHON_SITEPACKAGES 1
@@ -19,8 +18,7 @@ RUN mkdir /.ssh
 ENV PATH /google-cloud-sdk/bin:$PATH
 VOLUME ["/.config"]
 
-
-WORKDIR /app
+WORKDIR app/
 
 RUN pip install -r requirements.txt
 
