@@ -34,15 +34,17 @@ else
 fi
 
 echo "Deploying branch '${GIT_BRANCH}' to ${ENVIRONMENT}"
+
 set -x
 
 GOOGLE_PROJECT=terra-importservice-${ENVIRONMENT}
 IMPORT_SERVICE_IMAGE=quay.io/broadinstitute/import-service:${GIT_BRANCH}
 
-docker run --rm -e VAULT_TOKEN=${VAULT_TOKEN} broadinstitute/dsde-toolbox vault read --format=json "secret/dsde/firecloud/$ENVIRONMENT/import-service/import-service-account.json" | jq .data > import-service-account.json
+# Get the key for the service account used for deploying
+docker run --rm -e VAULT_TOKEN=${VAULT_TOKEN} broadinstitute/dsde-toolbox vault read --format=json "secret/dsde/firecloud/$ENVIRONMENT/import-service/deployer.json" | jq .data > deployer.json
 
-if [ ! -s import-service-account.json ]; then
-    echo "Failed to create import-service-account.json"
+if [ ! -s deployer.json ]; then
+    echo "Failed to create deployer.json"
     exit 1
 fi
 
@@ -51,6 +53,7 @@ docker pull ${IMPORT_SERVICE_IMAGE}
 export DSDE_TOOLBOX_DOCKER_IMG=broadinstitute/dsde-toolbox:consul-0.20.0
 docker pull $DSDE_TOOLBOX_DOCKER_IMG
 
+# render configs
 docker run -v $PWD:/app \
   -e RUN_CONTEXT=live \
   -e INPUT_PATH=/app \
@@ -60,10 +63,13 @@ docker run -v $PWD:/app \
   -e ENV=dev \
    $DSDE_TOOLBOX_DOCKER_IMG render-templates.sh
 
-# deploy the app to the specified project
+# Deploy the app to the specified project
+# If this deploy fails with the following error message:
+#    ERROR: (gcloud.app.deploy) Permissions error fetching application [apps/$GOOGLE_PROJECT]. Please make sure you are using the correct project ID and that you have permission to view applications on the project.
+# This could be due to the service account described by deployer.json either being destroyed and re-created in the project.
 docker run -v $PWD/app.yaml:/app/app.yaml \
-  -v $PWD/import-service-account.json:/app/import-service-account.json \
+  -v $PWD/deployer.json:/app/deployer.json \
   -e GOOGLE_PROJECT=${GOOGLE_PROJECT} \
   --entrypoint "/bin/bash" \
   ${IMPORT_SERVICE_IMAGE} \
-  -c "gcloud auth activate-service-account --key-file=import-service-account.json && gcloud -q app deploy app.yaml --project=$GOOGLE_PROJECT && gcloud -q app deploy cron.yaml --project=$GOOGLE_PROJECT"
+  -c "gcloud auth activate-service-account --key-file=deployer.json --project=$GOOGLE_PROJECT && gcloud -q app deploy app.yaml --project=$GOOGLE_PROJECT"
