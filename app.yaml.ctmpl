@@ -24,8 +24,6 @@ service: default
 env_variables:
  CLOUD_SQL_CONNECTION_NAME: "mysql+pymysql://{{$mysqlUsername}}:{{$mysqlPassword}}@/isvc?unix_socket=/cloudsql/terra-importservice-{{$env}}:us-central1:{{$mysqlInstanceName}}"
 
- PULL_PUBSUB: "False"
-
  RAWLS_URL: "https://rawls.dsde-{{$env}}.broadinstitute.org"
  SAM_URL: "https://sam.dsde-{{$env}}.broadinstitute.org"
 
