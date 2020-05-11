@@ -31,7 +31,7 @@ env_variables:
  BATCH_UPSERT_BUCKET: "import-service-batchupsert-{{$env}}"
 
  PUBSUB_PROJECT: "terra-importservice-{{$env}}"
- PUBSUB_TOPIC: import-service-notify-{{$env}}
+ PUBSUB_TOPIC: "import-service-notify-{{$env}}"
  PUBSUB_SUBSCRIPTION: "import-service-notify-push"
  PUBSUB_TOKEN: {{$pubSubToken}}
  PUBSUB_ACCOUNT: "import-service@terra-importservice-{{$env}}.iam.gserviceaccount.com"
