@@ -60,7 +60,6 @@ docker run -v $PWD:/app \
   -e OUT_PATH=/app \
   -e VAULT_TOKEN=${VAULT_TOKEN} \
   -e ENVIRONMENT=${ENVIRONMENT} \
-  -e ENV=dev \
    $DSDE_TOOLBOX_DOCKER_IMG render-templates.sh
 
 # Deploy the app to the specified project

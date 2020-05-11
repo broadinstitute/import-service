@@ -40,7 +40,7 @@ env_variables:
 
  # TODO: this needs to match the Terraform'd tfvars for the environment.
  # expect it to be importservice.firecloud.org for production and importservice.<env>.test.firecloud.org otherwise
- PUBSUB_AUDIENCE: "importservice.dev.test.firecloud.org"
+ PUBSUB_AUDIENCE:   {{if eq $env "prod"}}"importservice.firecloud.org"{{else}}"importservice.{{$env}}.test.firecloud.org"{{end}}
 
  RAWLS_PUBSUB_PROJECT: "broad-dsde-{{$env}}"
  RAWLS_PUBSUB_TOPIC: "rawls-async-import-topic-{{$env}}"
