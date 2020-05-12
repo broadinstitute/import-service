@@ -86,10 +86,10 @@ def external_update_status(msg: Dict[str, str]) -> model.ImportStatusResponse:
                 imp.write_error(msg.get("error_message", "External service set this import to Error"))
             else:
                 current_status: ImportStatus = ImportStatus.from_string(msg["current_status"])
-                update_successful = model.Import.update_status_exclusively(import_id, current_status, new_status, sess)
+                update_successful = model.Import.update_status_exclusively(import_id, imp.status, new_status, sess)
 
     if not update_successful:
-        logging.warning(f"Failed to update status for import {import_id}: expected {current_status}, got {imp.status}.")
+        logging.warning(f"Failed to update status for import {import_id}: wanted {current_status}->{new_status}, actually {imp.status}.")
 
     # This goes back to Pub/Sub, nobody reads it
     return model.ImportStatusResponse(import_id, new_status.name, None)

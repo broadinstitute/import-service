@@ -86,11 +86,12 @@ def test_good_update_status(fake_import, client):
 
 
 @pytest.mark.usefixtures("incoming_valid_pubsub")
-def test_fail_update_status_wrong_current(fake_import, client):
+def test_good_update_status_wrong_current(fake_import, client):
     """External service attempts to move import from wrong current status to wherever."""
     with db.session_ctx() as sess:
         sess.add(fake_import)
 
+    # as long as we're moving forward, we ignore current_status
     resp = client.post("/_ah/push-handlers/receive_messages",
                        json=testutils.pubsub_json_body({"action": "status", "import_id": fake_import.id,
                                                         "current_status": "ReadyForUpsert",
@@ -98,7 +99,7 @@ def test_fail_update_status_wrong_current(fake_import, client):
 
     with db.session_ctx() as sess2:
         imp: Import = Import.get(fake_import.id, sess2)
-        assert imp.status == ImportStatus.Pending  # unchanged
+        assert imp.status == ImportStatus.Upserting
 
     assert resp.status_code == 200
 
