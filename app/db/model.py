@@ -47,12 +47,12 @@ else:
 
 @enum.unique
 class ImportStatus(enum.Enum):
-    Pending = enum.auto()  # import request received by the user but we haven't done anything with it yet
-    Translating = enum.auto()  # in the process of translating to rawls batchUpsert
-    ReadyForUpsert = enum.auto()  # batchUpsert file has been put in bucket and rawls has been notified
-    Upserting = enum.auto()  # rawls is actively working on importing the batchUpsert file
-    Error = enum.auto()  # something bad happened, check the error_message column for details
-    Done = enum.auto()  # success
+    Pending = 10  # import request received by the user but we haven't done anything with it yet
+    Translating = 20  # in the process of translating to rawls batchUpsert
+    ReadyForUpsert = 50  # batchUpsert file has been put in bucket and rawls has been notified
+    Upserting = 100  # rawls is actively working on importing the batchUpsert file
+    Done = 500  # success
+    Error = 99999  # something bad happened, check the error_message column for details
 
     # NOTE: enums are special python classes where all members are enum instances.
     # so doing ALL_STATUSES = [foo, bar, baz] will give you a new enum member call ALL_STATUSES,

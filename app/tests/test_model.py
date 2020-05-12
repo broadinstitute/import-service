@@ -1,4 +1,7 @@
+import pytest
+
 from app.db import db, model
+from app.db.model import ImportStatus
 from typing import Iterator, Dict, IO, Any
 import copy
 
@@ -41,3 +44,19 @@ def test_update_status_exclusively(fake_import: model.Import):
     with db.session_ctx() as sess3:
         updated = model.Import.update_status_exclusively(fake_import.id, model.ImportStatus.Pending, model.ImportStatus.Translating, sess3)
         assert not updated
+
+def test_importstatus_enum_fromstring():
+    """ImportStatus enum from_string() works as expected"""
+
+    # don't need to test every enum member
+    p = ImportStatus.from_string("Pending")
+    assert p == ImportStatus.Pending
+
+    d = ImportStatus.from_string("Done")
+    assert d == ImportStatus.Done
+
+    r = ImportStatus.from_string("ReadyForUpsert")
+    assert r == ImportStatus.ReadyForUpsert
+
+    with pytest.raises(NotImplementedError):
+        ImportStatus.from_string("not a valid enum string")
