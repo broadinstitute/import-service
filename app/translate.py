@@ -23,7 +23,7 @@ import requests.exceptions
 
 FILETYPE_TRANSLATORS = {"pfb": PFBToRawls}
 
-VALID_NETLOCS = ["gen3-pfb-export.s3.amazonaws.com", "staging-pfb-export.s3.amazonaws.com", "storage.googleapis.com"]
+VALID_NETLOCS = ["gen3-datastage-io-pfb-export.s3.amazonaws.com", "gen3-pfb-export.s3.amazonaws.com", "staging-pfb-export.s3.amazonaws.com", "storage.googleapis.com"]
 
 
 def handle(msg: Dict[str, str]) -> ImportStatusResponse:
