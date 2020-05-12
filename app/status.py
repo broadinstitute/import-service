@@ -58,6 +58,8 @@ def external_update_status(msg: Dict[str, str]) -> model.ImportStatusResponse:
     import_id = msg["import_id"]
     new_status: ImportStatus = ImportStatus.from_string(msg["new_status"])
 
+    # We do not use current_status from the pubsub message in the logic below, but it is very useful for debugging
+    # so we ask the sender to include it
     if new_status != ImportStatus.Error and "current_status" not in msg:
         raise exceptions.BadJsonException(f"Missing current_status key from update status request for import {import_id}", audit_log = True)
 
@@ -65,23 +67,26 @@ def external_update_status(msg: Dict[str, str]) -> model.ImportStatusResponse:
     with db.session_ctx() as sess:
         imp: model.Import = model.Import.get(import_id, sess)
 
-        # Only think about updating if the statuses are different.
-        if new_status != imp.status:
-            # Quick summary:
-            #   If the caller is setting to error, ignore current status and jump straight there.
-            #   If the import is already in a terminal status, the caller did something bad.
-            #   Otherwise update the status if the caller got the previous one correct.
+        # if the import job is already in a terminal state, this is an error.
+        if imp.status in ImportStatus.terminal_statuses():
+            raise exceptions.TerminalStatusChangeException(import_id, new_status, imp.status)
+
+        # if the import job is already in the requested state, noop. Possibly pub/sub double delivery.
+        elif new_status.value == imp.status.value:
+            logging.info(f"Attempt to move import {import_id}: from {imp.status} to {imp.status}. Likely pub/sub double delivery.")
+
+        # if the requested state would move the import job backwards, this is an error.
+        elif new_status.value < imp.status.value:
+            logging.info(f"Attempt to move import {import_id}: from {imp.status} to {imp.status}. Possible pub/sub out of order.")
+            raise exceptions.IllegalStatusChangeException(import_id, new_status, imp.status)
+
+        # if the requested state would move the import job forward, attempt to save.
+        else: # new_status.value > imp.status.value:
             if new_status == ImportStatus.Error:
                 imp.write_error(msg.get("error_message", "External service set this import to Error"))
-
-            elif imp.status in ImportStatus.terminal_statuses():
-                raise exceptions.TerminalStatusChangeException(import_id, new_status, imp.status)
-
             else:
                 current_status: ImportStatus = ImportStatus.from_string(msg["current_status"])
                 update_successful = model.Import.update_status_exclusively(import_id, current_status, new_status, sess)
-        else:
-            logging.info(f"Attempt to move import {import_id}: from {imp.status} to {imp.status}. Likely pub/sub double delivery.")
 
     if not update_successful:
         logging.warning(f"Failed to update status for import {import_id}: expected {current_status}, got {imp.status}.")

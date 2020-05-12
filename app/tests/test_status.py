@@ -157,3 +157,21 @@ def test_fail_update_status_from_terminal(fake_import: Import, client):
         assert imp.status == ImportStatus.Done  # unchanged
 
     assert resp.status_code == PUBSUB_STATUS_NOTOK
+
+@pytest.mark.usefixtures("incoming_valid_pubsub")
+def test_fail_update_status_backwards(fake_import: Import, client):
+    """External service attempts to move import backwards in status, fails."""
+    with db.session_ctx() as sess:
+        fake_import.status = ImportStatus.Upserting
+        sess.add(fake_import)
+
+    resp = client.post("/_ah/push-handlers/receive_messages",
+                       json=testutils.pubsub_json_body({"action": "status", "import_id": fake_import.id,
+                                                        "current_status": "Upserting",
+                                                        "new_status": "Pending"}))
+
+    with db.session_ctx() as sess2:
+        imp: Import = Import.get(fake_import.id, sess2)
+        assert imp.status == ImportStatus.Upserting  # unchanged
+
+    assert resp.status_code == PUBSUB_STATUS_NOTOK

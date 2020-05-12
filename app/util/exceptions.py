@@ -93,3 +93,11 @@ class TerminalStatusChangeException(ISvcException):
         msg = f"Requested illegal status change on import {import_id} from terminal status {current_terminal_status} to {requested_status}"
         audit_logs = [AuditLog(msg, logging.WARN)]
         super().__init__(msg, 400, audit_logs=audit_logs)
+
+class IllegalStatusChangeException(ISvcException):
+    """An external service requested changing the state of an import, but the new state is not legal compared to the current state."""
+    def __init__(self, import_id: str, requested_status: ImportStatus, current_terminal_status: ImportStatus):
+        eid = uuid.uuid4()
+        msg = f"Requested illegal status change on import {import_id} from status {current_terminal_status} to {requested_status}"
+        audit_logs = [AuditLog(msg, logging.WARN)]
+        super().__init__(msg, 400, audit_logs=audit_logs)
