@@ -1,5 +1,17 @@
+{{- with $env := env "ENVIRONMENT" -}}
+{{- with $vaultSecretsPath := (or (env "VAULT_PATH_PREFIX") (printf "secret/dsde/firecloud/%s/import-service/" $env)) -}}
+{{- with $mysqlData := secret (printf "%s/mysql/user" $vaultSecretsPath) -}}
+{{- with $mysqlUsername := $mysqlData.Data.username -}}
+{{- with $mysqlPassword := $mysqlData.Data.password -}}
+{{- with $mysqlInstanceDetails := secret (printf "%s/mysql/instance_details" $vaultSecretsPath) -}}
+{{- with $mysqlInstanceName := $mysqlInstanceDetails.Data.instance_name -}}
+{{- with $pubSub := secret (printf "%s/pubsub" $vaultSecretsPath) -}}
+{{- with $pubSubToken := $pubSub.Data.secret_token -}}
+
+
 runtime: python37
 service: default
+
 
 # see https://cloud.google.com/appengine/docs/standard/#instance_classes if we ever need to bump memory limits
 # instance_class: F4_HIGHMEM
@@ -10,25 +22,27 @@ service: default
 # environment variables in its docker-compose.
 
 env_variables:
- CLOUD_SQL_CONNECTION_NAME: "mysql+pymysql://{vault/mysql/user.username}:{vault/mysql/user.password}@/isvc?unix_socket=/cloudsql/terra-importservice-{env}:us-central1:{vault/mysql/instance_details.instance_name}"
+ CLOUD_SQL_CONNECTION_NAME: "mysql+pymysql://{{$mysqlUsername}}:{{$mysqlPassword}}@/isvc?unix_socket=/cloudsql/terra-importservice-{{$env}}:us-central1:{{$mysqlInstanceName}}"
 
- PULL_PUBSUB: "False"
+ RAWLS_URL: "https://rawls.dsde-{{$env}}.broadinstitute.org"
+ SAM_URL: "https://sam.dsde-{{$env}}.broadinstitute.org"
 
- RAWLS_URL: "https://rawls.dsde-{env}.broadinstitute.org"
- SAM_URL: "https://sam.dsde-{env}.broadinstitute.org"
+ IMPORT_SVC_SA_EMAIL: "import-service@terra-importservice-{{$env}}.iam.gserviceaccount.com"
+ BATCH_UPSERT_BUCKET: "import-service-batchupsert-{{$env}}"
 
- IMPORT_SVC_SA_EMAIL: "import-service@terra-importservice-{env}.iam.gserviceaccount.com"
- BATCH_UPSERT_BUCKET: "import-service-batchupsert-{env}"
-
- PUBSUB_PROJECT: "terra-importservice-{env}"
- PUBSUB_TOPIC: "import-service-notify"
+ PUBSUB_PROJECT: "terra-importservice-{{$env}}"
+ PUBSUB_TOPIC: "import-service-notify-{{$env}}"
  PUBSUB_SUBSCRIPTION: "import-service-notify-push"
- PUBSUB_TOKEN: {vault/pubsub.secret_token}
- PUBSUB_ACCOUNT: "import-service@terra-importservice-{env}.iam.gserviceaccount.com"
+ PUBSUB_TOKEN: {{$pubSubToken}}
+ PUBSUB_ACCOUNT: "import-service@terra-importservice-{{$env}}.iam.gserviceaccount.com"
 
  # TODO: this needs to match the Terraform'd tfvars for the environment.
  # expect it to be importservice.firecloud.org for production and importservice.<env>.test.firecloud.org otherwise
- PUBSUB_AUDIENCE: "importservice.dev.test.firecloud.org"
+ PUBSUB_AUDIENCE:   {{if eq $env "prod"}}"importservice.firecloud.org"{{else}}"importservice.{{$env}}.test.firecloud.org"{{end}}
 
- RAWLS_PUBSUB_PROJECT: "broad-dsde-{env}"
- RAWLS_PUBSUB_TOPIC: "rawls-async-import-topic-{env}"
+ RAWLS_PUBSUB_PROJECT: "broad-dsde-{{$env}}"
+ RAWLS_PUBSUB_TOPIC: "rawls-async-import-topic-{{$env}}"
+
+
+{{end}}{{end}}{{end}}{{end}}{{end}}{{end}}{{end}}{{end}}{{end}}
+
