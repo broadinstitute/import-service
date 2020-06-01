@@ -7,7 +7,7 @@ import urllib
 from app.util.exceptions import ISvcException
 
 
-def encode(param: str):
+def encode(param: str) -> str:
     return urllib.parse.quote(param)
 
 def get_workspace_uuid(workspace_namespace: str, workspace_name: str, bearer_token: str) -> str:
