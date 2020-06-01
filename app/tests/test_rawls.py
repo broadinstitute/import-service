@@ -34,3 +34,13 @@ def test_check_workspace_iam_action():
     with testutils.patch_request("app.external.rawls", "get", status_code = 500, text="barf"):
         with pytest.raises(exceptions.ISvcException):
             rawls.check_workspace_iam_action("a", "a", "a", "a")
+
+def test_encode():
+    # properly encode spaces
+    assert rawls.encode("Hello world") == "Hello%20world"
+
+    # noop on plain ascii
+    assert rawls.encode("typicalname") == "typicalname"
+
+    # other non-urlsafe chars
+    assert rawls.encode("question?percent%sp ace") == "question%3Fpercent%25sp%20ace"

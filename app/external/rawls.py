@@ -6,8 +6,8 @@ import requests
 from app.util.exceptions import ISvcException
 from requests.utils import requote_uri
 
-def encode(param: str):
-    return requote_uri(param)
+def encode(param: str) -> str:
+    return urllib.parse.quote(param)
 
 def get_workspace_uuid(workspace_namespace: str, workspace_name: str, bearer_token: str) -> str:
     encoded_workspace_namespace = encode(workspace_namespace)
