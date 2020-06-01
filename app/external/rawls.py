@@ -2,10 +2,9 @@ import logging
 import os
 
 import requests
-import urllib
 
 from app.util.exceptions import ISvcException
-
+from requests.utils import requote_uri
 
 def encode(param: str) -> str:
     return urllib.parse.quote(param)
