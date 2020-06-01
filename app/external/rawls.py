@@ -2,13 +2,16 @@ import logging
 import os
 
 import requests
+import urllib
 
 from app.util.exceptions import ISvcException
 
+def encode_url_part(part: str) -> str:
+    return urllib.parse.quote(part)
 
 def get_workspace_uuid(workspace_namespace: str, workspace_name: str, bearer_token: str) -> str:
     resp = requests.get(
-        f"{os.environ.get('RAWLS_URL')}/api/workspaces/{workspace_namespace}/{workspace_name}?fields=workspace.workspaceId",
+        f"{os.environ.get('RAWLS_URL')}/api/workspaces/{encode_url_part(workspace_namespace)}/{encode_url_part(workspace_name)}?fields=workspace.workspaceId",
         headers={"Authorization": bearer_token})
 
     if resp.ok:
@@ -21,7 +24,7 @@ def get_workspace_uuid(workspace_namespace: str, workspace_name: str, bearer_tok
 
 def check_workspace_iam_action(workspace_namespace: str, workspace_name: str, action: str, bearer_token: str) -> bool:
     resp = requests.get(
-        f"{os.environ.get('RAWLS_URL')}/api/workspaces/{workspace_namespace}/{workspace_name}/checkIamActionWithLock/{action}",
+        f"{os.environ.get('RAWLS_URL')}/api/workspaces/{encode_url_part(workspace_namespace)}/{encode_url_part(workspace_name)}/checkIamActionWithLock/{action}",
         headers={"Authorization": bearer_token})
 
     if resp.ok:
@@ -30,7 +33,7 @@ def check_workspace_iam_action(workspace_namespace: str, workspace_name: str, ac
         return False
     else:
         # just pass the error upwards
-        logging.info(f"Got {resp.status_code} from Rawls for {workspace_namespace}/{workspace_name}: {resp.text}")
+        logging.info(f"Got {resp.status_code} from Rawls for {encode_url_part(workspace_namespace)}/{encode_url_part(workspace_name)}: {resp.text}")
         raise ISvcException(resp.text, resp.status_code)
 
 

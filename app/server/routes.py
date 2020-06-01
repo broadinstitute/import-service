@@ -9,6 +9,8 @@ from app.db import model
 import app.auth.service_auth
 from app.server.requestutils import httpify_excs, pubsubify_excs
 
+import urllib
+
 routes = flask.Blueprint('import-service', __name__)
 
 authorizations = {
@@ -35,6 +37,9 @@ import_status_response_model = ns.model("ImportStatusResponse", model.ImportStat
 health_response_model = ns.model("HealthResponse", health.HealthResponse.get_model(api))
 
 
+def decode_url_part(part: str) -> str:
+    return urllib.parse.unquote_plus(part)
+
 @ns.route('/<workspace_project>/<workspace_name>/imports/<import_id>')
 @ns.param('workspace_project', 'Workspace project')
 @ns.param('workspace_name', 'Workspace name')
@@ -44,7 +49,7 @@ class SpecificImport(Resource):
     @ns.marshal_with(import_status_response_model, skip_none=True)
     def get(self, workspace_project, workspace_name, import_id):
         """Return status for this import."""
-        return status.handle_get_import_status(flask.request, workspace_project, workspace_name, import_id)
+        return status.handle_get_import_status(flask.request, decode_url_part(workspace_project), decode_url_part(workspace_name), import_id)
 
 
 @ns.route('/<workspace_project>/<workspace_name>/imports')
@@ -56,7 +61,7 @@ class Imports(Resource):
     @ns.marshal_with(import_status_response_model, code=201, skip_none=True)
     def post(self, workspace_project, workspace_name):
         """Accept an import request."""
-        return new_import.handle(flask.request, workspace_project, workspace_name), 201
+        return new_import.handle(flask.request, decode_url_part(workspace_project), decode_url_part(workspace_name)), 201
 
     @httpify_excs
     @ns.marshal_with(import_status_response_model, code=200, as_list=True, skip_none=True)
@@ -64,7 +69,7 @@ class Imports(Resource):
        'description': "Return only running imports. Adding the query parameter ?running_only with no assigned value will assume true."}})
     def get(self, workspace_project, workspace_name):
         """Return all imports in the workspace."""
-        return status.handle_list_import_status(flask.request, workspace_project, workspace_name)
+        return status.handle_list_import_status(flask.request, decode_url_part(workspace_project), decode_url_part(workspace_name))
 
 
 @ns.route('/health')
