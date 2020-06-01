@@ -2,13 +2,16 @@ import logging
 import os
 
 import requests
+import urllib
 
 from app.util.exceptions import ISvcException
 
 
 def get_workspace_uuid(workspace_namespace: str, workspace_name: str, bearer_token: str) -> str:
+    encoded_workspace_namespace = urllib.parse.urlencode(workspace_namespace)
+    encoded_workspace_name = urllib.parse.urlencode(workspace_name)
     resp = requests.get(
-        f"{os.environ.get('RAWLS_URL')}/api/workspaces/{workspace_namespace}/{workspace_name}?fields=workspace.workspaceId",
+        f"{os.environ.get('RAWLS_URL')}/api/workspaces/{encoded_workspace_namespace}/{encoded_workspace_name}?fields=workspace.workspaceId",
         headers={"Authorization": bearer_token})
 
     if resp.ok:
@@ -20,8 +23,10 @@ def get_workspace_uuid(workspace_namespace: str, workspace_name: str, bearer_tok
 
 
 def check_workspace_iam_action(workspace_namespace: str, workspace_name: str, action: str, bearer_token: str) -> bool:
+    encoded_workspace_namespace = urllib.parse.urlencode(workspace_namespace)
+    encoded_workspace_name = urllib.parse.urlencode(workspace_name)
     resp = requests.get(
-        f"{os.environ.get('RAWLS_URL')}/api/workspaces/{workspace_namespace}/{workspace_name}/checkIamActionWithLock/{action}",
+        f"{os.environ.get('RAWLS_URL')}/api/workspaces/{encoded_workspace_namespace}/{encoded_workspace_name}/checkIamActionWithLock/{action}",
         headers={"Authorization": bearer_token})
 
     if resp.ok:
