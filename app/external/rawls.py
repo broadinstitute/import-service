@@ -30,11 +30,14 @@ def get_workspace_uuid(workspace_namespace: str, workspace_name: str, bearer_tok
 
 
 def check_workspace_iam_action(workspace_namespace: str, workspace_name: str, action: str, bearer_token: str) -> bool:
+    s = Session()
     encoded_workspace_namespace = encode(workspace_namespace)
     encoded_workspace_name = encode(workspace_name)
-    resp = requests.get(
-        f"{os.environ.get('RAWLS_URL')}/api/workspaces/{encoded_workspace_namespace}/{encoded_workspace_name}/checkIamActionWithLock/{action}",
-        headers={"Authorization": bearer_token})
+    url = f"{os.environ.get('RAWLS_URL')}/api/workspaces/{encoded_workspace_namespace}/{encoded_workspace_name}/checkIamActionWithLock/{action}"
+    req = Request('GET', url, headers={"Authorization": bearer_token})
+    prepped = s.prepare_request(req)
+    prepped.url = url
+    resp = s.send(prepped)
 
     if resp.ok:
         return True
