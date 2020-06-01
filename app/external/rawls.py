@@ -4,7 +4,7 @@ import os
 import requests
 
 from app.util.exceptions import ISvcException
-from requests.utils import requote_uri
+import urllib
 
 def encode(param: str) -> str:
     return urllib.parse.quote(param)
