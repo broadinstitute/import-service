@@ -1,4 +1,5 @@
 import enum
+import logging
 import uuid
 from datetime import datetime
 
@@ -145,6 +146,9 @@ class Import(ImportServiceTable, EqMixin, Base):
     def update_status_exclusively(cls, id: str, current_status: ImportStatus, new_status: ImportStatus, sess: DBSession) -> bool:
         """Given an object in status current_status, flip it to new_status and return True
         only if someone didn't steal the object meanwhile."""
+
+        logging.info(f"Attempting to update import {id} status from {current_status} to {new_status} ...")
+
         update = Import.__table__.update() \
             .where(Import.id == id) \
             .where(Import.status == current_status) \
