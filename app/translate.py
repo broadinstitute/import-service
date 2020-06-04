@@ -1,5 +1,7 @@
 import flask
+import json
 import logging
+import traceback
 
 from app.auth import service_auth
 from app.auth.userinfo import UserInfo
@@ -37,10 +39,11 @@ def handle(msg: Dict[str, str]) -> ImportStatusResponse:
         # this import wasn't in pending. most likely this means that the pubsub message we got was delivered twice,
         # and some other GAE instance has picked it up and is happily processing it. happy translating, friendo!
         logging.info(f"Failed to update status exclusively for translating import {import_id}: expected Pending, got {import_details.status}. PubSub probably delivered this message twice.")
-        return flask.make_response(import_details.to_status_response())
+        return flask.make_response(json.dumps(import_details.to_status_response()))
 
     dest_file = f'{os.environ.get("BATCH_UPSERT_BUCKET")}/{import_details.id}.rawlsUpsert'
 
+    logging.info(f"Starting translation for import {import_id} from {import_details.import_url} to {dest_file} ...")
     try:
         with http.http_as_filelike(import_details.import_url) as pfb_file:
 
@@ -55,17 +58,22 @@ def handle(msg: Dict[str, str]) -> ImportStatusResponse:
         # is probably a service account permissions issue.
         # Note that we open the import URL using urllib's urlopen, which raises subclasses of URLError,
         # so we're not at risk of confusing import failures with bucket write failures.
+        logging.error(f"Read/write error during translation for import {import_id}: {traceback.format_exc()}")
         raise exceptions.SystemException([import_details], e)
     except Exception as e:
         # Something went wrong with the translate. Raising an exception will fail the import.
         # Over time we should be able to narrow down the kinds of exception we might get, and perhaps
         # give users clearer messaging instead of logging them all.
         # For now, this is a last-ditch catch-all.
+        logging.error(f"Unexpcted error during translation for import {import_id}: {traceback.format_exc()}")
         raise exceptions.FileTranslationException(import_details, e)
 
     with db.session_ctx() as sess:
         # This should always succeed as we started this function by getting an exclusive lock on the import row.
         Import.update_status_exclusively(import_id, ImportStatus.Translating, ImportStatus.ReadyForUpsert, sess)
+
+    logging.info(f"Completed translation for import {import_id} from {import_details.import_url} to {dest_file}")
+    logging.info(f"Requesting Rawls upsert for import {import_id}...")
 
     # Tell Rawls to import the result.
     pubsub.publish_rawls({
