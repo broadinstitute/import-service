@@ -2,7 +2,7 @@ import base64
 from app.translators.translator import Translator
 from pfb.reader import PFBReader
 from typing import Iterator, Dict, Set, Tuple, Any
-
+import logging
 
 class PFBToRawls(Translator):
     def __init__(self, options=None):
@@ -30,11 +30,17 @@ class PFBToRawls(Translator):
 
         def make_op(key, value):
             if self.options['b64-decode-enums'] and (entity_type, key) in enums:
+                logging.info(f"b64 found: key {key} : value {value}")
                 value = self.b64_decode(value).decode("utf-8")
+                logging.info(f"b64 found: key {key} : new value {value}")
             if self.options['prefix-object-ids'] and key == 'object_id':
+                logging.info(f"Object_id found: key {key} : value {value}")
                 value = 'drs://' + value
+                logging.info(f"Object_id found: key {key} : new value {value}")
             if key == 'name':
+                logging.info(f"Name found: key {key} : value {value}")
                 key = entity_type + '_name'
+                logging.info(f"Name found: key {key} : new value {value}")
             return self.make_add_update_op(key, value)
 
         attributes = [make_op(key, value)
