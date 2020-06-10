@@ -29,19 +29,12 @@ class PFBToRawls(Translator):
         name = record['id']
 
         def make_op(key, value):
-            logging.info(f"pair -> key {key} : value {value}")
             if self.options['b64-decode-enums'] and (entity_type, key) in enums:
-                logging.info(f"b64 found: key {key} : value {value}")
                 value = self.b64_decode(value).decode("utf-8")
-                logging.info(f"b64 found: key {key} : new value {value}")
             if self.options['prefix-object-ids'] and key == 'object_id':
-                logging.info(f"Object_id found: key {key} : value {value}")
                 value = 'drs://' + value
-                logging.info(f"Object_id found: key {key} : new value {value}")
             if key == 'name':
-                logging.info(f"Name found: key {key} : value {value}")
                 key = entity_type + '_name'
-                logging.info(f"Name found: key {key} : new value {value}")
             return self.make_add_update_op(key, value)
 
         attributes = [make_op(key, value)
