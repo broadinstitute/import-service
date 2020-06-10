@@ -2,7 +2,7 @@ import base64
 from app.translators.translator import Translator
 from pfb.reader import PFBReader
 from typing import Iterator, Dict, Set, Tuple, Any
-import logging
+
 
 class PFBToRawls(Translator):
     def __init__(self, options=None):
