@@ -29,6 +29,7 @@ class PFBToRawls(Translator):
         name = record['id']
 
         def make_op(key, value):
+            logging.info(f"pair -> key {key} : value {value}")
             if self.options['b64-decode-enums'] and (entity_type, key) in enums:
                 logging.info(f"b64 found: key {key} : value {value}")
                 value = self.b64_decode(value).decode("utf-8")
