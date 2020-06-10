@@ -8,7 +8,7 @@ class PFBToRawls(Translator):
     def __init__(self, options=None):
         if options is None:
             options = {}
-        defaults = {'b64-decode-enums': False, 'prefix-object-ids': False}
+        defaults = {'b64-decode-enums': False, 'prefix-object-ids': True}
         self.options = {**defaults, **options}
 
     def translate(self, file_like) -> Iterator[Dict[str, Any]]:
