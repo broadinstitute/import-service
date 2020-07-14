@@ -59,9 +59,9 @@ class FileTranslationException(ISvcException):
         eid = uuid.uuid4()
         tb = exc.__traceback__
 
-        user_msg = f"Error translating file: {imprt.import_url}\n" + \
-                                       f"{str(exc)}\n" + \
-                                       f"eid: {str(eid)}"
+        user_msg = f"Error translating file (eid: {str(eid)}). This file is likely corrupt or contains illegal syntax. " + \
+                   f"Please check your file for validity before trying again. Underlying error message: " + \
+                   f"{str(exc)} for file {imprt.import_url}"
 
         audit_logs = [AuditLog(f"Error translating import id: {imprt.id} \n" +
                                f"file: {imprt.import_url} \n" +
