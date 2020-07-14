@@ -40,9 +40,9 @@ def test_unparsable_path(client: flask.testing.FlaskClient, caplog):
 @pytest.mark.parametrize("netloc", translate.VALID_NETLOCS)
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
 def test_subdomain_of_legal_netlocs(client, netloc, caplog):
-    payload = {"path": f"https://hijacked.{netloc}/some/valid/path", "filetype": "pfb"}
+    payload = {"path": f"https://subdomain.{netloc}/some/valid/path", "filetype": "pfb"}
     resp = client.post('/namespace/name/imports', json=payload, headers=good_headers)
-    assert_response_code_and_logs(resp, caplog, payload["path"])
+    assert resp.status_code == 201
 
 @pytest.mark.parametrize("netloc", translate.VALID_NETLOCS)
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")

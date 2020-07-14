@@ -25,7 +25,7 @@ import requests.exceptions
 
 FILETYPE_TRANSLATORS = {"pfb": PFBToRawls}
 
-VALID_NETLOCS = ["gen3-datastage-io-pfb-export.s3.amazonaws.com", "gen3-pfb-export.s3.amazonaws.com", "staging-pfb-export.s3.amazonaws.com", "storage.googleapis.com"]
+VALID_NETLOCS = ["s3.amazonaws.com", "storage.googleapis.com"]
 
 
 def handle(msg: Dict[str, str]) -> ImportStatusResponse:
@@ -112,8 +112,10 @@ def validate_import_url(import_url: Optional[str], user_info: UserInfo) -> bool:
         raise exceptions.InvalidPathException(import_url, user_info, f"{e}")
 
     # parse path into url parts, verify the netloc is one that we allow
-    # we may want to validate netloc suffixes ("s3.amazonaws.com") instead of entire string matches someday.
-    if parsedurl.netloc in VALID_NETLOCS:
+    # we validate netloc suffixes ("s3.amazonaws.com") instead of entire string matches; this allows
+    # for subdomains of the netlocs we deem safe.
+    actual_netloc = parsedurl.netloc
+    if any(actual_netloc.endswith(s) for s in VALID_NETLOCS):
         return True
     else:
         logging.warning(f"Unrecognized netloc for PFB import: [{parsedurl.netloc}] from [{import_url}]")
