@@ -12,7 +12,7 @@
 runtime: python37
 service: default
 
-# set scaling algorithm for this service.
+# set scaling algorithm for this service. basic_scaling parameters are:
 #
 # max_instances: Required. The maximum number of instances for App Engine to create for this service version.
 # This is useful to limit the costs of a service.
@@ -27,7 +27,7 @@ basic_scaling:
 # see https://cloud.google.com/appengine/docs/standard/#instance_classes if we ever need to bump memory limits
 #
 # default instance_class for automatic_scaling is F1: 256MB / 600MHz
-# default instance_class for automatic_scaling is B2: 512MB / 1.2GHz
+# default instance_class for basic_scaling is B2: 512MB / 1.2GHz
 #
 # instance_class: B2
 
