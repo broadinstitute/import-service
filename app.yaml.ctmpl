@@ -12,9 +12,24 @@
 runtime: python37
 service: default
 
+# set scaling algorithm for this service. basic_scaling parameters are:
+#
+# max_instances: Required. The maximum number of instances for App Engine to create for this service version.
+# This is useful to limit the costs of a service.
+#
+# idle_timeout: Optional. The instance will be shut down this amount of time after receiving its last request.
+# The default is 5 minutes (5m).
+#
+basic_scaling:
+  max_instances: 16
+  idle_timeout: 15m
 
 # see https://cloud.google.com/appengine/docs/standard/#instance_classes if we ever need to bump memory limits
-# instance_class: F4_HIGHMEM
+#
+# default instance_class for automatic_scaling is F1: 256MB / 600MHz
+# default instance_class for basic_scaling is B2: 512MB / 1.2GHz
+#
+# instance_class: B2
 
 # in the ctmpl below, the token "vault" means secret/dsde/firecloud/<env>/import-service/
 # vault/foo.bar means vault read secret/dsde/firecloud/<env>/import-service/foo and look for the "bar" key
