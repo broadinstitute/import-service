@@ -12,6 +12,7 @@ from app.translators import Translator, PFBToRawls
 from app.util import http, exceptions
 from app.util.json import StreamArray
 
+from time import time
 from typing import Dict, Optional, IO
 import os
 from json import JSONEncoder
@@ -39,7 +40,7 @@ def handle(msg: Dict[str, str]) -> ImportStatusResponse:
         # this import wasn't in pending. most likely this means that the pubsub message we got was delivered twice,
         # and some other GAE instance has picked it up and is happily processing it. happy translating, friendo!
         logging.info(f"Failed to update status exclusively for translating import {import_id}: expected Pending, got {import_details.status}. PubSub probably delivered this message twice.")
-        return flask.make_response(json.dumps(import_details.to_status_response()))
+        return flask.make_response(f"Failed to update status exclusively for translating import {import_id}: expected Pending, got {import_details.status}. PubSub probably delivered this message twice.", 409)
 
     dest_file = f'{os.environ.get("BATCH_UPSERT_BUCKET")}/{import_details.id}.rawlsUpsert'
 
@@ -49,7 +50,7 @@ def handle(msg: Dict[str, str]) -> ImportStatusResponse:
 
             gcs_project = GCSFileSystem(os.environ.get("PUBSUB_PROJECT"), token=service_auth.get_isvc_credential())
             with gcs_project.open(dest_file, 'wb') as dest_upsert:
-                _stream_translate(pfb_file, dest_upsert, translator = FILETYPE_TRANSLATORS[import_details.filetype]())
+                _stream_translate(import_id, pfb_file, dest_upsert, translator = FILETYPE_TRANSLATORS[import_details.filetype]())
 
     except (FileNotFoundError, IOError, gcsfs.utils.HttpError, requests.exceptions.ProxyError) as e:
         # These are errors thrown by the gcsfs library, see here:
@@ -87,12 +88,22 @@ def handle(msg: Dict[str, str]) -> ImportStatusResponse:
     return ImportStatusResponse(import_id, ImportStatus.ReadyForUpsert.name, None)
 
 
-def _stream_translate(source: IO, dest: IO, translator: Translator) -> None:
+def _stream_translate(import_id: str, source: IO, dest: IO, translator: Translator) -> None:
     translated_gen = translator.translate(source)  # doesn't actually translate, just returns a generator
 
-    for chunk in JSONEncoder(indent=0).iterencode(StreamArray(translated_gen)):
-        dest.write(chunk.encode())  # encodes as utf-8 by default
+    start_time = time()
+    last_log_time = time()
+    num_chunks = 0
 
+    for chunk in JSONEncoder(indent=0).iterencode(StreamArray(translated_gen)):
+        chunk_time = time()
+        num_chunks = num_chunks + 1
+        if (chunk_time - last_log_time >= 5):
+            elapsed = chunk_time - start_time
+            logging.info(f"still translating for import {import_id}: total time {elapsed}s, chunks processed {num_chunks}")
+            last_log_time = chunk_time
+
+        dest.write(chunk.encode())  # encodes as utf-8 by default
 
 def validate_import_url(import_url: Optional[str], user_info: UserInfo) -> bool:
     """Inspects the URI from which the user wants to import data. Because our service will make an
