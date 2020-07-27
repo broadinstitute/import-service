@@ -8,10 +8,11 @@ _subscriber_client: Optional[pubsub_v1.SubscriberClient] = None
 
 
 def _get_publisher_client() -> pubsub_v1.PublisherClient:
-    global _publisher_client
-    if _publisher_client is None:
-        _publisher_client = pubsub_v1.PublisherClient(credentials=service_auth.get_isvc_credential())
-    return _publisher_client
+    # global _publisher_client
+    # if _publisher_client is None:
+    #     _publisher_client = pubsub_v1.PublisherClient(credentials=service_auth.get_isvc_credential())
+    # return _publisher_client
+    return pubsub_v1.PublisherClient(credentials=service_auth.get_isvc_credential())
 
 
 def create_topic_and_sub() -> None:
@@ -44,10 +45,11 @@ def publish_rawls(data: Dict[str, str]) -> None:
 
 
 def _get_subscriber_client() -> pubsub_v1.SubscriberClient:
-    global _subscriber_client
-    if _subscriber_client is None:
-        _subscriber_client = pubsub_v1.SubscriberClient(credentials=service_auth.get_isvc_credential())
-    return _subscriber_client
+    # global _subscriber_client
+    # if _subscriber_client is None:
+    #     _subscriber_client = pubsub_v1.SubscriberClient(credentials=service_auth.get_isvc_credential())
+    # return _subscriber_client
+    return pubsub_v1.SubscriberClient(credentials=service_auth.get_isvc_credential())
 
 
 def pull_self(num_messages: int):
