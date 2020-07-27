@@ -28,8 +28,12 @@ basic_scaling:
 #
 # default instance_class for automatic_scaling is F1: 256MB / 600MHz
 # default instance_class for basic_scaling is B2: 512MB / 1.2GHz
+# other instance_class options:
+#   B4: 1024MB / 2.4GHz
+#   B4_1G: 2048MB / 2.4GHz
+#   B8: 2048MB / 4.8GHz
 #
-# instance_class: B2
+instance_class: B4
 
 # in the ctmpl below, the token "vault" means secret/dsde/firecloud/<env>/import-service/
 # vault/foo.bar means vault read secret/dsde/firecloud/<env>/import-service/foo and look for the "bar" key
