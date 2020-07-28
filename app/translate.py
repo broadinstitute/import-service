@@ -98,7 +98,7 @@ def _stream_translate(import_id: str, source: IO, dest: IO, translator: Translat
     for chunk in JSONEncoder(indent=0).iterencode(StreamArray(translated_gen)):
         chunk_time = time()
         num_chunks = num_chunks + 1
-        if (chunk_time - last_log_time >= 5):
+        if (chunk_time - last_log_time >= 30):
             elapsed = chunk_time - start_time
             logging.info(f"still translating for import {import_id}: total time {elapsed}s, chunks processed {num_chunks}")
             last_log_time = chunk_time
