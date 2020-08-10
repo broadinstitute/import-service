@@ -88,7 +88,7 @@ def handle(msg: Dict[str, str]) -> ImportStatusResponse:
     return ImportStatusResponse(import_id, ImportStatus.ReadyForUpsert.name, None)
 
 
-def _stream_translate(import_id: str, source: IO, dest: IO, translator: Translator) -> None:
+def _stream_translate(import_id: IO, source: IO, dest: IO, translator: Translator) -> None:
     translated_gen = translator.translate(source)  # doesn't actually translate, just returns a generator
 
     start_time = time()
