@@ -40,7 +40,7 @@ def rawls_bad(monkeypatch):
 @pytest.mark.usefixtures("sam_ok", "rawls_ok", "db_ok")
 def test_everything_ok(client):
     resp = client.get('/health')
-    assert resp.status_code == 200
+    assert resp.status_code == 201
 
     assert resp.json["ok"]
     assert resp.json["subsystems"]["rawls"]
