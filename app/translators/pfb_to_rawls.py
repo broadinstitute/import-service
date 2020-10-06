@@ -35,6 +35,8 @@ class PFBToRawls(Translator):
                 value = 'drs://' + value
             if key == 'name':
                 key = entity_type + '_name'
+            else:
+                key = 'pfb:' + key
             return self.make_add_update_op(key, value)
 
         attributes = [make_op(key, value)
