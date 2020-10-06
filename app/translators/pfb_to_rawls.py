@@ -11,7 +11,7 @@ class PFBToRawls(Translator):
         defaults = {'b64-decode-enums': False, 'prefix-object-ids': True}
         self.options = {**defaults, **options}
 
-    def translate(self, file_like) -> Iterator[Dict[str, Any]]:
+    def translate(self, file_like, file_type) -> Iterator[Dict[str, Any]]:
         with PFBReader(file_like) as reader:
             schema = reader.schema
             enums = self.list_enums(schema)
@@ -22,9 +22,9 @@ class PFBToRawls(Translator):
             # more than once.
             for record in reader:
                 if record['name'] != 'Metadata':
-                    yield self.translate_record(record, enums)
+                    yield self.translate_record(record, enums, file_type)
 
-    def translate_record(self, record, enums) -> Dict[str, Any]:
+    def translate_record(self, record, enums, file_type) -> Dict[str, Any]:
         entity_type = record['name']
         name = record['id']
 
@@ -36,7 +36,7 @@ class PFBToRawls(Translator):
             if key == 'name':
                 key = entity_type + '_name'
             else:
-                key = 'pfb:' + key
+                key = file_type + ':' + key
             return self.make_add_update_op(key, value)
 
         attributes = [make_op(key, value)

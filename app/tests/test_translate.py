@@ -16,13 +16,13 @@ import pytest
 
 class StreamyNoOpTranslator(Translator):
     """Well-behaved no-op translator: does nothing, while streaming"""
-    def translate(self, file_like: IO) -> Iterator[Dict[str, Any]]:
+    def translate(self, file_like: IO, file_type: str) -> Iterator[Dict[str, Any]]:
         return ({line: line} for line in file_like)
 
 
 class BadNoOpTranslator(Translator):
     """Badly-behaved no-op translator: does nothing, using lots of memory"""
-    def translate(self, file_like: IO) -> Iterator[Dict[str, Any]]:
+    def translate(self, file_like: IO, file_type: str) -> Iterator[Dict[str, Any]]:
         return iter([{line: line} for line in file_like])
 
 
@@ -37,7 +37,7 @@ def get_memory_usage_mb():
 def maybe_himem_work(numbers_path: str, translator: Translator):
     with open(numbers_path, 'r') as read_numbers:
         with open(os.devnull, 'wb') as dev_null:
-            translate._stream_translate("unittest", read_numbers, dev_null, translator)
+            translate._stream_translate("unittest", read_numbers, dev_null, "somefiletype", translator)
 
 
 def test_stream_translate(tmp_path):
