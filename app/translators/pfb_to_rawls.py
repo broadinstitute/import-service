@@ -34,7 +34,9 @@ class PFBToRawls(Translator):
             if self.options['prefix-object-ids'] and key == 'object_id':
                 value = 'drs://' + value
             if key == 'name':
-                key = entity_type + '_name'
+                # with namespaces in place, why do we need the entity_type prefix here?
+                # we won't remove it now so as to not break any compatibility
+                key = file_type + ':' + entity_type + '_name'
             else:
                 key = file_type + ':' + key
             return self.make_add_update_op(key, value)
