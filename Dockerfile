@@ -1,4 +1,4 @@
-FROM us.gcr.io/broad-dsp-gcr-public/base/python:distroless
+FROM us.gcr.io/broad-dsp-gcr-public/base/python:debian
 
 RUN apt-get update -y && \
     apt-get install -y python-pip python-dev
