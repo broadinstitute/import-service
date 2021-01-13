@@ -15,5 +15,5 @@ COPY . .
 
 EXPOSE 8080
 
-CMD gunicorn -b :8080 main:app
+CMD /venv/bin/gunicorn -b :8080 main:app
 # ENTRYPOINT ["/venv/bin/python3", "main.py"]
