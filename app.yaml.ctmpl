@@ -9,7 +9,7 @@
 {{- with $pubSubToken := $pubSub.Data.secret_token -}}
 
 
-runtime: python37
+runtime: python39
 service: default
 
 # set scaling algorithm for this service. basic_scaling parameters are:
