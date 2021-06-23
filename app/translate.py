@@ -40,7 +40,7 @@ def handle(msg: Dict[str, str]) -> ImportStatusResponse:
         # this import wasn't in pending. most likely this means that the pubsub message we got was delivered twice,
         # and some other GAE instance has picked it up and is happily processing it. happy translating, friendo!
         logging.info(f"Failed to update status exclusively for translating import {import_id}: expected Pending, got {import_details.status}. PubSub probably delivered this message twice.")
-        return flask.make_response(f"Failed to update status exclusively for translating import {import_id}: expected Pending, got {import_details.status}. PubSub probably delivered this message twice.", 409)
+        return flask.make_response(f"Failed to update status exclusively for translating import {import_id}: expected Pending, got {import_details.status}. PubSub probably delivered this message twice.", 409) # type: ignore
 
     dest_file = f'{os.environ.get("BATCH_UPSERT_BUCKET")}/{import_details.id}.rawlsUpsert'
 
