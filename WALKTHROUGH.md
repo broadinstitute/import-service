@@ -1,6 +1,6 @@
 # Walkthrough
 
-This is a Python 3.7 project containing a Google App Engine application, which is also a [Flask](https://flask.palletsprojects.com/) application.
+This is a Python 3.9 project containing a Google App Engine application, which is also a [Flask](https://flask.palletsprojects.com/) application.
 
 I strongly advise you to keep the GitHub repo (or your IDE) open while reading this, so you can refer to the code in context. Additionally, terminal code in this walkthrough assumes you've set up your Python virtualenvironment as described in the [readme](README.md), so if you haven't done that and see `(venv) $` in some code snippet, you'll need to do that if you want to follow along.
 
