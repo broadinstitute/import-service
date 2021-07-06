@@ -9,10 +9,10 @@ job_defaults: &job_defaults
 
 jobs:
   test:
+    <<: *job_defaults
+
     docker:
       - image: circleci/python:3.9.5
-
-    working_directory: ~/repo
 
     steps:
       - checkout
@@ -71,7 +71,7 @@ jobs:
       - run:
           name: Build image
           command: |
-            docker build -t "${GCR_IMAGE_NAME}:${CIRCLE_TAG:-${CIRCLE_BRANCH}}" -f docker/Dockerfile .
+            docker build -t "${GCR_IMAGE_NAME}:${CIRCLE_TAG:-${CIRCLE_BRANCH}}" -f Dockerfile .
             if [[ ${CIRCLE_BRANCH} == "dev" ]]; then
               docker tag ${GCR_IMAGE_NAME}:${CIRCLE_BRANCH} ${GCR_IMAGE_NAME}:latest
             fi
