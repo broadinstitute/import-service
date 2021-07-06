@@ -3,6 +3,10 @@
 # Check https://circleci.com/docs/2.0/language-python/ for more details
 #
 version: 2
+
+job_defaults: &job_defaults
+  working_directory: ~/repo
+
 jobs:
   build:
     docker:
@@ -48,3 +52,40 @@ jobs:
       - store_artifacts:
           path: test-reports
           destination: test-reports
+
+  build-image:
+    <<: *job_defaults
+    docker:
+      - image: google/cloud-sdk
+
+    environment:
+      GCR_REGISTRY_HOST: us.gcr.io
+      GCR_IMAGE_NAME: us.gcr.io/broad-dsp-gcr-public/import-service
+
+    steps:
+      - checkout
+
+      - setup_remote_docker:
+          docker_layer_caching: true
+
+      - run:
+          name: Build image
+          command: |
+            docker build -t "${GCR_IMAGE_NAME}:${CIRCLE_TAG:-${CIRCLE_BRANCH}}" -f docker/Dockerfile .
+            if [[ ${CIRCLE_BRANCH} == "dev" ]]; then
+              docker tag ${GCR_IMAGE_NAME}:${CIRCLE_BRANCH} ${GCR_IMAGE_NAME}:latest
+            fi
+      - run:
+          name: Push to GCR
+          command: |
+            # SA copied from secret/dsde/dsp-techops/common/dspci-wb-gcr-service-account.json
+            # - Follow up: https://broadworkbench.atlassian.net/browse/DDO-526
+            # Get the credentials used to push to GCR from CircleCI from the CircleCI environment variables
+            echo ${GCR_SA} > ${HOME}/gcr_auth_key_file.json
+            gcloud auth activate-service-account --key-file ${HOME}/gcr_auth_key_file.json
+            # Register `gcloud` as a Docker credential helper. Add `-q` to silence confirmation prompts
+            gcloud auth configure-docker ${GCR_REGISTRY_HOST} -q
+            docker push "${GCR_IMAGE_NAME}:${CIRCLE_TAG:-${CIRCLE_BRANCH}}"
+            if [[ ${CIRCLE_BRANCH} == "dev" ]]; then
+              docker push ${GCR_IMAGE_NAME}:latest
+            fi
