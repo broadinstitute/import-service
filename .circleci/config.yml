@@ -85,7 +85,7 @@ jobs:
           path: test-reports
           destination: test-reports
 
-  build-image:
+  build:
     <<: *job_defaults
     docker:
       - image: google/cloud-sdk
@@ -129,7 +129,7 @@ workflows:
           filters:
             <<: *git_tags
       - test
-      - build-image:
+      - build:
           requires:
             - test
             - secrets
