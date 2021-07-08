@@ -62,6 +62,7 @@ def pull_self(num_messages: int):
     return response.received_messages
 
 
+
 def acknowledge_self_messages(ack_ids: List[int]):
     client = _get_subscriber_client()
     subscription_path = client.subscription_path(os.environ.get("PUBSUB_PROJECT"), os.environ.get("PUBSUB_SUBSCRIPTION"))
