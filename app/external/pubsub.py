@@ -1,7 +1,7 @@
 from google.cloud import pubsub_v1
 import os, contextlib
 
-from google.pubsub_v1 import PullRequest
+from google.pubsub_v1 import PullRequest, AcknowledgeRequest
 
 from app.auth import service_auth
 from typing import Dict, List, Optional
@@ -66,4 +66,4 @@ def pull_self(num_messages: int):
 def acknowledge_self_messages(ack_ids: List[int]):
     client = _get_subscriber_client()
     subscription_path = client.subscription_path(os.environ.get("PUBSUB_PROJECT"), os.environ.get("PUBSUB_SUBSCRIPTION"))
-    client.acknowledge(subscription_path, ack_ids)
+    client.acknowledge(AcknowledgeRequest(subscription=subscription_path, ack_ids=ack_ids))
