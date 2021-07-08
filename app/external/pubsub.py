@@ -58,7 +58,7 @@ def _get_subscriber_client() -> pubsub_v1.SubscriberClient:
 def pull_self(num_messages: int):
     client = _get_subscriber_client()
     subscription_path = client.subscription_path(os.environ.get("PUBSUB_PROJECT"), os.environ.get("PUBSUB_SUBSCRIPTION"))
-    response = client.pull(request=PullRequest(subcription=subscription_path, max_messages=num_messages, return_immediately=True))
+    response = client.pull(request=PullRequest(subscription=subscription_path, max_messages=num_messages, return_immediately=True))
     return response.received_messages
 
 
