@@ -24,7 +24,10 @@ import gcsfs.utils
 import requests.exceptions
 
 
-FILETYPE_TRANSLATORS = {"pfb": PFBToRawls}
+FILETYPE_TRANSLATORS = {
+    "pfb": PFBToRawls,
+    "batchUpsert": {}
+}
 
 VALID_NETLOCS = ["s3.amazonaws.com", "storage.googleapis.com"]
 
@@ -46,11 +49,16 @@ def handle(msg: Dict[str, str]) -> ImportStatusResponse:
 
     logging.info(f"Starting translation for import {import_id} from {import_details.import_url} to {dest_file} ...")
     try:
-        with http.http_as_filelike(import_details.import_url) as pfb_file:
+        gcs_project = GCSFileSystem(os.environ.get("PUBSUB_PROJECT"), token=service_auth.get_isvc_credential())
 
-            gcs_project = GCSFileSystem(os.environ.get("PUBSUB_PROJECT"), token=service_auth.get_isvc_credential())
-            with gcs_project.open(dest_file, 'wb') as dest_upsert:
-                _stream_translate(import_id, pfb_file, dest_upsert, import_details.filetype, translator = FILETYPE_TRANSLATORS[import_details.filetype]())
+        if import_details.filetype == "batchUpsert":
+            # no need to stream-translate, we just move the file from its incoming location to
+            # its final destination; the final destination includes the job id
+            gcs_project.mv(import_details.import_url, dest_file)
+        else:
+            with http.http_as_filelike(import_details.import_url) as pfb_file:
+                with gcs_project.open(dest_file, 'wb') as dest_upsert:
+                    _stream_translate(import_id, pfb_file, dest_upsert, import_details.filetype, translator = FILETYPE_TRANSLATORS[import_details.filetype]())
 
     except (FileNotFoundError, IOError, gcsfs.utils.HttpError, requests.exceptions.ProxyError) as e:
         # These are errors thrown by the gcsfs library, see here:
@@ -105,7 +113,7 @@ def _stream_translate(import_id: str, source: IO, dest: IO, file_type: str, tran
 
         dest.write(chunk.encode())  # encodes as utf-8 by default
 
-def validate_import_url(import_url: Optional[str], user_info: UserInfo) -> bool:
+def validate_import_url(import_url: Optional[str], import_filetype: Optional[str], user_info: UserInfo) -> bool:
     """Inspects the URI from which the user wants to import data. Because our service will make an
     outbound request to the user-supplied URI, we want to make sure that our service only visits
     safe and acceptable domains. Especially if we were to add authentication tokens to these outbound
@@ -116,6 +124,11 @@ def validate_import_url(import_url: Optional[str], user_info: UserInfo) -> bool:
         logging.info(f"Missing path from inbound translate request:")
         raise exceptions.InvalidPathException(import_url, user_info, "Missing path to PFB")
 
+    # json schema validation ensures that "import_filetype" exists, but we'll be safe
+    if import_filetype is None:
+        logging.info(f"Missing filetype from inbound translate request:")
+        raise exceptions.InvalidFiletypeException(import_filetype, user_info, "Missing filetype")
+
     try:
         parsedurl = urlparse(import_url)
     except Exception as e:
@@ -125,9 +138,13 @@ def validate_import_url(import_url: Optional[str], user_info: UserInfo) -> bool:
     # parse path into url parts, verify the netloc is one that we allow
     # we validate netloc suffixes ("s3.amazonaws.com") instead of entire string matches; this allows
     # for subdomains of the netlocs we deem safe.
+    # for "batchUpsert" requests, we validate that the file-to-be-imported is already in our
+    # dedicated bucket.
     actual_netloc = parsedurl.netloc
-    if any(actual_netloc.endswith(s) for s in VALID_NETLOCS):
+    if import_filetype == "batchUpsert" and actual_netloc == os.environ.get("BATCH_UPSERT_BUCKET"):
+        return True
+    elif any(actual_netloc.endswith(s) for s in VALID_NETLOCS):
         return True
     else:
-        logging.warning(f"Unrecognized netloc for PFB import: [{parsedurl.netloc}] from [{import_url}]")
-        raise exceptions.InvalidPathException(import_url, user_info, "PFB cannot be imported from this domain.")
+        logging.warning(f"Unrecognized netloc or bucket for import: [{parsedurl.netloc}] from [{import_url}]")
+        raise exceptions.InvalidPathException(import_url, user_info, "File cannot be imported from this URL.")

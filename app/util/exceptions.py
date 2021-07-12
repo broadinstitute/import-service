@@ -53,6 +53,10 @@ class InvalidPathException(ISvcException):
         audit_logs = [AuditLog(f"User {user_info.subject_id} {user_info.user_email} attempted to import from path {import_url}", logging.ERROR)]
         super().__init__(f"Path Not Allowed - {hint}: {import_url}", 400, audit_logs=audit_logs)
 
+class InvalidFiletypeException(ISvcException):
+    def __init__(self, import_filetype: Optional[str], user_info: UserInfo, hint: str):
+        audit_logs = [AuditLog(f"User {user_info.subject_id} {user_info.user_email} attempted to import from filetype {import_filetype}", logging.ERROR)]
+        super().__init__(f"Path Not Allowed - {hint}: {import_filetype}", 400, audit_logs=audit_logs)
 
 class FileTranslationException(ISvcException):
     def __init__(self, imprt: Import, exc: Exception):
