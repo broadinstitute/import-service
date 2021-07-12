@@ -8,7 +8,7 @@ from app.auth.userinfo import UserInfo
 from app.db import db
 from app.db.model import *
 from app.external import pubsub
-from app.translators import Translator, PFBToRawls
+from app.translators import Translator, PFBToRawls, BatchUpsertNoop
 from app.util import http, exceptions
 from app.util.json import StreamArray
 
@@ -26,7 +26,7 @@ import requests.exceptions
 
 FILETYPE_TRANSLATORS = {
     "pfb": PFBToRawls,
-    "batchUpsert": {}
+    "batchUpsert": BatchUpsertNoop
 }
 
 VALID_NETLOCS = ["s3.amazonaws.com", "storage.googleapis.com"]
