@@ -66,4 +66,4 @@ def pull_self(num_messages: int):
 def acknowledge_self_messages(ack_ids: List[int]):
     client = _get_subscriber_client()
     subscription_path = client.subscription_path(os.environ.get("PUBSUB_PROJECT"), os.environ.get("PUBSUB_SUBSCRIPTION"))
-    client.acknowledge(AcknowledgeRequest(subscription=subscription_path, ack_ids=ack_ids))
+    client.acknowledge(request=AcknowledgeRequest(subscription=subscription_path, ack_ids=ack_ids))
