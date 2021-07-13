@@ -23,11 +23,11 @@ from gcsfs.core import GCSFileSystem
 import gcsfs.utils
 import requests.exceptions
 
+# these filetypes get stream-translated
+FILETYPE_TRANSLATORS = {"pfb": PFBToRawls}
 
-FILETYPE_TRANSLATORS = {
-    "pfb": PFBToRawls,
-    "batchUpsert": BatchUpsertNoop
-}
+# this filetype is accepted as-is
+FILETYPE_NOTRANSLATION = "batchUpsert"
 
 VALID_NETLOCS = ["s3.amazonaws.com", "storage.googleapis.com"]
 
@@ -51,7 +51,7 @@ def handle(msg: Dict[str, str]) -> ImportStatusResponse:
     try:
         gcs_project = GCSFileSystem(os.environ.get("PUBSUB_PROJECT"), token=service_auth.get_isvc_credential())
 
-        if import_details.filetype == "batchUpsert":
+        if import_details.filetype == FILETYPE_NOTRANSLATION:
             # no need to stream-translate, we just move the file from its incoming location to
             # its final destination; the final destination includes the job id
             gcs_project.mv(import_details.import_url, dest_file)
@@ -141,7 +141,7 @@ def validate_import_url(import_url: Optional[str], import_filetype: Optional[str
     # for "batchUpsert" requests, we validate that the file-to-be-imported is already in our
     # dedicated bucket.
     actual_netloc = parsedurl.netloc
-    if import_filetype == "batchUpsert" and actual_netloc == os.environ.get("BATCH_UPSERT_BUCKET"):
+    if import_filetype == FILETYPE_NOTRANSLATION and actual_netloc == os.environ.get("BATCH_UPSERT_BUCKET"):
         return True
     elif import_filetype == "pfb" and any(actual_netloc.endswith(s) for s in VALID_NETLOCS):
         return True
