@@ -58,7 +58,7 @@ def _get_subscriber_client() -> pubsub_v1.SubscriberClient:
 def pull_self(num_messages: int):
     client = _get_subscriber_client()
     subscription_path = client.subscription_path(os.environ.get("PUBSUB_PROJECT"), os.environ.get("PUBSUB_SUBSCRIPTION"))
-    response = client.pull(request=PullRequest(subscription=subscription_path, max_messages=num_messages, return_immediately=True))
+    response = client.pull(request={"subscription":subscription_path, "max_messages":num_messages, "return_immediately":True})
     return response.received_messages
 
 
@@ -66,4 +66,4 @@ def pull_self(num_messages: int):
 def acknowledge_self_messages(ack_ids: List[int]):
     client = _get_subscriber_client()
     subscription_path = client.subscription_path(os.environ.get("PUBSUB_PROJECT"), os.environ.get("PUBSUB_SUBSCRIPTION"))
-    client.acknowledge(request=AcknowledgeRequest(subscription=subscription_path, ack_ids=ack_ids))
+    client.acknowledge(request={"subscription":subscription_path, "ack_ids":ack_ids})
