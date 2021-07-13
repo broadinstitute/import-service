@@ -8,7 +8,7 @@ from app.auth.userinfo import UserInfo
 from app.db import db
 from app.db.model import *
 from app.external import pubsub
-from app.translators import Translator, PFBToRawls, BatchUpsertNoop
+from app.translators import Translator, PFBToRawls
 from app.util import http, exceptions
 from app.util.json import StreamArray
 
