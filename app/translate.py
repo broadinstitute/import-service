@@ -52,16 +52,12 @@ def handle(msg: Dict[str, str]) -> ImportStatusResponse:
         gcs_project = GCSFileSystem(os.environ.get("PUBSUB_PROJECT"), token=service_auth.get_isvc_credential())
 
         if import_details.filetype == FILETYPE_NOTRANSLATION:
-
             logging.info(f"import {import_id} is of type {import_details.filetype}; attempting copy from {import_details.import_url} to {dest_file} ...")
-
             # no need to stream-translate, we just move the file from its incoming location to
             # its final destination; the final destination includes the job id
             gcs_project.mv(import_details.import_url, dest_file)
         else:
-
             logging.info(f"import {import_id} is of type {import_details.filetype}; attempting stream-translate ...")
-
             with http.http_as_filelike(import_details.import_url) as pfb_file:
                 with gcs_project.open(dest_file, 'wb') as dest_upsert:
                     _stream_translate(import_id, pfb_file, dest_upsert, import_details.filetype, translator = FILETYPE_TRANSLATORS[import_details.filetype]())
