@@ -27,7 +27,7 @@ import requests.exceptions
 FILETYPE_TRANSLATORS = {"pfb": PFBToRawls}
 
 # this filetype is accepted as-is
-FILETYPE_NOTRANSLATION = "batchUpsert"
+FILETYPE_NOTRANSLATION = "rawlsjson"
 
 VALID_NETLOCS = ["s3.amazonaws.com", "storage.googleapis.com"]
 
@@ -138,7 +138,7 @@ def validate_import_url(import_url: Optional[str], import_filetype: Optional[str
     # parse path into url parts, verify the netloc is one that we allow
     # we validate netloc suffixes ("s3.amazonaws.com") instead of entire string matches; this allows
     # for subdomains of the netlocs we deem safe.
-    # for "batchUpsert" requests, we validate that the file-to-be-imported is already in our
+    # for "rawlsjson" requests, we validate that the file-to-be-imported is already in our
     # dedicated bucket.
     actual_netloc = parsedurl.netloc
     if import_filetype == FILETYPE_NOTRANSLATION and actual_netloc == os.environ.get("BATCH_UPSERT_BUCKET"):

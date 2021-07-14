@@ -81,27 +81,27 @@ def test_audit_logging(client: flask.testing.FlaskClient, caplog):
     assert_response_code_and_logs(resp, caplog, payload["path"])
 
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
-def test_legal_bucket_for_batchupsert(client: flask.testing.FlaskClient, caplog):
-    payload = {"path": "gs://unittest-allowed-bucket/some/valid/path.json", "filetype": "batchUpsert"}
+def test_legal_bucket_for_rawlsjson(client: flask.testing.FlaskClient, caplog):
+    payload = {"path": "gs://unittest-allowed-bucket/some/valid/path.json", "filetype": "rawlsjson"}
     resp = client.post('/namespace/name/imports', json=payload, headers=good_headers)
     assert resp.status_code == 201
 
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
-def test_legal_bucket_for_batchupsert_in_path(client: flask.testing.FlaskClient, caplog):
-    payload = {"path": "gs://unittest-DISallowed-bucket/some/unittest-allowed-bucket/path.json", "filetype": "batchUpsert"}
+def test_legal_bucket_for_rawlsjson_in_path(client: flask.testing.FlaskClient, caplog):
+    payload = {"path": "gs://unittest-DISallowed-bucket/some/unittest-allowed-bucket/path.json", "filetype": "rawlsjson"}
     resp = client.post('/namespace/name/imports', json=payload, headers=good_headers)
     assert_response_code_and_logs(resp, caplog, payload["path"])
 
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
-def test_illegal_bucket_for_batchupsert(client: flask.testing.FlaskClient, caplog):
-    payload = {"path": "gs://unittest-DISallowed-bucket/some/valid/path.json", "filetype": "batchUpsert"}
+def test_illegal_bucket_for_rawlsjson(client: flask.testing.FlaskClient, caplog):
+    payload = {"path": "gs://unittest-DISallowed-bucket/some/valid/path.json", "filetype": "rawlsjson"}
     resp = client.post('/namespace/name/imports', json=payload, headers=good_headers)
     assert_response_code_and_logs(resp, caplog, payload["path"])
 
 @pytest.mark.parametrize("netloc", translate.VALID_NETLOCS)
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
-def test_legal_netlocs_but_batchupsert(client, netloc, caplog):
-    payload = {"path": f"https://{netloc}/some/valid/path", "filetype": "batchUpsert"}
+def test_legal_netlocs_but_rawlsjson(client, netloc, caplog):
+    payload = {"path": f"https://{netloc}/some/valid/path", "filetype": "rawlsjson"}
     resp = client.post('/namespace/name/imports', json=payload, headers=good_headers)
     assert_response_code_and_logs(resp, caplog, payload["path"])
 
