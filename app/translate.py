@@ -124,7 +124,7 @@ def validate_import_url(import_url: Optional[str], import_filetype: Optional[str
     # json schema validation ensures that "import_url" exists, but we'll be safe
     if import_url is None:
         logging.info(f"Missing path from inbound translate request:")
-        raise exceptions.InvalidPathException(import_url, user_info, "Missing path to PFB")
+        raise exceptions.InvalidPathException(import_url, user_info, "Missing path to file to import")
 
     # json schema validation ensures that "import_filetype" exists, but we'll be safe
     if import_filetype is None:
