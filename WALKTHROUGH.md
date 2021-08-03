@@ -6,7 +6,11 @@ I strongly advise you to keep the GitHub repo (or your IDE) open while reading t
 
 #### What does this do?
 
-It accepts an import request through HTTP (a path to a gen3 .pfb file), translates it to the Rawls batchUpsert format, and then passes that file on to Rawls to import into the user's chosen workspace.
+It accepts an import request through HTTP, which is either:
+* a path to a gen3 .pfb file, which it translates to the Rawls batchUpsert format
+* a path, which must be in import-service's bucket, to a file already in Rawls batchUpsert format
+
+and then passes the batchUpsert data to Rawls to import into the user's chosen workspace.
 
 The tech doc [here](https://docs.google.com/document/d/1MeL9J5UqhtCg6SLD2Z9S_SsX3L9jYlZnSpfn2HJptc8/edit#) is out of date but gives some sense of its place within the Terra ecosystem.
 
