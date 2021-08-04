@@ -18,9 +18,10 @@ def handle(request: flask.Request, ws_ns: str, ws_name: str) -> model.ImportStat
 
     # TODO: AS-155: change to "url"?
     import_url = request_json["path"]
+    import_filetype = request_json["filetype"]
 
     # and validate the input's path
-    translate.validate_import_url(import_url, user_info)
+    translate.validate_import_url(import_url, import_filetype, user_info)
 
     new_import = model.Import(
         workspace_name=ws_name,

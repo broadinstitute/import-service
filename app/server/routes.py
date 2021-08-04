@@ -27,10 +27,9 @@ api = Api(routes, version='1.0', title='Import Service',
 
 ns = api.namespace('/', description='import handling')
 
-
 new_import_model = ns.model("NewImport",
                              {"path": fields.String(required=True),
-                              "filetype": fields.String(enum=list(translate.FILETYPE_TRANSLATORS.keys()), required=True)})
+                              "filetype": fields.String(enum=list(translate.FILETYPE_TRANSLATORS.keys()) + [translate.FILETYPE_NOTRANSLATION], required=True)})
 import_status_response_model = ns.model("ImportStatusResponse", model.ImportStatusResponse.get_model())
 health_response_model = ns.model("HealthResponse", health.HealthResponse.get_model(api))
 
