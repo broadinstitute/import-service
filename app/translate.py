@@ -29,7 +29,7 @@ FILETYPE_TRANSLATORS = {"pfb": PFBToRawls}
 # this filetype is accepted as-is
 FILETYPE_NOTRANSLATION = "rawlsjson"
 
-VALID_NETLOCS = ["s3.amazonaws.com", "storage.googleapis.com"]
+VALID_NETLOCS = ["s3.amazonaws.com", "storage.googleapis.com", "service.azul.data.humancellatlas.org", "service.dev.singlecell.gi.ucsc.edu"]
 
 
 def handle(msg: Dict[str, str]) -> ImportStatusResponse:
