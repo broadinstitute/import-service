@@ -71,7 +71,7 @@ def test_import_is_upsert_default():
         import_url="import_url",
         filetype="filetype")
 
-    assert new_import.is_upsert == True
+    assert new_import.is_upsert
 
 @pytest.mark.parametrize("is_upsert", [True, False])
 def test_import_is_upsert_allows_setting_false(is_upsert):

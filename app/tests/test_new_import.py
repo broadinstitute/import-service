@@ -112,7 +112,7 @@ def test_is_upsert_is_false_when_falsey_in_json(input_value, client):
     dbres = sess.query(Import).filter(Import.id == id).all()
     assert len(dbres) == 1
     # assert that the db row contains True for is_upsert
-    assert dbres[0].is_upsert == False
+    assert not dbres[0].is_upsert
 
 @pytest.mark.parametrize("input_value", ["true", "tRuE", "  TRUE  ", True])
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
