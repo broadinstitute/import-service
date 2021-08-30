@@ -25,7 +25,7 @@ def handle(request: flask.Request, ws_ns: str, ws_name: str) -> model.ImportStat
     translate.validate_import_url(import_url, import_filetype, user_info)
 
     # parse is_upsert from a str into a bool
-    is_upsert = str(import_is_upsert).lower == "true"
+    is_upsert = str(import_is_upsert).strip().lower() == "true"
 
     new_import = model.Import(
         workspace_name=ws_name,

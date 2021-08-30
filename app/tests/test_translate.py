@@ -142,6 +142,35 @@ def test_golden_path(fake_import, fake_publish_rawls, client):
     # rawls should have been told to do something
     fake_publish_rawls.assert_called_once()
 
+@pytest.mark.parametrize("is_upsert", [True, False])
+@pytest.mark.usefixtures("good_http_pfb", "good_gcs_dest", "incoming_valid_pubsub")
+def test_publish_rawls_is_upsert_passed_on(is_upsert, fake_publish_rawls, client):
+    """is_upsert value from the database is sent along to Rawls in the pubsub message"""
+    test_import = model.Import("bb", "bb", "uuid", "bb@bb.bb", "gs://bb/bb", "pfb", is_upsert=is_upsert)
+
+    with db.session_ctx() as sess:
+        sess.add(test_import)
+
+    resp = client.post("/_ah/push-handlers/receive_messages",
+                       json=testutils.pubsub_json_body({"action":"translate", "import_id":test_import.id}))
+
+    # result should be OK
+    assert resp.status_code == 200
+
+    # import should be updated to next step
+    with db.session_ctx() as sess:
+        imp: model.Import = model.Import.get(test_import.id, sess)
+        assert imp.status == model.ImportStatus.ReadyForUpsert
+
+        # rawls should have been told to do something
+        fake_publish_rawls.assert_called_once_with({
+            "workspaceNamespace": "bb",
+            "workspaceName": "bb",
+            "userEmail": "bb@bb.bb",
+            "jobId": imp.id,
+            "upsertFile": f"unittest-allowed-bucket/{imp.id}.rawlsUpsert",
+            "isUpsert": str(is_upsert)
+        })
 
 @pytest.mark.usefixtures("forbidden_http_pfb", "good_gcs_dest", "incoming_valid_pubsub")
 def test_forbidden_pfb(fake_import, fake_publish_rawls, client):
