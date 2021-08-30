@@ -62,8 +62,7 @@ def test_importstatus_enum_fromstring():
         ImportStatus.from_string("not a valid enum string")
 
 def test_import_is_upsert_default():
-    """Import model sets is_upsert to True when omitted"""
-
+    """Import model sets is_upsert to True when omitted."""
     new_import = model.Import(
         workspace_name="ws_name",
         workspace_ns="ws_ns",
@@ -76,8 +75,7 @@ def test_import_is_upsert_default():
 
 @pytest.mark.parametrize("is_upsert", [True, False])
 def test_import_is_upsert_allows_setting_false(is_upsert):
-    """Import model sets is_upsert appropriately when specified"""
-
+    """Import model sets is_upsert appropriately when specified."""
     new_import = model.Import(
         workspace_name="ws_name",
         workspace_ns="ws_ns",

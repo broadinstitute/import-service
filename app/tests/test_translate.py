@@ -145,7 +145,7 @@ def test_golden_path(fake_import, fake_publish_rawls, client):
 @pytest.mark.parametrize("is_upsert", [True, False])
 @pytest.mark.usefixtures("good_http_pfb", "good_gcs_dest", "incoming_valid_pubsub")
 def test_publish_rawls_is_upsert_passed_on(is_upsert, fake_publish_rawls, client):
-    """is_upsert value from the database is sent along to Rawls in the pubsub message"""
+    """is_upsert value from the database is sent along to Rawls in the pubsub message."""
     test_import = model.Import("bb", "bb", "uuid", "bb@bb.bb", "gs://bb/bb", "pfb", is_upsert=is_upsert)
 
     with db.session_ctx() as sess:
