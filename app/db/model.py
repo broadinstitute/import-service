@@ -127,7 +127,7 @@ class Import(ImportServiceTable, EqMixin, Base):
         return value
 
     def __init__(self, workspace_name: str, workspace_ns: str, workspace_uuid: str, submitter: str, import_url: str, filetype: str, is_upsert: bool = True):
-        """init method for Import model."""
+        """Init method for Import model."""
         self.id = str(uuid.uuid4())
         self.workspace_name = workspace_name
         self.workspace_namespace = workspace_ns
