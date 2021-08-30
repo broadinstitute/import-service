@@ -7,6 +7,7 @@ from sqlalchemy import Column, DateTime, String
 from sqlalchemy.schema import Table
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import validates
+from sqlalchemy.sql.sqltypes import Boolean
 from sqlalchemy_repr import RepresentableBase
 from app.db import DBSession
 
@@ -115,6 +116,7 @@ class Import(ImportServiceTable, EqMixin, Base):
     status = Column(Enum(ImportStatus), nullable=False)
     filetype = Column(String(10), nullable=False)
     error_message = Column(String(2048), nullable=True)
+    is_upsert = Column(Boolean, nullable=False, default=True)
 
     @validates('error_message')
     def truncate(self, key, value):
@@ -124,7 +126,7 @@ class Import(ImportServiceTable, EqMixin, Base):
             return value[:max_len]
         return value
 
-    def __init__(self, workspace_name: str, workspace_ns: str, workspace_uuid: str, submitter: str, import_url: str, filetype: str):
+    def __init__(self, workspace_name: str, workspace_ns: str, workspace_uuid: str, submitter: str, import_url: str, filetype: str, is_upsert: bool = True):
         self.id = str(uuid.uuid4())
         self.workspace_name = workspace_name
         self.workspace_namespace = workspace_ns
@@ -135,6 +137,7 @@ class Import(ImportServiceTable, EqMixin, Base):
         self.status = ImportStatus.Pending
         self.filetype = filetype
         self.error_message = None
+        self.is_upsert = is_upsert
 
     @classmethod
     def get(cls, id: str, sess: DBSession) -> ImportT:
