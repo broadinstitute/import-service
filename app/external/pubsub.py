@@ -25,11 +25,10 @@ def create_topic_and_sub() -> None:
     sub_path = subclient.subscription_path(os.environ.get("PUBSUB_PROJECT"), os.environ.get("PUBSUB_SUBSCRIPTION"))
 
     with contextlib.suppress(Exception): # it's fine if the topic already exists.
-        pubclient.create_topic(topic_path)
+        pubclient.create_topic(request={"name": topic_path})
 
     with contextlib.suppress(Exception): # it's fine if the subscription already exists.
-        subclient.create_subscription(sub_path, topic_path)
-
+        subclient.create_subscription(request={"name": sub_path, "topic": topic_path})
 
 def publish_self(data: Dict[str, str]) -> None:
     """Publish the data (as attributes, not in the message body) to ourselves using pub/sub."""
