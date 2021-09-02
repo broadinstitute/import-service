@@ -82,3 +82,56 @@ def test_user_cant_see_workspace(client):
 def test_user_cant_write_to_workspace(client):
     resp = client.post('/namespace/name/imports', json=good_json, headers=good_headers)
     assert resp.status_code == 403
+
+@pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
+def test_is_upsert_defaults_true_when_missing_from_json(client):
+    json_payload = {"path": f"https://{translate.VALID_NETLOCS[0]}/some/path", "filetype": "pfb"}
+
+    resp = client.post('/mynamespace/myname/imports', json=json_payload, headers=good_headers)
+    assert resp.status_code == 201
+
+    # response contains the job ID, check it's actually in the database
+    sess = db.get_session()
+    id = resp.json["jobId"]
+    dbres = sess.query(Import).filter(Import.id == id).all()
+    assert len(dbres) == 1
+    # assert that the db row contains True for is_upsert
+    assert dbres[0].is_upsert
+
+@pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
+def test_is_upsert_is_false_when_false_in_json(client):
+    json_payload = {"path": f"https://{translate.VALID_NETLOCS[0]}/some/path", "filetype": "pfb", "isUpsert": False}
+
+    resp = client.post('/mynamespace/myname/imports', json=json_payload, headers=good_headers)
+    assert resp.status_code == 201
+
+    # response contains the job ID, check it's actually in the database
+    sess = db.get_session()
+    id = resp.json["jobId"]
+    dbres = sess.query(Import).filter(Import.id == id).all()
+    assert len(dbres) == 1
+    # assert that the db row contains True for is_upsert
+    assert not dbres[0].is_upsert
+
+@pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
+def test_is_upsert_is_true_when_true_in_json(client):
+    json_payload = {"path": f"https://{translate.VALID_NETLOCS[0]}/some/path", "filetype": "pfb", "isUpsert": True}
+
+    resp = client.post('/mynamespace/myname/imports', json=json_payload, headers=good_headers)
+    assert resp.status_code == 201
+
+    # response contains the job ID, check it's actually in the database
+    sess = db.get_session()
+    id = resp.json["jobId"]
+    dbres = sess.query(Import).filter(Import.id == id).all()
+    assert len(dbres) == 1
+    # assert that the db row contains True for is_upsert
+    assert dbres[0].is_upsert
+
+@pytest.mark.parametrize("input_value", ["true", "True", "yes", 1, "false", "False", "no", 0, "", "something else"])
+@pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
+def test_bad_request_when_isUpsert_is_not_boolean(input_value, client):
+    json_payload = {"path": f"https://{translate.VALID_NETLOCS[0]}/some/path", "filetype": "pfb", "isUpsert": input_value}
+
+    resp = client.post('/mynamespace/myname/imports', json=json_payload, headers=good_headers)
+    assert resp.status_code == 400

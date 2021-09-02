@@ -92,7 +92,8 @@ def handle(msg: Dict[str, str]) -> ImportStatusResponse:
         "workspaceName": import_details.workspace_name,
         "userEmail": import_details.submitter,
         "jobId": import_details.id,
-        "upsertFile": dest_file
+        "upsertFile": dest_file,
+        "isUpsert": str(import_details.is_upsert)
     })
 
     return ImportStatusResponse(import_id, ImportStatus.ReadyForUpsert.name, None)

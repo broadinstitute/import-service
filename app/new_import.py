@@ -19,9 +19,13 @@ def handle(request: flask.Request, ws_ns: str, ws_name: str) -> model.ImportStat
     # TODO: AS-155: change to "url"?
     import_url = request_json["path"]
     import_filetype = request_json["filetype"]
+    import_is_upsert = request_json.get("isUpsert", "true") # default to true if missing, to support legacy imports
 
     # and validate the input's path
     translate.validate_import_url(import_url, import_filetype, user_info)
+
+    # parse is_upsert from a str into a bool
+    is_upsert = str(import_is_upsert).strip().lower() == "true"
 
     new_import = model.Import(
         workspace_name=ws_name,
@@ -29,7 +33,8 @@ def handle(request: flask.Request, ws_ns: str, ws_name: str) -> model.ImportStat
         workspace_uuid=workspace_uuid,
         submitter=user_info.user_email,
         import_url=import_url,
-        filetype=request_json["filetype"])
+        filetype=request_json["filetype"],
+        is_upsert=is_upsert)
 
     with db.session_ctx() as sess:
         sess.add(new_import)
