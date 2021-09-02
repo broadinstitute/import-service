@@ -29,7 +29,8 @@ ns = api.namespace('/', description='import handling')
 
 new_import_model = ns.model("NewImport",
                              {"path": fields.String(required=True),
-                              "filetype": fields.String(enum=list(translate.FILETYPE_TRANSLATORS.keys()) + [translate.FILETYPE_NOTRANSLATION], required=True)})
+                              "filetype": fields.String(enum=list(translate.FILETYPE_TRANSLATORS.keys()) + [translate.FILETYPE_NOTRANSLATION], required=True),
+                              "isUpsert": fields.Boolean(required=False, default=True)})
 import_status_response_model = ns.model("ImportStatusResponse", model.ImportStatusResponse.get_model())
 health_response_model = ns.model("HealthResponse", health.HealthResponse.get_model(api))
 
