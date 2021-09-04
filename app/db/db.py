@@ -17,6 +17,7 @@ _sessionmaker = None
 
 def get_session() -> DBSession:
     global _db
+    global _sessionmaker
 
     if _db is None:
         _db = sqlalchemy.create_engine(
