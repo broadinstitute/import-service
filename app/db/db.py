@@ -31,6 +31,7 @@ def get_session() -> DBSession:
         logging.info("Creating new database tables...")
         model.Base.metadata.create_all(_db)
 
+    if _sessionmaker is None:
         # NOTE on the use of expire_on_commit = False here.
         # We often need to access attributes on an import object after a session is closed.
         # By default, the session will "expire" the object on commit, which makes further attribute access throw an exception.
@@ -38,6 +39,7 @@ def get_session() -> DBSession:
         # expire_on_commit = False disables this behaviour. We pair this with session.expunge_all() when closing a
         # transaction, which detaches the object without invalidating access to its attributes.
         _sessionmaker = sqlalchemy.orm.sessionmaker(bind=_db, expire_on_commit=False)
+
     return _sessionmaker()
 
 
