@@ -9,9 +9,9 @@ RUN apt-get update -q && \
     apt-get install -qq --no-install-recommends \
       build-essential \
       libffi-dev && \
-    pip3 install -U pip && \
-    pip3 install -r /requirements.txt && \
-    pip3 install gunicorn && \
+    /venv/bin/pip3 install -U pip && \
+    /venv/bin/pip3 install -r /requirements.txt && \
+    /venv/bin/pip3 install gunicorn && \
     apt-get remove -y \
       build-essential \
       libffi-dev && \
