@@ -7,7 +7,7 @@ COPY requirements.txt /
 RUN /venv/bin/pip install -r /requirements.txt
 RUN /venv/bin/pip install gunicorn
 
-FROM us.gcr.io/broad-dsp-gcr-public/base/python:debian
+FROM us.gcr.io/broad-dsp-gcr-public/base/python:3.9-debian
 
 WORKDIR /app
 COPY --from=build /venv /venv
