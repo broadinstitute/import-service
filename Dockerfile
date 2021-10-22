@@ -1,4 +1,4 @@
-FROM us.gcr.io/broad-dsp-gcr-public/base/python:3.9-debian AS build
+FROM python:3.9.6 AS build
 
 RUN python3 -m venv /venv
 
