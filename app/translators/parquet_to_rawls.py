@@ -5,8 +5,8 @@ from typing import Iterator, Dict, Any
 
 
 class ParquetToRawls(Translator):
-    "Translator for Parquet files."
     def __init__(self, options=None):
+        "Translator for Parquet files."
         if options is None:
             options = {}
         defaults = {}
