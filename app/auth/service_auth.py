@@ -67,7 +67,7 @@ def _get_isvc_cached_creds() -> CachedCreds:
     """Use the cached creds if it still exists and we have at least 5 minutes until it expires."""
     if _cached_isvc_creds is not None and \
             _cached_isvc_creds.expiry > datetime.datetime.utcnow() + datetime.timedelta(minutes=5):
-        logging.info("using cached creds for import service SA")
+        logging.debug("using cached creds for import service SA")
         return _cached_isvc_creds
     else:
         logging.info("generating new creds for import service SA")
