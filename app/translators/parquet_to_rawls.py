@@ -6,7 +6,7 @@ from typing import Iterator, Dict, Any
 
 class ParquetToRawls(Translator):
     def __init__(self, options=None):
-        "Translator for Parquet files."
+        """Translator for Parquet files."""
         if options is None:
             options = {}
         defaults = {}
