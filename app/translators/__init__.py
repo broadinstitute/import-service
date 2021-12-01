@@ -1,7 +1,5 @@
 from app.translators.translator import Translator
 from app.translators.pfb_to_rawls import PFBToRawls
-from app.translators.parquet_to_rawls import ParquetToRawls
+from app.translators.parquet_to_rawls import ParquetToRawls # noqa: F401
 
-# to ignore "imported but unused" errors from codacy/pyflakes
-import warnings
-warnings.filterwarnings("ignore")
+# the "noqa: F401" annotations tell pyflakes to ignore "imported but unused" SCA errors
