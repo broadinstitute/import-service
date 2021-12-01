@@ -147,7 +147,7 @@ def test_golden_path_pfb(fake_import, fake_publish_rawls, client):
 
 @pytest.mark.usefixtures("good_http_parquet", "good_gcs_dest", "incoming_valid_pubsub")
 def test_golden_path_parquet(fake_import_parquet, fake_publish_rawls, client):
-    """Everything is fine: the pfb is valid and retrievable, and we can write to the destination."""
+    """Everything is fine: the parquet file is valid and retrievable, and we can write to the destination."""
     with db.session_ctx() as sess:
         sess.add(fake_import_parquet)
 

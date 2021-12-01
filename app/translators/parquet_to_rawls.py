@@ -1,8 +1,7 @@
-import base64
 import logging
 
 from app.translators.translator import Translator
-from typing import Iterator, Dict, Set, Tuple, Any
+from typing import Iterator, Dict, Any
 
 
 class ParquetToRawls(Translator):
@@ -13,5 +12,5 @@ class ParquetToRawls(Translator):
         self.options = {**defaults, **options}
 
     def translate(self, file_like, file_type) -> Iterator[Dict[str, Any]]:
-        logging.info("executing a no-op ParquetToRawls translation")
+        logging.info(f"executing a no-op ParquetToRawls translation for {file_type}: {file_like}")
         return iter([])
