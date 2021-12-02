@@ -10,6 +10,6 @@ def test_noop_translate_parquet(fake_import_parquet):
     translator = ParquetToRawls()
     result_iterator = translator.translate(fake_import_parquet, "tdrexport")
     with pytest.raises(StopIteration):
-        item = next(result_iterator)
+        next(result_iterator)
 
 
