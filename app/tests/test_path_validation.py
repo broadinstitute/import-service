@@ -19,17 +19,19 @@ def assert_response_code_and_logs(resp, caplog, import_url):
     assert list(auditlog), "Expected audit log message to exist if user specified illegal domain; did not find such message in log."
 
 @pytest.mark.parametrize("netloc", translate.VALID_NETLOCS)
+@pytest.mark.parametrize("filetype", translate.FILETYPE_TRANSLATORS.keys())
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
-def test_legal_netlocs_simple(client, netloc):
-    payload = {"path": f"https://{netloc}/some/valid/path", "filetype": "pfb"}
+def test_legal_netlocs_simple(client, netloc, filetype):
+    payload = {"path": f"https://{netloc}/some/valid/path", "filetype": filetype}
     resp = client.post('/namespace/name/imports', json=payload, headers=good_headers)
     assert resp.status_code == 201
     # NB we don't test anything deeper than the 201 response; other tests check to see if the
     # db is updated, etc.
 
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
-def test_illegal_netloc_simple(client: flask.testing.FlaskClient, caplog):
-    payload = {"path": f"https://haxxor.evil.bad/some/valid/path", "filetype": "pfb"}
+@pytest.mark.parametrize("filetype", translate.FILETYPE_TRANSLATORS.keys())
+def test_illegal_netloc_simple(client: flask.testing.FlaskClient, filetype, caplog):
+    payload = {"path": "https://haxxor.evil.bad/some/valid/path", "filetype": filetype}
     resp = client.post('/namespace/name/imports', json=payload, headers=good_headers)
     assert_response_code_and_logs(resp, caplog, payload["path"])
 

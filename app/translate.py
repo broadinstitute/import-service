@@ -146,7 +146,7 @@ def validate_import_url(import_url: Optional[str], import_filetype: Optional[str
     actual_netloc = parsedurl.netloc
     if import_filetype == FILETYPE_NOTRANSLATION and actual_netloc == os.environ.get("BATCH_UPSERT_BUCKET"):
         return True
-    elif import_filetype == "pfb" and any(actual_netloc.endswith(s) for s in VALID_NETLOCS):
+    elif import_filetype in FILETYPE_TRANSLATORS.keys() and any(actual_netloc.endswith(s) for s in VALID_NETLOCS):
         return True
     else:
         logging.warning(f"Unrecognized netloc or bucket for import: [{parsedurl.netloc}] from [{import_url}]")
