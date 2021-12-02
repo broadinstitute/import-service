@@ -8,7 +8,7 @@ from app.auth.userinfo import UserInfo
 from app.db import db
 from app.db.model import *
 from app.external import pubsub
-from app.translators import Translator, PFBToRawls
+from app.translators import Translator, ParquetToRawls, PFBToRawls
 from app.util import http, exceptions
 from app.util.json import StreamArray
 
@@ -24,7 +24,7 @@ import gcsfs.utils
 import requests.exceptions
 
 # these filetypes get stream-translated
-FILETYPE_TRANSLATORS = {"pfb": PFBToRawls}
+FILETYPE_TRANSLATORS = {"pfb": PFBToRawls, "tdrexport": ParquetToRawls}
 
 # this filetype is accepted as-is
 FILETYPE_NOTRANSLATION = "rawlsjson"

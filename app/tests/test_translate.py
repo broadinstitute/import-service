@@ -70,6 +70,9 @@ def test_stream_translate(tmp_path):
 def good_http_pfb(monkeypatch, fake_pfb):
     monkeypatch.setattr(translate.http, "http_as_filelike", mock.MagicMock(return_value=fake_pfb))
 
+@pytest.fixture(scope="function")
+def good_http_parquet(monkeypatch, fake_parquet):
+    monkeypatch.setattr(translate.http, "http_as_filelike", mock.MagicMock(return_value=fake_parquet))
 
 @pytest.fixture(scope="function")
 def forbidden_http_pfb(monkeypatch):
@@ -123,7 +126,7 @@ def fake_publish_rawls(monkeypatch, pubsub_fake_env):
 
 
 @pytest.mark.usefixtures("good_http_pfb", "good_gcs_dest", "incoming_valid_pubsub")
-def test_golden_path(fake_import, fake_publish_rawls, client):
+def test_golden_path_pfb(fake_import, fake_publish_rawls, client):
     """Everything is fine: the pfb is valid and retrievable, and we can write to the destination."""
     with db.session_ctx() as sess:
         sess.add(fake_import)
@@ -137,6 +140,26 @@ def test_golden_path(fake_import, fake_publish_rawls, client):
     # import should be updated to next step
     with db.session_ctx() as sess:
         imp: model.Import = model.Import.get(fake_import.id, sess)
+        assert imp.status == model.ImportStatus.ReadyForUpsert
+
+    # rawls should have been told to do something
+    fake_publish_rawls.assert_called_once()
+
+@pytest.mark.usefixtures("good_http_parquet", "good_gcs_dest", "incoming_valid_pubsub")
+def test_golden_path_parquet(fake_import_parquet, fake_publish_rawls, client):
+    """Everything is fine: the parquet file is valid and retrievable, and we can write to the destination."""
+    with db.session_ctx() as sess:
+        sess.add(fake_import_parquet)
+
+    resp = client.post("/_ah/push-handlers/receive_messages",
+                       json=testutils.pubsub_json_body({"action":"translate", "import_id":fake_import_parquet.id}))
+
+    # result should be OK
+    assert resp.status_code == 200
+
+    # import should be updated to next step
+    with db.session_ctx() as sess:
+        imp: model.Import = model.Import.get(fake_import_parquet.id, sess)
         assert imp.status == model.ImportStatus.ReadyForUpsert
 
     # rawls should have been told to do something

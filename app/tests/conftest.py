@@ -65,6 +65,9 @@ def fresh_db(_db_internal: sqlalchemy.engine.Engine) -> Iterator[None]:
 def fake_import() -> Iterator[model.Import]:
     yield model.Import("aa", "aa", "uuid", "aa@aa.aa", "gs://aa/aa", "pfb")
 
+@pytest.fixture(scope="function")
+def fake_import_parquet() -> Iterator[model.Import]:
+    yield model.Import("bb", "bb", "uuid2", "bb@bb.bb", "gs://bb/bb", "tdrexport")
 
 @pytest.fixture(scope="function")
 def incoming_valid_pubsub(monkeypatch) -> Iterator[None]:
@@ -88,6 +91,11 @@ def fake_pfb() -> Iterator[IO]:
     with open("app/tests/empty.avro", 'rb') as out:
         yield out
 
+
+@pytest.fixture(scope="function")
+def fake_parquet() -> Iterator[IO]:
+    with open("app/tests/empty.parquet", 'rb') as out:
+        yield out
 
 @pytest.fixture(scope="function")
 def sam_valid_user(monkeypatch):
