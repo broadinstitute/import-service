@@ -31,7 +31,7 @@ def test_legal_netlocs_simple(client, netloc, filetype):
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
 @pytest.mark.parametrize("filetype", translate.FILETYPE_TRANSLATORS.keys())
 def test_illegal_netloc_simple(client: flask.testing.FlaskClient, filetype, caplog):
-    payload = {"path": f"https://haxxor.evil.bad/some/valid/path", "filetype": filetype}
+    payload = {"path": "https://haxxor.evil.bad/some/valid/path", "filetype": filetype}
     resp = client.post('/namespace/name/imports', json=payload, headers=good_headers)
     assert_response_code_and_logs(resp, caplog, payload["path"])
 
