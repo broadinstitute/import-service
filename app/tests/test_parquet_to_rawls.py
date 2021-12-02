@@ -1,4 +1,5 @@
 from app.translators.parquet_to_rawls import ParquetToRawls
+from app.translators.parquet_to_rawls import SAMPLE_ENTITY
 
 import pytest
 
@@ -9,6 +10,9 @@ def test_noop_translate_parquet(fake_import_parquet):
     """Proper translation of parquet files to rawls json."""
     translator = ParquetToRawls()
     result_iterator = translator.translate(fake_import_parquet, "tdrexport")
+    # result_iterator should have one entity in it:
+    assert next(result_iterator) == SAMPLE_ENTITY
+    # and since there's only one entity, we should see StopIteration when asking for anything beyond the first
     with pytest.raises(StopIteration):
         next(result_iterator)
 
