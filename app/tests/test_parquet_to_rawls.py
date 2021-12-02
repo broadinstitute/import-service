@@ -9,11 +9,7 @@ def test_noop_translate_parquet(fake_import_parquet):
     """Proper translation of parquet files to rawls json."""
     translator = ParquetToRawls()
     result_iterator = translator.translate(fake_import_parquet, "tdrexport")
-    try:
+    with pytest.raises(StopIteration):
         item = next(result_iterator)
-    except StopIteration:
-        pass  # This is what should happen
-    else:
-        pytest.fail(f"Expected result_iterator to be empty, got {item}")
 
 
