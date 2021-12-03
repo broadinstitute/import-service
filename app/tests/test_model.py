@@ -67,6 +67,7 @@ def test_import_is_upsert_default():
         workspace_name="ws_name",
         workspace_ns="ws_ns",
         workspace_uuid="workspace_uuid",
+        workspace_google_project="google-project",
         submitter="user_info.user_email",
         import_url="import_url",
         filetype="filetype")
@@ -80,6 +81,7 @@ def test_import_is_upsert_allows_setting_false(is_upsert):
         workspace_name="ws_name",
         workspace_ns="ws_ns",
         workspace_uuid="workspace_uuid",
+        workspace_google_project="google-project",
         submitter="user_info.user_email",
         import_url="import_url",
         filetype="filetype",

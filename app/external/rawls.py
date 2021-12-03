@@ -4,15 +4,17 @@ import os
 import requests
 
 from app.util.exceptions import ISvcException
+from typing import Dict
 
 
-def get_workspace_uuid(workspace_namespace: str, workspace_name: str, bearer_token: str) -> str:
+def get_workspace_uuid_and_project(workspace_namespace: str, workspace_name: str, bearer_token: str) -> Dict[str, str]:
     resp = requests.get(
-        f"{os.environ.get('RAWLS_URL')}/api/workspaces/{workspace_namespace}/{workspace_name}?fields=workspace.workspaceId",
+        f"{os.environ.get('RAWLS_URL')}/api/workspaces/{workspace_namespace}/{workspace_name}?fields=workspace.workspaceId,workspace.googleProject",
         headers={"Authorization": bearer_token})
 
     if resp.ok:
-        return resp.json()["workspace"]["workspaceId"]
+        jso = resp.json()
+        return {"uuid": jso["workspace"]["workspaceId"], "googleProject": jso["workspace"]["googleProject"]}
     else:
         # just pass the error upwards
         logging.info(f"Got {resp.status_code} from Rawls for {workspace_namespace}/{workspace_name}: {resp.text}")

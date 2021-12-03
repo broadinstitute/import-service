@@ -14,9 +14,10 @@ def handle(request: flask.Request, ws_ns: str, ws_name: str) -> model.ImportStat
     request_json = request.get_json(force=True, silent=True)
 
     # make sure the user is allowed to import to this workspace
-    workspace_uuid = user_auth.workspace_uuid_with_auth(ws_ns, ws_name, access_token, "write")
+    uuid_and_project = user_auth.workspace_uuid_and_project_with_auth(ws_ns, ws_name, access_token, "write")
+    workspace_uuid = uuid_and_project["uuid"]
+    google_project = uuid_and_project["googleProject"]
 
-    # TODO: AS-155: change to "url"?
     import_url = request_json["path"]
     import_filetype = request_json["filetype"]
     import_is_upsert = request_json.get("isUpsert", "true") # default to true if missing, to support legacy imports
@@ -31,6 +32,7 @@ def handle(request: flask.Request, ws_ns: str, ws_name: str) -> model.ImportStat
         workspace_name=ws_name,
         workspace_ns=ws_ns,
         workspace_uuid=workspace_uuid,
+        workspace_google_project=google_project,
         submitter=user_info.user_email,
         import_url=import_url,
         filetype=request_json["filetype"],

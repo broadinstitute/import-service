@@ -110,6 +110,7 @@ class Import(ImportServiceTable, EqMixin, Base):
     workspace_name = Column(String(100), nullable=False)
     workspace_namespace = Column(String(100), nullable=False)
     workspace_uuid = Column(String(36), nullable=False)
+    workspace_google_project = Column(String(30), nullable=False)
     submitter = Column(String(100), nullable=False)
     import_url = Column(String(2048), nullable=False)  # max url length: https://stackoverflow.com/q/417142/2941784
     submit_time = Column(DateTime, nullable=False)
@@ -126,12 +127,13 @@ class Import(ImportServiceTable, EqMixin, Base):
             return value[:max_len]
         return value
 
-    def __init__(self, workspace_name: str, workspace_ns: str, workspace_uuid: str, submitter: str, import_url: str, filetype: str, is_upsert: bool = True):
+    def __init__(self, workspace_name: str, workspace_ns: str, workspace_uuid: str, workspace_google_project: str, submitter: str, import_url: str, filetype: str, is_upsert: bool = True):
         """Init method for Import model."""
         self.id = str(uuid.uuid4())
         self.workspace_name = workspace_name
         self.workspace_namespace = workspace_ns
         self.workspace_uuid = workspace_uuid
+        self.workspace_google_project = workspace_google_project
         self.submitter = submitter
         self.import_url = import_url
         self.submit_time = datetime.now()

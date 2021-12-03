@@ -5,6 +5,7 @@ def test_db_add():
     new_import = model.Import(workspace_name="wsName",
                               workspace_ns="wsNs",
                               workspace_uuid="ws-uuid",
+                              workspace_google_project="google-project",
                               submitter="hussein@coolguy.email",
                               import_url="gs://import/me.pfb",
                               filetype="pfb")

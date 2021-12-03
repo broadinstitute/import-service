@@ -63,11 +63,11 @@ def fresh_db(_db_internal: sqlalchemy.engine.Engine) -> Iterator[None]:
 
 @pytest.fixture(scope="function")
 def fake_import() -> Iterator[model.Import]:
-    yield model.Import("aa", "aa", "uuid", "aa@aa.aa", "gs://aa/aa", "pfb")
+    yield model.Import("aa", "aa", "uuid", "project", "aa@aa.aa", "gs://aa/aa", "pfb")
 
 @pytest.fixture(scope="function")
 def fake_import_parquet() -> Iterator[model.Import]:
-    yield model.Import("bb", "bb", "uuid2", "bb@bb.bb", "gs://bb/bb", "tdrexport")
+    yield model.Import("bb", "bb", "uuid2", "project2", "bb@bb.bb", "gs://bb/bb", "tdrexport")
 
 @pytest.fixture(scope="function")
 def incoming_valid_pubsub(monkeypatch) -> Iterator[None]:
@@ -107,8 +107,8 @@ def sam_valid_user(monkeypatch):
 @pytest.fixture(scope="function")
 def user_has_ws_access(monkeypatch):
     """Makes us think that the user has access to the workspace in Rawls."""
-    monkeypatch.setattr("app.auth.user_auth.workspace_uuid_with_auth",
-                        mock.MagicMock(return_value="some-uuid"))
+    monkeypatch.setattr("app.auth.user_auth.workspace_uuid_and_project_with_auth",
+                        mock.MagicMock(return_value={"uuid":"some-uuid", "googleProject":"some-project"}))
 
 
 @pytest.fixture(scope="function")

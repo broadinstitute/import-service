@@ -67,7 +67,7 @@ def test_user_not_found(client):
 @pytest.mark.usefixtures(
     "sam_valid_user",
     testutils.fxpatch(
-        "app.auth.user_auth.workspace_uuid_with_auth",
+        "app.auth.user_auth.workspace_uuid_and_project_with_auth",
         side_effect = exceptions.ISvcException("what workspace?", 404)))
 def test_user_cant_see_workspace(client):
     resp = client.post('/namespace/name/imports', json=good_json, headers=good_headers)
@@ -77,7 +77,7 @@ def test_user_cant_see_workspace(client):
 @pytest.mark.usefixtures(
     "sam_valid_user",
     testutils.fxpatch(
-        "app.auth.user_auth.workspace_uuid_with_auth",
+        "app.auth.user_auth.workspace_uuid_and_project_with_auth",
         side_effect = exceptions.ISvcException("you can't write to this", 403)))
 def test_user_cant_write_to_workspace(client):
     resp = client.post('/namespace/name/imports', json=good_json, headers=good_headers)
