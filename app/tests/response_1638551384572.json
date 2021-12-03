@@ -1,0 +1,783 @@
+{
+  "id": "8bf100c0-7ac3-4860-80ca-28093f4adb61",
+  "name": "hca_dev_90bd693340c048d48d76778c103bf545__20210827_20211110",
+  "description": "Create snapshot hca_dev_90bd693340c048d48d76778c103bf545__20210827_20211110",
+  "createdDate": "2021-11-10T18:58:03.460156Z",
+  "source": [
+    {
+      "dataset": {
+        "id": "fa6ede4a-fb4c-449c-9dac-1f15cd94aeaa",
+        "name": "hca_dev_90bd693340c048d48d76778c103bf545__20210827",
+        "description": "Dataset for HCA project 90bd6933-40c0-48d4-8d76-778c103bf545",
+        "defaultProfileId": "390e7a85-d47f-4531-b612-165fc977d3bd",
+        "createdDate": "2021-08-27T20:14:58.309435Z",
+        "storage": [
+          {
+            "region": "us-central1",
+            "cloudResource": "bigquery",
+            "cloudPlatform": "gcp"
+          },
+          {
+            "region": "us-east4",
+            "cloudResource": "firestore",
+            "cloudPlatform": "gcp"
+          },
+          {
+            "region": "us-central1",
+            "cloudResource": "bucket",
+            "cloudPlatform": "gcp"
+          }
+        ]
+      },
+      "asset": null
+    }
+  ],
+  "tables": [
+    {
+      "name": "imaging_protocol",
+      "columns": [
+        {
+          "name": "imaging_protocol_id",
+          "datatype": "string",
+          "array_of": false
+        },
+        {
+          "name": "version",
+          "datatype": "timestamp",
+          "array_of": false
+        },
+        {
+          "name": "content",
+          "datatype": "string",
+          "array_of": false
+        }
+      ],
+      "primaryKey": null,
+      "partitionMode": "none",
+      "datePartitionOptions": null,
+      "intPartitionOptions": null,
+      "rowCount": 0
+    },
+    {
+      "name": "ipsc_induction_protocol",
+      "columns": [
+        {
+          "name": "ipsc_induction_protocol_id",
+          "datatype": "string",
+          "array_of": false
+        },
+        {
+          "name": "version",
+          "datatype": "timestamp",
+          "array_of": false
+        },
+        {
+          "name": "content",
+          "datatype": "string",
+          "array_of": false
+        }
+      ],
+      "primaryKey": null,
+      "partitionMode": "none",
+      "datePartitionOptions": null,
+      "intPartitionOptions": null,
+      "rowCount": 0
+    },
+    {
+      "name": "enrichment_protocol",
+      "columns": [
+        {
+          "name": "enrichment_protocol_id",
+          "datatype": "string",
+          "array_of": false
+        },
+        {
+          "name": "version",
+          "datatype": "timestamp",
+          "array_of": false
+        },
+        {
+          "name": "content",
+          "datatype": "string",
+          "array_of": false
+        }
+      ],
+      "primaryKey": null,
+      "partitionMode": "none",
+      "datePartitionOptions": null,
+      "intPartitionOptions": null,
+      "rowCount": 8
+    },
+    {
+      "name": "differentiation_protocol",
+      "columns": [
+        {
+          "name": "differentiation_protocol_id",
+          "datatype": "string",
+          "array_of": false
+        },
+        {
+          "name": "version",
+          "datatype": "timestamp",
+          "array_of": false
+        },
+        {
+          "name": "content",
+          "datatype": "string",
+          "array_of": false
+        }
+      ],
+      "primaryKey": null,
+      "partitionMode": "none",
+      "datePartitionOptions": null,
+      "intPartitionOptions": null,
+      "rowCount": 0
+    },
+    {
+      "name": "supplementary_file",
+      "columns": [
+        {
+          "name": "content",
+          "datatype": "string",
+          "array_of": false
+        },
+        {
+          "name": "file_id",
+          "datatype": "fileref",
+          "array_of": false
+        },
+        {
+          "name": "version",
+          "datatype": "timestamp",
+          "array_of": false
+        },
+        {
+          "name": "supplementary_file_id",
+          "datatype": "string",
+          "array_of": false
+        },
+        {
+          "name": "descriptor",
+          "datatype": "string",
+          "array_of": false
+        }
+      ],
+      "primaryKey": null,
+      "partitionMode": "none",
+      "datePartitionOptions": null,
+      "intPartitionOptions": null,
+      "rowCount": 2
+    },
+    {
+      "name": "analysis_process",
+      "columns": [
+        {
+          "name": "analysis_process_id",
+          "datatype": "string",
+          "array_of": false
+        },
+        {
+          "name": "version",
+          "datatype": "timestamp",
+          "array_of": false
+        },
+        {
+          "name": "content",
+          "datatype": "string",
+          "array_of": false
+        }
+      ],
+      "primaryKey": null,
+      "partitionMode": "none",
+      "datePartitionOptions": null,
+      "intPartitionOptions": null,
+      "rowCount": 0
+    },
+    {
+      "name": "imaging_preparation_protocol",
+      "columns": [
+        {
+          "name": "imaging_preparation_protocol_id",
+          "datatype": "string",
+          "array_of": false
+        },
+        {
+          "name": "version",
+          "datatype": "timestamp",
+          "array_of": false
+        },
+        {
+          "name": "content",
+          "datatype": "string",
+          "array_of": false
+        }
+      ],
+      "primaryKey": null,
+      "partitionMode": "none",
+      "datePartitionOptions": null,
+      "intPartitionOptions": null,
+      "rowCount": 0
+    },
+    {
+      "name": "collection_protocol",
+      "columns": [
+        {
+          "name": "collection_protocol_id",
+          "datatype": "string",
+          "array_of": false
+        },
+        {
+          "name": "version",
+          "datatype": "timestamp",
+          "array_of": false
+        },
+        {
+          "name": "content",
+          "datatype": "string",
+          "array_of": false
+        }
+      ],
+      "primaryKey": null,
+      "partitionMode": "none",
+      "datePartitionOptions": null,
+      "intPartitionOptions": null,
+      "rowCount": 2
+    },
+    {
+      "name": "project",
+      "columns": [
+        {
+          "name": "project_id",
+          "datatype": "string",
+          "array_of": false
+        },
+        {
+          "name": "version",
+          "datatype": "timestamp",
+          "array_of": false
+        },
+        {
+          "name": "content",
+          "datatype": "string",
+          "array_of": false
+        }
+      ],
+      "primaryKey": null,
+      "partitionMode": "none",
+      "datePartitionOptions": null,
+      "intPartitionOptions": null,
+      "rowCount": 1
+    },
+    {
+      "name": "donor_organism",
+      "columns": [
+        {
+          "name": "donor_organism_id",
+          "datatype": "string",
+          "array_of": false
+        },
+        {
+          "name": "version",
+          "datatype": "timestamp",
+          "array_of": false
+        },
+        {
+          "name": "content",
+          "datatype": "string",
+          "array_of": false
+        }
+      ],
+      "primaryKey": null,
+      "partitionMode": "none",
+      "datePartitionOptions": null,
+      "intPartitionOptions": null,
+      "rowCount": 16
+    },
+    {
+      "name": "reference_file",
+      "columns": [
+        {
+          "name": "content",
+          "datatype": "string",
+          "array_of": false
+        },
+        {
+          "name": "file_id",
+          "datatype": "fileref",
+          "array_of": false
+        },
+        {
+          "name": "reference_file_id",
+          "datatype": "string",
+          "array_of": false
+        },
+        {
+          "name": "version",
+          "datatype": "timestamp",
+          "array_of": false
+        },
+        {
+          "name": "descriptor",
+          "datatype": "string",
+          "array_of": false
+        }
+      ],
+      "primaryKey": null,
+      "partitionMode": "none",
+      "datePartitionOptions": null,
+      "intPartitionOptions": null,
+      "rowCount": 0
+    },
+    {
+      "name": "analysis_file",
+      "columns": [
+        {
+          "name": "content",
+          "datatype": "string",
+          "array_of": false
+        },
+        {
+          "name": "file_id",
+          "datatype": "fileref",
+          "array_of": false
+        },
+        {
+          "name": "version",
+          "datatype": "timestamp",
+          "array_of": false
+        },
+        {
+          "name": "analysis_file_id",
+          "datatype": "string",
+          "array_of": false
+        },
+        {
+          "name": "descriptor",
+          "datatype": "string",
+          "array_of": false
+        }
+      ],
+      "primaryKey": null,
+      "partitionMode": "none",
+      "datePartitionOptions": null,
+      "intPartitionOptions": null,
+      "rowCount": 0
+    },
+    {
+      "name": "protocol",
+      "columns": [
+        {
+          "name": "protocol_id",
+          "datatype": "string",
+          "array_of": false
+        },
+        {
+          "name": "version",
+          "datatype": "timestamp",
+          "array_of": false
+        },
+        {
+          "name": "content",
+          "datatype": "string",
+          "array_of": false
+        }
+      ],
+      "primaryKey": null,
+      "partitionMode": "none",
+      "datePartitionOptions": null,
+      "intPartitionOptions": null,
+      "rowCount": 0
+    },
+    {
+      "name": "cell_line",
+      "columns": [
+        {
+          "name": "cell_line_id",
+          "datatype": "string",
+          "array_of": false
+        },
+        {
+          "name": "version",
+          "datatype": "timestamp",
+          "array_of": false
+        },
+        {
+          "name": "content",
+          "datatype": "string",
+          "array_of": false
+        }
+      ],
+      "primaryKey": null,
+      "partitionMode": "none",
+      "datePartitionOptions": null,
+      "intPartitionOptions": null,
+      "rowCount": 0
+    },
+    {
+      "name": "aggregate_generation_protocol",
+      "columns": [
+        {
+          "name": "aggregate_generation_protocol_id",
+          "datatype": "string",
+          "array_of": false
+        },
+        {
+          "name": "version",
+          "datatype": "timestamp",
+          "array_of": false
+        },
+        {
+          "name": "content",
+          "datatype": "string",
+          "array_of": false
+        }
+      ],
+      "primaryKey": null,
+      "partitionMode": "none",
+      "datePartitionOptions": null,
+      "intPartitionOptions": null,
+      "rowCount": 0
+    },
+    {
+      "name": "links",
+      "columns": [
+        {
+          "name": "links_id",
+          "datatype": "string",
+          "array_of": false
+        },
+        {
+          "name": "version",
+          "datatype": "timestamp",
+          "array_of": false
+        },
+        {
+          "name": "project_id",
+          "datatype": "string",
+          "array_of": false
+        },
+        {
+          "name": "content",
+          "datatype": "string",
+          "array_of": false
+        }
+      ],
+      "primaryKey": null,
+      "partitionMode": "none",
+      "datePartitionOptions": null,
+      "intPartitionOptions": null,
+      "rowCount": 2245
+    },
+    {
+      "name": "image_file",
+      "columns": [
+        {
+          "name": "image_file_id",
+          "datatype": "string",
+          "array_of": false
+        },
+        {
+          "name": "content",
+          "datatype": "string",
+          "array_of": false
+        },
+        {
+          "name": "file_id",
+          "datatype": "fileref",
+          "array_of": false
+        },
+        {
+          "name": "version",
+          "datatype": "timestamp",
+          "array_of": false
+        },
+        {
+          "name": "descriptor",
+          "datatype": "string",
+          "array_of": false
+        }
+      ],
+      "primaryKey": null,
+      "partitionMode": "none",
+      "datePartitionOptions": null,
+      "intPartitionOptions": null,
+      "rowCount": 0
+    },
+    {
+      "name": "dissociation_protocol",
+      "columns": [
+        {
+          "name": "dissociation_protocol_id",
+          "datatype": "string",
+          "array_of": false
+        },
+        {
+          "name": "version",
+          "datatype": "timestamp",
+          "array_of": false
+        },
+        {
+          "name": "content",
+          "datatype": "string",
+          "array_of": false
+        }
+      ],
+      "primaryKey": null,
+      "partitionMode": "none",
+      "datePartitionOptions": null,
+      "intPartitionOptions": null,
+      "rowCount": 1
+    },
+    {
+      "name": "sequencing_protocol",
+      "columns": [
+        {
+          "name": "sequencing_protocol_id",
+          "datatype": "string",
+          "array_of": false
+        },
+        {
+          "name": "version",
+          "datatype": "timestamp",
+          "array_of": false
+        },
+        {
+          "name": "content",
+          "datatype": "string",
+          "array_of": false
+        }
+      ],
+      "primaryKey": null,
+      "partitionMode": "none",
+      "datePartitionOptions": null,
+      "intPartitionOptions": null,
+      "rowCount": 1
+    },
+    {
+      "name": "process",
+      "columns": [
+        {
+          "name": "process_id",
+          "datatype": "string",
+          "array_of": false
+        },
+        {
+          "name": "version",
+          "datatype": "timestamp",
+          "array_of": false
+        },
+        {
+          "name": "content",
+          "datatype": "string",
+          "array_of": false
+        }
+      ],
+      "primaryKey": null,
+      "partitionMode": "none",
+      "datePartitionOptions": null,
+      "intPartitionOptions": null,
+      "rowCount": 4516
+    },
+    {
+      "name": "imaged_specimen",
+      "columns": [
+        {
+          "name": "imaged_specimen_id",
+          "datatype": "string",
+          "array_of": false
+        },
+        {
+          "name": "version",
+          "datatype": "timestamp",
+          "array_of": false
+        },
+        {
+          "name": "content",
+          "datatype": "string",
+          "array_of": false
+        }
+      ],
+      "primaryKey": null,
+      "partitionMode": "none",
+      "datePartitionOptions": null,
+      "intPartitionOptions": null,
+      "rowCount": 0
+    },
+    {
+      "name": "analysis_protocol",
+      "columns": [
+        {
+          "name": "analysis_protocol_id",
+          "datatype": "string",
+          "array_of": false
+        },
+        {
+          "name": "version",
+          "datatype": "timestamp",
+          "array_of": false
+        },
+        {
+          "name": "content",
+          "datatype": "string",
+          "array_of": false
+        }
+      ],
+      "primaryKey": null,
+      "partitionMode": "none",
+      "datePartitionOptions": null,
+      "intPartitionOptions": null,
+      "rowCount": 0
+    },
+    {
+      "name": "cell_suspension",
+      "columns": [
+        {
+          "name": "cell_suspension_id",
+          "datatype": "string",
+          "array_of": false
+        },
+        {
+          "name": "version",
+          "datatype": "timestamp",
+          "array_of": false
+        },
+        {
+          "name": "content",
+          "datatype": "string",
+          "array_of": false
+        }
+      ],
+      "primaryKey": null,
+      "partitionMode": "none",
+      "datePartitionOptions": null,
+      "intPartitionOptions": null,
+      "rowCount": 2244
+    },
+    {
+      "name": "organoid",
+      "columns": [
+        {
+          "name": "organoid_id",
+          "datatype": "string",
+          "array_of": false
+        },
+        {
+          "name": "version",
+          "datatype": "timestamp",
+          "array_of": false
+        },
+        {
+          "name": "content",
+          "datatype": "string",
+          "array_of": false
+        }
+      ],
+      "primaryKey": null,
+      "partitionMode": "none",
+      "datePartitionOptions": null,
+      "intPartitionOptions": null,
+      "rowCount": 0
+    },
+    {
+      "name": "specimen_from_organism",
+      "columns": [
+        {
+          "name": "specimen_from_organism_id",
+          "datatype": "string",
+          "array_of": false
+        },
+        {
+          "name": "version",
+          "datatype": "timestamp",
+          "array_of": false
+        },
+        {
+          "name": "content",
+          "datatype": "string",
+          "array_of": false
+        }
+      ],
+      "primaryKey": null,
+      "partitionMode": "none",
+      "datePartitionOptions": null,
+      "intPartitionOptions": null,
+      "rowCount": 28
+    },
+    {
+      "name": "library_preparation_protocol",
+      "columns": [
+        {
+          "name": "library_preparation_protocol_id",
+          "datatype": "string",
+          "array_of": false
+        },
+        {
+          "name": "version",
+          "datatype": "timestamp",
+          "array_of": false
+        },
+        {
+          "name": "content",
+          "datatype": "string",
+          "array_of": false
+        }
+      ],
+      "primaryKey": null,
+      "partitionMode": "none",
+      "datePartitionOptions": null,
+      "intPartitionOptions": null,
+      "rowCount": 1
+    },
+    {
+      "name": "sequence_file",
+      "columns": [
+        {
+          "name": "content",
+          "datatype": "string",
+          "array_of": false
+        },
+        {
+          "name": "file_id",
+          "datatype": "fileref",
+          "array_of": false
+        },
+        {
+          "name": "version",
+          "datatype": "timestamp",
+          "array_of": false
+        },
+        {
+          "name": "sequence_file_id",
+          "datatype": "string",
+          "array_of": false
+        },
+        {
+          "name": "descriptor",
+          "datatype": "string",
+          "array_of": false
+        }
+      ],
+      "primaryKey": null,
+      "partitionMode": "none",
+      "datePartitionOptions": null,
+      "intPartitionOptions": null,
+      "rowCount": 2244
+    }
+  ],
+  "relationships": [
+    {
+      "name": "from_links.project_id_to_project.project_id",
+      "from": {
+        "table": "links",
+        "column": "project_id"
+      },
+      "to": {
+        "table": "project",
+        "column": "project_id"
+      }
+    }
+  ],
+  "profileId": "390e7a85-d47f-4531-b612-165fc977d3bd",
+  "dataProject": "datarepo-dev-29509483",
+  "accessInformation": null
+}

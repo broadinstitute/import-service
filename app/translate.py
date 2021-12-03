@@ -7,7 +7,7 @@ from app.auth import service_auth
 from app.auth.userinfo import UserInfo
 from app.db import db
 from app.db.model import *
-from app.external import pubsub
+from app.external import pubsub, sam
 from app.translators import Translator, ParquetToRawls, PFBToRawls
 from app.util import http, exceptions
 from app.util.json import StreamArray
@@ -58,7 +58,19 @@ def handle(msg: Dict[str, str]) -> ImportStatusResponse:
             gcs_project.mv(import_details.import_url, dest_file)
         else:
             logging.info(f"import {import_id} is of type {import_details.filetype}; attempting stream-translate ...")
-            with http.http_as_filelike(import_details.import_url) as pfb_file:
+            
+            # TODO AS-1037: if import_details.import_url is a gs:// url, get a pet token and use that token to read the file. Might need gcsfs.
+            parsedurl = urlparse(import_details.import_url)
+            if parsedurl.scheme == "gs":
+                import_details.submitter
+                # bucket = parsedurl.hostname
+                sam.admin_get_pet_token("project", "user@hello.com")
+                manifest_fs = GCSFileSystem(os.environ.get("PUBSUB_PROJECT"), token=service_auth.get_isvc_credential())
+                filereader = manifest_fs.open(f"{parsedurl.hostname}{parsedurl.path}")
+            else:
+                filereader = http.http_as_filelike(import_details.import_url)
+
+            with filereader as pfb_file:
                 with gcs_project.open(dest_file, 'wb') as dest_upsert:
                     _stream_translate(import_id, pfb_file, dest_upsert, import_details.filetype, translator = FILETYPE_TRANSLATORS[import_details.filetype]())
 
