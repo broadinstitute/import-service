@@ -5,7 +5,6 @@ import requests
 
 from app.util.exceptions import ISvcException
 from dataclasses import dataclass
-from typing import Dict
 
 
 @dataclass
