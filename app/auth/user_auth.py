@@ -5,6 +5,7 @@ import logging
 
 from app.util.exceptions import AuthorizationException
 from app.external import rawls
+from app.external.rawls import RawlsWorkspaceResponse
 
 
 def extract_auth_token(request: flask.Request) -> str:
@@ -18,7 +19,7 @@ def extract_auth_token(request: flask.Request) -> str:
     return token
 
 
-def workspace_uuid_and_project_with_auth(workspace_ns: str, workspace_name: str, bearer_token: str, sam_action: str = "read") -> Dict[str, str]:
+def workspace_uuid_and_project_with_auth(workspace_ns: str, workspace_name: str, bearer_token: str, sam_action: str = "read") -> RawlsWorkspaceResponse:
     """Checks Rawls to get the workspace UUID, and then checks Sam to see if the user has the given action on the workspace resource.
     If so, returns the workspace UUID."""
     uuid_and_project = rawls.get_workspace_uuid_and_project(workspace_ns, workspace_name, bearer_token)

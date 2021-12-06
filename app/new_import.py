@@ -15,8 +15,8 @@ def handle(request: flask.Request, ws_ns: str, ws_name: str) -> model.ImportStat
 
     # make sure the user is allowed to import to this workspace
     uuid_and_project = user_auth.workspace_uuid_and_project_with_auth(ws_ns, ws_name, access_token, "write")
-    workspace_uuid = uuid_and_project["uuid"]
-    google_project = uuid_and_project["googleProject"]
+    workspace_uuid = uuid_and_project.workspace_id
+    google_project = uuid_and_project.google_project
 
     import_url = request_json["path"]
     import_filetype = request_json["filetype"]

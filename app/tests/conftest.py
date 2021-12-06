@@ -17,6 +17,7 @@ from unittest import mock
 from app import create_app
 from app.auth import service_auth, userinfo
 from app.db import db, model
+from app.external.rawls import RawlsWorkspaceResponse
 
 
 def _test_client() -> flask.testing.FlaskClient:
@@ -108,7 +109,7 @@ def sam_valid_user(monkeypatch):
 def user_has_ws_access(monkeypatch):
     """Makes us think that the user has access to the workspace in Rawls."""
     monkeypatch.setattr("app.auth.user_auth.workspace_uuid_and_project_with_auth",
-                        mock.MagicMock(return_value={"uuid":"some-uuid", "googleProject":"some-project"}))
+                        mock.MagicMock(return_value=RawlsWorkspaceResponse("some-uuid", "some-project")))
 
 
 @pytest.fixture(scope="function")

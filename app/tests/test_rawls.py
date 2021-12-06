@@ -3,7 +3,7 @@ import pytest
 from app.tests import testutils
 from app.util import exceptions
 from app.external import rawls
-
+from app.external.rawls import RawlsWorkspaceResponse
 
 def test_get_workspace_uuid():
     # rawls returns non-OK response
@@ -18,7 +18,7 @@ def test_get_workspace_uuid():
 
     # rawls returns ok with good json, parse it out
     with testutils.patch_request("app.external.rawls", "get", status_code = 200, json={"workspace" : {"workspaceId" : "the-uuid", "googleProject": "proj"}}):
-        assert rawls.get_workspace_uuid_and_project("a", "a", "a") == {"uuid": "the-uuid", "googleProject": "proj"}
+        assert rawls.get_workspace_uuid_and_project("a", "a", "a") == RawlsWorkspaceResponse("the-uuid", "proj")
 
 
 def test_check_workspace_iam_action():
