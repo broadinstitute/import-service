@@ -1,27 +1,24 @@
-import flask
-import json
 import logging
+import os
 import traceback
+from json import JSONEncoder
+from time import time
+from typing import IO, Dict, Optional
+from urllib.parse import urlparse
+
+import flask
+import gcsfs.utils
+import requests.exceptions
+from gcsfs.core import GCSFileSystem
 
 from app.auth import service_auth
 from app.auth.userinfo import UserInfo
 from app.db import db
 from app.db.model import *
 from app.external import gcs, pubsub
-from app.translators import Translator, ParquetToRawls, PFBToRawls
-from app.util import http, exceptions
+from app.translators import ParquetToRawls, PFBToRawls, Translator
+from app.util import exceptions, http
 from app.util.json import StreamArray
-
-from time import time
-from typing import Dict, Optional, IO
-import os
-from json import JSONEncoder
-
-from urllib.parse import urlparse
-
-from gcsfs.core import GCSFileSystem
-import gcsfs.utils
-import requests.exceptions
 
 # these filetypes get stream-translated
 FILETYPE_TRANSLATORS = {"pfb": PFBToRawls, "tdrexport": ParquetToRawls}
