@@ -1,7 +1,6 @@
 import json
-
-from collections import namedtuple
 from urllib.parse import urlparse
+
 
 def test_url_parsing():
     parsedurl = urlparse("gs://datarepo-tools-83c20e98-snapshot-export-bucket/4WKdTpfwTmOevbNouz171g/manifest.json")
@@ -22,7 +21,7 @@ def test_raw_dicts():
         tablekeys.append(f"Table {t['name']} has primary key {pk}")
 
     assert len(tablekeys) == len(jso["tables"])
-    
+
     relationships = []
     for r in jso["relationships"]:
         f = r["from"]
@@ -32,4 +31,4 @@ def test_raw_dicts():
     assert len(relationships) == len(jso["relationships"])
 
     assert jso["id"] == "8bf100c0-7ac3-4860-80ca-28093f4adb61"
-    assert jso["name"] == "hca_dev_90bd693340c048d48d76778c103bf545__20210827_20211110"    
+    assert jso["name"] == "hca_dev_90bd693340c048d48d76778c103bf545__20210827_20211110"
