@@ -47,6 +47,8 @@ def check_health() -> bool:
 
     return resp.ok
 
+# TODO: these should be dataclasses, classes, or something not a simple dict. But, need to watch out for the
+# various types of operations and support everything we need (upsert single attr, array attr, reference, array of references)
 def make_add_update_op(key: str, value: Any) -> Dict[str, Any]:
     return {
         'op': 'AddUpdateAttribute',
