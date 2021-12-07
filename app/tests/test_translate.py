@@ -1,6 +1,5 @@
 from app import translate, db
 from app.db import model
-from app.tests.conftest import fake_tdr_manifest
 from app.translators import Translator
 from app.server import requestutils
 from app.tests import testutils
@@ -125,13 +124,6 @@ def fake_publish_rawls(monkeypatch, pubsub_fake_env):
     monkeypatch.setattr(translate.pubsub, "publish_rawls", mm)
     yield mm
 
-@pytest.fixture(scope="function")
-def fake_sam_pet_token(monkeypatch):
-    mm = mock.MagicMock()
-    monkeypatch.setattr(translate.sam, "admin_get_pet_token", mm)
-    yield mm
-
-
 @pytest.mark.usefixtures("good_http_pfb", "good_gcs_dest", "incoming_valid_pubsub")
 def test_golden_path_pfb(fake_import, fake_publish_rawls, client):
     """Everything is fine: the pfb is valid and retrievable, and we can write to the destination."""
@@ -152,7 +144,7 @@ def test_golden_path_pfb(fake_import, fake_publish_rawls, client):
     # rawls should have been told to do something
     fake_publish_rawls.assert_called_once()
 
-@pytest.mark.usefixtures("good_http_tdr_manifest", "good_gcs_dest", "incoming_valid_pubsub", "fake_sam_pet_token")
+@pytest.mark.usefixtures("good_http_tdr_manifest", "good_gcs_dest", "incoming_valid_pubsub")
 def test_golden_path_tdr_manifest(fake_import_tdr_manifest, fake_publish_rawls, client):
     """Everything is fine: the tdr manifest file is valid and retrievable, and we can write to the destination."""
     with db.session_ctx() as sess:
