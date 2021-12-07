@@ -27,7 +27,7 @@ def test_raw_dicts():
         f = r["from"]
         t = r["to"]
         relationships.append(f"{f['table']}.{f['column']} -> {t['table']}.{t['column']}")
-    
+
     assert len(relationships) == len(jso["relationships"])
 
     assert jso["id"] == "8bf100c0-7ac3-4860-80ca-28093f4adb61"
