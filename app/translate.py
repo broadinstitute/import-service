@@ -7,7 +7,7 @@ from app.auth import service_auth
 from app.auth.userinfo import UserInfo
 from app.db import db
 from app.db.model import *
-from app.external import pubsub, sam
+from app.external import gcs, pubsub, sam
 from app.translators import Translator, ParquetToRawls, PFBToRawls
 from app.util import http, exceptions
 from app.util.json import StreamArray
@@ -61,11 +61,7 @@ def handle(msg: Dict[str, str]) -> ImportStatusResponse:
             
             parsedurl = urlparse(import_details.import_url)
             if import_details.filetype == "tdrexport" and parsedurl.scheme == "gs":
-                submitter = import_details.submitter
-                project = import_details.workspace_google_project
-                pet_token = sam.admin_get_pet_token(project, submitter)
-                manifest_fs = GCSFileSystem(project, token=pet_token)
-                filereader = manifest_fs.open(f"{parsedurl.hostname}{parsedurl.path}")
+                filereader = gcs.open_file(import_details.workspace_google_project, parsedurl.hostname, parsedurl.path, import_details.submitter)
             else:
                 filereader = http.http_as_filelike(import_details.import_url)
 

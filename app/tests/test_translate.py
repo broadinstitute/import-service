@@ -73,7 +73,7 @@ def good_http_pfb(monkeypatch, fake_pfb):
 
 @pytest.fixture(scope="function")
 def good_http_tdr_manifest(monkeypatch, fake_tdr_manifest):
-    monkeypatch.setattr(translate.GCSFileSystem, "open", mock.MagicMock(return_value=fake_tdr_manifest))
+    monkeypatch.setattr(translate.gcs, "open_file", mock.MagicMock(return_value=fake_tdr_manifest))
 
 @pytest.fixture(scope="function")
 def forbidden_http_pfb(monkeypatch):
@@ -162,8 +162,7 @@ def test_golden_path_tdr_manifest(fake_import_tdr_manifest, fake_publish_rawls, 
                        json=testutils.pubsub_json_body({"action":"translate", "import_id":fake_import_tdr_manifest.id}))
 
     # result should be OK
-    # TODO: why is this returning 202, not 200?
-    # assert resp.status_code == 200
+    assert resp.status_code == 200
 
     # import should be updated to next step
     with db.session_ctx() as sess:
