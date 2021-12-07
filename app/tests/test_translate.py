@@ -169,7 +169,7 @@ def test_golden_path_parquet(fake_import_parquet, fake_publish_rawls, client):
 @pytest.mark.usefixtures("good_http_pfb", "good_gcs_dest", "incoming_valid_pubsub")
 def test_publish_rawls_is_upsert_passed_on(is_upsert, fake_publish_rawls, client):
     """is_upsert value from the database is sent along to Rawls in the pubsub message."""
-    test_import = model.Import("bb", "bb", "uuid", "bb@bb.bb", "gs://bb/bb", "pfb", is_upsert=is_upsert)
+    test_import = model.Import("bb", "bb", "uuid", "project", "bb@bb.bb", "gs://bb/bb", "pfb", is_upsert=is_upsert)
 
     with db.session_ctx() as sess:
         sess.add(test_import)

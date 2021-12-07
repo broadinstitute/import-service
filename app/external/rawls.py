@@ -4,15 +4,23 @@ import os
 import requests
 
 from app.util.exceptions import ISvcException
+from dataclasses import dataclass
 
 
-def get_workspace_uuid(workspace_namespace: str, workspace_name: str, bearer_token: str) -> str:
+@dataclass
+class RawlsWorkspaceResponse:
+     workspace_id: str
+     google_project: str
+
+
+def get_workspace_uuid_and_project(workspace_namespace: str, workspace_name: str, bearer_token: str) -> RawlsWorkspaceResponse:
     resp = requests.get(
-        f"{os.environ.get('RAWLS_URL')}/api/workspaces/{workspace_namespace}/{workspace_name}?fields=workspace.workspaceId",
+        f"{os.environ.get('RAWLS_URL')}/api/workspaces/{workspace_namespace}/{workspace_name}?fields=workspace.workspaceId,workspace.googleProject",
         headers={"Authorization": bearer_token})
 
     if resp.ok:
-        return resp.json()["workspace"]["workspaceId"]
+        jso = resp.json()
+        return RawlsWorkspaceResponse(workspace_id=jso["workspace"]["workspaceId"], google_project=jso["workspace"]["googleProject"])
     else:
         # just pass the error upwards
         logging.info(f"Got {resp.status_code} from Rawls for {workspace_namespace}/{workspace_name}: {resp.text}")

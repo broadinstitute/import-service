@@ -5,6 +5,7 @@ import logging
 
 from app.util.exceptions import AuthorizationException
 from app.external import rawls
+from app.external.rawls import RawlsWorkspaceResponse
 
 
 def extract_auth_token(request: flask.Request) -> str:
@@ -18,10 +19,10 @@ def extract_auth_token(request: flask.Request) -> str:
     return token
 
 
-def workspace_uuid_with_auth(workspace_ns: str, workspace_name: str, bearer_token: str, sam_action: str = "read") -> str:
+def workspace_uuid_and_project_with_auth(workspace_ns: str, workspace_name: str, bearer_token: str, sam_action: str = "read") -> RawlsWorkspaceResponse:
     """Checks Rawls to get the workspace UUID, and then checks Sam to see if the user has the given action on the workspace resource.
     If so, returns the workspace UUID."""
-    ws_uuid = rawls.get_workspace_uuid(workspace_ns, workspace_name, bearer_token)
+    uuid_and_project = rawls.get_workspace_uuid_and_project(workspace_ns, workspace_name, bearer_token)
 
     # the read check is done when you ask rawls for the workspace UUID, so don't redo it
     if sam_action != "read" and not rawls.check_workspace_iam_action(workspace_ns, workspace_name, sam_action, bearer_token):
@@ -29,4 +30,4 @@ def workspace_uuid_with_auth(workspace_ns: str, workspace_name: str, bearer_toke
         logging.info(f"User has read action on workspace {workspace_ns}/{workspace_name}, but cannot perform {sam_action}.")
         raise AuthorizationException(f"Cannot perform the action {sam_action} on {workspace_ns}/{workspace_name}.")
 
-    return ws_uuid
+    return uuid_and_project

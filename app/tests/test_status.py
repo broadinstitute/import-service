@@ -46,7 +46,7 @@ def test_get_all_import_status(fake_import, client):
 def test_get_all_running_when_none(client):
     # poke in one import that's in the Done state
     with db.session_ctx() as sess:
-        new_import = Import("namespace", "name", "uuid", "hello@me.com", "http://path", "pfb")
+        new_import = Import("namespace", "name", "uuid", "project", "hello@me.com", "http://path", "pfb")
         new_import.status = ImportStatus.Done
         sess.add(new_import)
         sess.commit()

@@ -16,7 +16,7 @@ def handle_get_import_status(request: flask.Request, ws_ns: str, ws_name: str, i
     sam.validate_user(access_token)
 
     # make sure the user is allowed to view the workspace containing the import
-    user_auth.workspace_uuid_with_auth(ws_ns, ws_name, access_token, "read")
+    user_auth.workspace_uuid_and_project_with_auth(ws_ns, ws_name, access_token, "read")
 
     try:
         with db.session_ctx() as sess:
@@ -38,7 +38,7 @@ def handle_list_import_status(request: flask.Request, ws_ns: str, ws_name: str) 
     sam.validate_user(access_token)
 
     # make sure the user is allowed to view this workspace
-    user_auth.workspace_uuid_with_auth(ws_ns, ws_name, access_token, "read")
+    user_auth.workspace_uuid_and_project_with_auth(ws_ns, ws_name, access_token, "read")
 
     with db.session_ctx() as sess:
         q = sess.query(model.Import).\
