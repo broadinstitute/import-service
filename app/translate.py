@@ -1,6 +1,7 @@
 import logging
 import os
 import traceback
+from dataclasses import asdict
 from json import JSONEncoder
 from time import time
 from typing import IO, Dict, Optional
@@ -16,7 +17,7 @@ from app.auth.userinfo import UserInfo
 from app.db import db
 from app.db.model import *
 from app.external import gcs, pubsub
-from app.translators import TDRManifestToRawls, PFBToRawls, Translator
+from app.translators import PFBToRawls, TDRManifestToRawls, Translator
 from app.util import exceptions, http
 from app.util.json import StreamArray
 
@@ -104,7 +105,10 @@ def handle(msg: Dict[str, str]) -> ImportStatusResponse:
 
 
 def _stream_translate(import_id: str, source: IO, dest: IO, file_type: str, translator: Translator) -> None:
-    translated_gen = translator.translate(source, file_type)  # doesn't actually translate, just returns a generator
+    # returns Iterator[Entity]
+    translated_entity_gen = translator.translate(source, file_type)  # doesn't actually translate, just returns a generator
+    # turn into dicts so they can be json-encoded
+    translated_gen = (asdict(e) for e in translated_entity_gen)
 
     start_time = time()
     last_log_time = time()

@@ -1,4 +1,4 @@
-from app.translators.parquet_to_rawls import TDRManifestToRawls
+from app.translators.tdr_manifest_to_rawls import TDRManifestToRawls
 
 # this unit test asserts that the parquet translation results in an iterator with one entity per snapshot table.
 # this test is only valid for the noop end-to-end spike, in which we don't actually look inside the parquet file.

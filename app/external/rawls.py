@@ -1,12 +1,11 @@
 import logging
 import os
+from dataclasses import dataclass
+from typing import Any, Dict, List
 
 import requests
-
 from app.util.exceptions import ISvcException
-from dataclasses import dataclass
 
-from typing import Any, Dict, Sequence
 
 @dataclass
 class RawlsWorkspaceResponse:
@@ -46,19 +45,3 @@ def check_health() -> bool:
     resp = requests.get(f"{os.environ.get('RAWLS_URL')}/status")
 
     return resp.ok
-
-# TODO: these should be dataclasses, classes, or something not a simple dict. But, need to watch out for the
-# various types of operations and support everything we need (upsert single attr, array attr, reference, array of references)
-def make_add_update_op(key: str, value: Any) -> Dict[str, Any]:
-    return {
-        'op': 'AddUpdateAttribute',
-        'attributeName': key,
-        'addUpdateAttribute': value
-    }
-
-def make_entity(name: str, entity_type: str, operations: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
-    return {
-        'name': name,
-        'entityType': entity_type,
-        'operations': [*operations]
-    }

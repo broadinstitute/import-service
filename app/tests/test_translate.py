@@ -1,29 +1,32 @@
-from app import translate, db
-from app.db import model
-from app.translators import Translator
-from app.server import requestutils
-from app.tests import testutils
-from typing import Iterator, Dict, IO, Any
-
 import io
 import os
+import unittest.mock as mock
+import urllib.error
+from typing import IO, Any, Dict, Iterator
+
 import gcsfs.utils
 import memunit
-import urllib.error
-import unittest.mock as mock
 import pytest
+from app import db, translate
+from app.db import model
+from app.external.rawls_entity_model import (AddUpdateAttribute,
+                                             AttributeOperation, Entity,
+                                             EntityReference)
+from app.server import requestutils
+from app.tests import testutils
+from app.translators import Translator
 
 
 class StreamyNoOpTranslator(Translator):
     """Well-behaved no-op translator: does nothing, while streaming"""
-    def translate(self, file_like: IO, file_type: str) -> Iterator[Dict[str, Any]]:
-        return ({line: line} for line in file_like)
+    def translate(self, file_like: IO, file_type: str) -> Iterator[Entity]:
+        return (Entity(line, 'line', []) for line in file_like)
 
 
 class BadNoOpTranslator(Translator):
     """Badly-behaved no-op translator: does nothing, using lots of memory"""
-    def translate(self, file_like: IO, file_type: str) -> Iterator[Dict[str, Any]]:
-        return iter([{line: line} for line in file_like])
+    def translate(self, file_like: IO, file_type: str) -> Iterator[Entity]:
+        return iter([Entity(line, 'line', []) for line in file_like])
 
 
 def get_memory_usage_mb():

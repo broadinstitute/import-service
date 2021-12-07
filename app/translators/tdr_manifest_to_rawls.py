@@ -1,9 +1,11 @@
-import logging
 import json
+import logging
+from typing import Any, Dict, Iterator
 
-from app.translators.translator import Translator
 from app.external import rawls
-from typing import Iterator, Dict, Any
+from app.external.rawls_entity_model import AddUpdateAttribute, Entity
+from app.translators.translator import Translator
+
 
 class TDRManifestToRawls(Translator):
     def __init__(self, options=None):
@@ -14,7 +16,7 @@ class TDRManifestToRawls(Translator):
         defaults = {}
         self.options = {**defaults, **options}
 
-    def translate(self, file_like, file_type) -> Iterator[Dict[str, Any]]:
+    def translate(self, file_like, file_type) -> Iterator[Entity]:
         logging.info(f"executing a TDRManifestToRawls translation for {file_type}: {file_like}")
         # read and parse entire manifest file
         jso = json.load(file_like)
@@ -36,10 +38,10 @@ class TDRManifestToRawls(Translator):
             else:
                 pk = "datarepo_row_id"
 
-            ops.append(rawls.make_add_update_op('table', t))
-            ops.append(rawls.make_add_update_op('primarykey', pk))
+            ops.append(AddUpdateAttribute('tablename', t))
+            ops.append(AddUpdateAttribute('primarykey', pk))
 
-            recs.append(rawls.make_entity(t, 'snapshottable', ops))
+            recs.append(Entity(t, 'snapshottable', ops))
 
         # TODO AS-1059: create map of table names->parquet files
         # TODO AS-1036: build relationship graph, determine proper ordering for tables

@@ -1,7 +1,7 @@
 import json
 from urllib.parse import urlparse
 
-# TODO: delete these tests in favor of test_parquet_to_rawls.py
+# TODO: delete these tests in favor of test_tdr_manifest_to_rawls.py
 
 def test_url_parsing():
     parsedurl = urlparse("gs://datarepo-tools-83c20e98-snapshot-export-bucket/4WKdTpfwTmOevbNouz171g/manifest.json")
