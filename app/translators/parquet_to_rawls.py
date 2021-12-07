@@ -5,8 +5,7 @@ from app.translators.translator import Translator
 from app.external import rawls
 from typing import Iterator, Dict, Any
 
-# TODO AS-1037: rename to e.g. TDRManifestToRawls?
-class ParquetToRawls(Translator):
+class TDRManifestToRawls(Translator):
     def __init__(self, options=None):
         """Translator for Parquet files."""
         if options is None:
@@ -16,7 +15,7 @@ class ParquetToRawls(Translator):
         self.options = {**defaults, **options}
 
     def translate(self, file_like, file_type) -> Iterator[Dict[str, Any]]:
-        logging.info(f"executing a ParquetToRawls translation for {file_type}: {file_like}")
+        logging.info(f"executing a TDRManifestToRawls translation for {file_type}: {file_like}")
         # read and parse entire manifest file
         jso = json.load(file_like)
 
