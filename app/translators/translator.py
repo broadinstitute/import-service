@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import IO, Any, Dict, Iterator
+from typing import IO, Iterator
 
 from app.external.rawls_entity_model import Entity
 

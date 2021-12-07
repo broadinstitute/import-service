@@ -1,7 +1,6 @@
 import base64
 from typing import Iterator, Set, Tuple
 
-from app.external import rawls
 from app.external.rawls_entity_model import (AddUpdateAttribute, Entity,
                                              EntityReference)
 from app.translators.translator import Translator

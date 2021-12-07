@@ -1,7 +1,6 @@
 import logging
 import os
 from dataclasses import dataclass
-from typing import Any, Dict, List
 
 import requests
 from app.util.exceptions import ISvcException

@@ -2,16 +2,14 @@ import io
 import os
 import unittest.mock as mock
 import urllib.error
-from typing import IO, Any, Dict, Iterator
+from typing import IO, Iterator
 
 import gcsfs.utils
 import memunit
 import pytest
 from app import db, translate
 from app.db import model
-from app.external.rawls_entity_model import (AddUpdateAttribute,
-                                             AttributeOperation, Entity,
-                                             EntityReference)
+from app.external.rawls_entity_model import Entity
 from app.server import requestutils
 from app.tests import testutils
 from app.translators import Translator

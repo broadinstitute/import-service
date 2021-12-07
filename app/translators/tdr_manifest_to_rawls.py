@@ -1,8 +1,7 @@
 import json
 import logging
-from typing import Any, Dict, Iterator
+from typing import Iterator
 
-from app.external import rawls
 from app.external.rawls_entity_model import AddUpdateAttribute, Entity
 from app.translators.translator import Translator
 
