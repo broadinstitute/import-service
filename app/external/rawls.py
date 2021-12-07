@@ -6,6 +6,7 @@ import requests
 from app.util.exceptions import ISvcException
 from dataclasses import dataclass
 
+from typing import Any, Dict, Sequence
 
 @dataclass
 class RawlsWorkspaceResponse:
@@ -45,3 +46,17 @@ def check_health() -> bool:
     resp = requests.get(f"{os.environ.get('RAWLS_URL')}/status")
 
     return resp.ok
+
+def make_add_update_op(key: str, value: Any) -> Dict[str, Any]:
+    return {
+        'op': 'AddUpdateAttribute',
+        'attributeName': key,
+        'addUpdateAttribute': value
+    }
+
+def make_entity(name: str, entity_type: str, operations: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
+    return {
+        'name': name,
+        'entityType': entity_type,
+        'operations': [*operations]
+    }

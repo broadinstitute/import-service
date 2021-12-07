@@ -2,6 +2,7 @@ import logging
 import json
 
 from app.translators.translator import Translator
+from app.external import rawls
 from typing import Iterator, Dict, Any
 
 # TODO AS-1037: rename to e.g. TDRManifestToRawls?
@@ -19,6 +20,9 @@ class ParquetToRawls(Translator):
         # read and parse entire manifest file
         jso = json.load(file_like)
 
+        # TODO: the actual TDR manifest file does not match the code below. When
+        # the TDR exports are ready, update this code to reflect the actual file structure.
+
         # extract table names from manifest
         recs = []
         ops = []
@@ -26,34 +30,23 @@ class ParquetToRawls(Translator):
             tdr_pk = t["primaryKey"]
             if tdr_pk is None:
                 pk = "datarepo_row_id"
+            elif not isinstance(tdr_pk, list):
+                pk = tdr_pk
             elif isinstance(tdr_pk, list) and len(tdr_pk) == 1:
                 pk = tdr_pk[0]
             else:
-                pk = tdr_pk
+                pk = "datarepo_row_id"
 
-            ops.append(self.make_add_update_op('table', t))
-            ops.append(self.make_add_update_op('primarykey', pk))
+            ops.append(rawls.make_add_update_op('table', t))
+            ops.append(rawls.make_add_update_op('primarykey', pk))
 
-            recs.append( {
-                'name': t,
-                'entityType': 'table',
-                'operations': [*ops]
-            } )
+            recs.append(rawls.make_entity(t, 'snapshottable', ops))
 
-        # TODO AS-1037: create map of table names->parquet files
-        # TODO AS-1037: build relationship graph, determine proper ordering for tables
-        # TODO AS-1037: determine proper PK columns for each table
+        # TODO AS-1059: create map of table names->parquet files
+        # TODO AS-1036: build relationship graph, determine proper ordering for tables
         # TODO AS-1037: in proper table order,
             # get new pet token as necessary
             # parse all parquet files for this table into rawls json, add to result iterator
 
         return iter(recs)
 
-    # TODO: don't copy this wholesale from pfb_to_rawls; share!
-    @classmethod
-    def make_add_update_op(cls, key, value) -> Dict[str, str]:
-        return {
-            'op': 'AddUpdateAttribute',
-            'attributeName': key,
-            'addUpdateAttribute': value
-        }

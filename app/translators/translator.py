@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Iterator, Dict, IO, Any
+from typing import Any, Dict, Iterator, IO
 
 
 class Translator(ABC):

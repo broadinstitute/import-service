@@ -1,4 +1,5 @@
 import base64
+from app.external import rawls
 from app.translators.translator import Translator
 from pfb.reader import PFBReader
 from typing import Iterator, Dict, Set, Tuple, Any
@@ -39,7 +40,7 @@ class PFBToRawls(Translator):
                 key = file_type + ':' + entity_type + '_name'
             else:
                 key = file_type + ':' + key
-            return self.make_add_update_op(key, value)
+            return rawls.make_add_update_op(key, value)
 
         attributes = [make_op(key, value)
                       for key, value in record['object'].items() if value is not None]
@@ -47,11 +48,7 @@ class PFBToRawls(Translator):
                              {'entityType': relation['dst_name'], 'entityName': relation['dst_id']})
                      for relation in record['relations']]
 
-        return {
-            'name': name,
-            'entityType': entity_type,
-            'operations': [*attributes, *relations]
-        }
+        return rawls.make_entity(name, entity_type, [*attributes, *relations])
 
     @classmethod
     def b64_decode(cls, encoded_value):
@@ -64,12 +61,4 @@ class PFBToRawls(Translator):
                  for field in entity_type['fields']
                  for enum in field['type'] if isinstance(enum, dict) and enum['type'] == 'enum'}
         return enums
-
-    @classmethod
-    def make_add_update_op(cls, key, value) -> Dict[str, str]:
-        return {
-            'op': 'AddUpdateAttribute',
-            'attributeName': key,
-            'addUpdateAttribute': value
-        }
 

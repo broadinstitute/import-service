@@ -1,5 +1,7 @@
 from app.translators.parquet_to_rawls import ParquetToRawls
 
+# TODO: rename to test_tdr_manifest_to_rawls.py or similar
+
 # this unit test asserts that the parquet translation results in an iterator with one entity per snapshot table.
 # this test is only valid for the noop end-to-end spike, in which we don't actually look inside the parquet file.
 # once we implement real parquet translation, this test must be deleted or updated.
