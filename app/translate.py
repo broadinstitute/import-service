@@ -59,13 +59,12 @@ def handle(msg: Dict[str, str]) -> ImportStatusResponse:
         else:
             logging.info(f"import {import_id} is of type {import_details.filetype}; attempting stream-translate ...")
             
-            # TODO AS-1037: if import_details.import_url is a gs:// url, get a pet token and use that token to read the file. Might need gcsfs.
             parsedurl = urlparse(import_details.import_url)
-            if parsedurl.scheme == "gs":
-                import_details.submitter
-                # bucket = parsedurl.hostname
-                sam.admin_get_pet_token("project", "user@hello.com")
-                manifest_fs = GCSFileSystem(os.environ.get("PUBSUB_PROJECT"), token=service_auth.get_isvc_credential())
+            if import_details.filetype == "tdrexport" and parsedurl.scheme == "gs":
+                submitter = import_details.submitter
+                project = import_details.workspace_google_project
+                pet_token = sam.admin_get_pet_token(project, submitter)
+                manifest_fs = GCSFileSystem(project, token=pet_token)
                 filereader = manifest_fs.open(f"{parsedurl.hostname}{parsedurl.path}")
             else:
                 filereader = http.http_as_filelike(import_details.import_url)
@@ -88,7 +87,7 @@ def handle(msg: Dict[str, str]) -> ImportStatusResponse:
         # Over time we should be able to narrow down the kinds of exception we might get, and perhaps
         # give users clearer messaging instead of logging them all.
         # For now, this is a last-ditch catch-all.
-        logging.error(f"Unexpcted error during translation for import {import_id}: {traceback.format_exc()}")
+        logging.error(f"Unexpected error during translation for import {import_id}: {traceback.format_exc()}")
         raise exceptions.FileTranslationException(import_details, e)
 
     with db.session_ctx() as sess:
