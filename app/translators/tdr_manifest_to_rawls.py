@@ -20,13 +20,13 @@ class TDRManifestToRawls(Translator):
         # read and parse entire manifest file
         jso = json.load(file_like)
 
-        # TODO: the actual TDR manifest file does not match the code below. When
-        # the TDR exports are ready, update this code to reflect the actual file structure.
+        snapshot = jso["snapshot"] # the snapshot model: table names, primary keys, relationships
+        format = jso["format"]     # the parquet export files
 
         # extract table names from manifest
         recs = []
         ops = []
-        for t in jso["tables"]:
+        for t in snapshot["tables"]:
             tdr_pk = t["primaryKey"]
             if tdr_pk is None:
                 pk = "datarepo_row_id"

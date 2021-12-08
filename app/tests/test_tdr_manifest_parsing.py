@@ -14,22 +14,24 @@ def test_raw_dicts():
     # read the file into a raw dict
     jso = json.load(open('./app/tests/response_1638551384572.json'))
 
+    snapshot = jso["snapshot"]
+
     tablekeys = []
-    for t in jso["tables"]:
+    for t in snapshot["tables"]:
         pk = "datarepo_row_id"
         if (t["primaryKey"] is not None):
             pk = t["primaryKey"]
         tablekeys.append(f"Table {t['name']} has primary key {pk}")
 
-    assert len(tablekeys) == len(jso["tables"])
+    assert len(tablekeys) == len(snapshot["tables"])
 
     relationships = []
-    for r in jso["relationships"]:
+    for r in snapshot["relationships"]:
         f = r["from"]
         t = r["to"]
         relationships.append(f"{f['table']}.{f['column']} -> {t['table']}.{t['column']}")
 
-    assert len(relationships) == len(jso["relationships"])
+    assert len(relationships) == len(snapshot["relationships"])
 
-    assert jso["id"] == "8bf100c0-7ac3-4860-80ca-28093f4adb61"
-    assert jso["name"] == "hca_dev_90bd693340c048d48d76778c103bf545__20210827_20211110"
+    assert snapshot["id"] == "9516afec-583f-11ec-bf63-0242ac130002"
+    assert snapshot["name"] == "unit_test_snapshot"
