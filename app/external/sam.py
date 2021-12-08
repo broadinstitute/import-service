@@ -3,7 +3,7 @@ import os
 import jsonschema
 import logging
 import requests
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from google.auth.transport import requests as grequests
 from google.oauth2 import service_account
@@ -76,14 +76,19 @@ def admin_get_pet_token(google_project: str, user_email: str) -> str:
     """Use our SA to get a token for this user's pet.
     Other Terra services have ended up adding a cache here, but given that App Engine VMs spin up and down at will,
     we may not get enough repeated requests on the same machine for an in-memory cache to be worthwhile."""
+    return _creds_from_key(admin_get_pet_key(google_project, user_email)).token
+
+def admin_get_pet_key(google_project: str, user_email: str) -> Dict[str, Any]:
+    """Use our SA to get a key for this user's pet.
+    Other Terra services have ended up adding a cache here, but given that App Engine VMs spin up and down at will,
+    we may not get enough repeated requests on the same machine for an in-memory cache to be worthwhile."""
     import_svc_token = service_auth.get_isvc_token()
     resp = requests.get(
         f"{os.environ.get('SAM_URL')}/api/google/v1/petServiceAccount/{google_project}/{user_email}",
         headers={"Authorization": f"Bearer {import_svc_token}"})
 
     if resp.ok:
-        creds = _creds_from_key(resp.json())
-        return creds.token
+        return resp.json()
     else:
         logging.debug(f"Got {resp.status_code} from Sam while trying to get pet key for {google_project}/{user_email}: {resp.text}")
         raise ISvcException(resp.text, resp.status_code)
