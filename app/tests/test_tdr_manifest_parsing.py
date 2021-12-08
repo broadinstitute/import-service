@@ -15,6 +15,7 @@ def test_raw_dicts():
     jso = json.load(open('./app/tests/response_1638551384572.json'))
 
     snapshot = jso["snapshot"]
+    format = jso["format"]["parquet"]["location"] # the parquet export files
 
     tablekeys = []
     for t in snapshot["tables"]:
@@ -35,3 +36,7 @@ def test_raw_dicts():
 
     assert snapshot["id"] == "9516afec-583f-11ec-bf63-0242ac130002"
     assert snapshot["name"] == "unit_test_snapshot"
+
+    exports = dict(map(lambda e: (e["name"], e["paths"]), format["tables"]))
+
+    assert ['gs://my-project-snapshot-export-bucket/feKB6na2Ta2EI5xZDwCqjA/annotation/annotation-000000000000.parquet'] == exports['annotation']

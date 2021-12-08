@@ -2,7 +2,9 @@ import json
 import logging
 from typing import Iterator
 
-from app.external.rawls_entity_model import AddUpdateAttribute, Entity
+from app.external.rawls_entity_model import (AddListMember, AddUpdateAttribute,
+                                             CreateAttributeValueList, Entity,
+                                             RemoveAttribute)
 from app.translators.translator import Translator
 
 
@@ -21,12 +23,17 @@ class TDRManifestToRawls(Translator):
         jso = json.load(file_like)
 
         snapshot = jso["snapshot"] # the snapshot model: table names, primary keys, relationships
-        format = jso["format"]     # the parquet export files
+        format = jso["format"]["parquet"]["location"] # the parquet export files
+
+        # build dict of table->parquet files for the exports
+        exports = dict(map(lambda e: (e["name"], e["paths"]), format["tables"]))
 
         # extract table names from manifest
         recs = []
         ops = []
         for t in snapshot["tables"]:
+            table_name = t["name"]
+
             tdr_pk = t["primaryKey"]
             if tdr_pk is None:
                 pk = "datarepo_row_id"
@@ -37,8 +44,14 @@ class TDRManifestToRawls(Translator):
             else:
                 pk = "datarepo_row_id"
 
-            ops.append(AddUpdateAttribute('tablename', t))
+            ops.append(AddUpdateAttribute('tablename', table_name))
             ops.append(AddUpdateAttribute('primarykey', pk))
+
+            if table_name in exports:
+                ops.append(RemoveAttribute('parquetFiles'))
+                ops.append(CreateAttributeValueList('parquetFiles'))
+                for f in exports[table_name]:
+                    ops.append(AddListMember('parquetFiles', f))
 
             recs.append(Entity(t, 'snapshottable', ops))
 
