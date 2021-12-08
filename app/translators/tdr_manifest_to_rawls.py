@@ -1,8 +1,9 @@
 import json
 import logging
-from typing import Iterator
+from typing import Iterator, List
 
 from app.external.rawls_entity_model import (AddListMember, AddUpdateAttribute,
+                                             AttributeOperation,
                                              CreateAttributeValueList, Entity,
                                              RemoveAttribute)
 from app.translators.translator import Translator
@@ -29,7 +30,7 @@ class TDRManifestToRawls(Translator):
         exports = dict(map(lambda e: (e['name'], e['paths']), format['tables']))
 
         recs = []
-        ops = []
+        ops = [] # type: List[AttributeOperation]
 
         # for each table in the snapshot model, extract the table name and primary key
         for t in snapshot['tables']:
