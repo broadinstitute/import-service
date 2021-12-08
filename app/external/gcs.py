@@ -11,4 +11,5 @@ from gcsfs.core import GCSFileSystem
 def open_file(project: str, bucket: str, path: str, submitter: str) -> Iterator[IO]:
     pet_key = sam.admin_get_pet_key(project, submitter)
     manifest_fs = GCSFileSystem(project=project, token=pet_key)
-    return manifest_fs.open(f"{bucket}{path}")
+    with manifest_fs.open(f"{bucket}{path}") as response:
+        yield response
