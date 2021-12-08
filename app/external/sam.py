@@ -74,12 +74,14 @@ def _creds_from_key(key_info: dict, scopes: Optional[List[str]] = None) -> servi
 
 def admin_get_pet_token(google_project: str, user_email: str) -> str:
     """Use our SA to get a token for this user's pet.
+
     Other Terra services have ended up adding a cache here, but given that App Engine VMs spin up and down at will,
     we may not get enough repeated requests on the same machine for an in-memory cache to be worthwhile."""
     return _creds_from_key(admin_get_pet_key(google_project, user_email)).token
 
 def admin_get_pet_key(google_project: str, user_email: str) -> Dict[str, Any]:
     """Use our SA to get a key for this user's pet.
+
     Other Terra services have ended up adding a cache here, but given that App Engine VMs spin up and down at will,
     we may not get enough repeated requests on the same machine for an in-memory cache to be worthwhile."""
     import_svc_token = service_auth.get_isvc_token()

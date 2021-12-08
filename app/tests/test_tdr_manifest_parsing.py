@@ -15,7 +15,7 @@ def test_raw_dicts():
     jso = json.load(open('./app/tests/response_1638551384572.json'))
 
     snapshot = jso["snapshot"]
-    format = jso["format"]["parquet"]["location"] # the parquet export files
+    format = jso["format"]["parquet"]["location"]  # noqa
 
     tablekeys = []
     for t in snapshot["tables"]:

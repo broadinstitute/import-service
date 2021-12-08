@@ -1,11 +1,12 @@
 import json
 import logging
-from typing import IO, Iterator, List
+from typing import IO, Iterator
+from typing import List  # noqa
 
 from app.external.rawls_entity_model import (AddListMember, AddUpdateAttribute,
-                                             AttributeOperation,
                                              CreateAttributeValueList, Entity,
                                              RemoveAttribute)
+from app.external.rawls_entity_model import AttributeOperation  # noqa
 from app.translators.translator import Translator
 
 
@@ -23,8 +24,10 @@ class TDRManifestToRawls(Translator):
         # read and parse entire manifest file
         jso = json.load(file_like)
 
-        snapshot = jso['snapshot'] # the snapshot model: table names, primary keys, relationships
-        format = jso['format']['parquet']['location'] # the parquet export files
+        # the snapshot model: table names, primary keys, relationships
+        snapshot = jso['snapshot']
+        # the parquet export files
+        format = jso['format']['parquet']['location']  # noqa
 
         # build dict of table->parquet files for the exports
         exports = dict(map(lambda e: (e['name'], e['paths']), format['tables']))
