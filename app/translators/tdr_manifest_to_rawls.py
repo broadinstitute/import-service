@@ -11,7 +11,7 @@ from app.translators.translator import Translator
 
 class TDRManifestToRawls(Translator):
     def __init__(self, options=None):
-        '''Translator for Parquet files.'''
+        """Translator for Parquet files."""
         if options is None:
             options = {}
         # TODO AS-1037: set defaults for 'create references', 'use PK', etc?
