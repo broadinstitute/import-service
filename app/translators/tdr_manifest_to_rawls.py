@@ -28,9 +28,10 @@ class TDRManifestToRawls(Translator):
         # build dict of table->parquet files for the exports
         exports = dict(map(lambda e: (e["name"], e["paths"]), format["tables"]))
 
-        # extract table names from manifest
         recs = []
         ops = []
+
+        # for each table in the snapshot model, extract the table name and primary key
         for t in snapshot["tables"]:
             table_name = t["name"]
 
@@ -47,6 +48,7 @@ class TDRManifestToRawls(Translator):
             ops.append(AddUpdateAttribute('tablename', table_name))
             ops.append(AddUpdateAttribute('primarykey', pk))
 
+            # if this table name also exists as exported parquet files, grab those too
             if table_name in exports:
                 ops.append(RemoveAttribute('parquetFiles'))
                 ops.append(CreateAttributeValueList('parquetFiles'))
@@ -55,11 +57,10 @@ class TDRManifestToRawls(Translator):
 
             recs.append(Entity(t, 'snapshottable', ops))
 
-        # TODO AS-1059: create map of table names->parquet files
         # TODO AS-1036: build relationship graph, determine proper ordering for tables
         # TODO AS-1037: in proper table order,
-            # get new pet token as necessary
-            # parse all parquet files for this table into rawls json, add to result iterator
+            # get new pet token as necessary, since pet may have expired
+            # parse all parquet files for this table into rawls json, add those attrs to the result
 
         return iter(recs)
 
