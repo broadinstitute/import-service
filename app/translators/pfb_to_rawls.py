@@ -46,7 +46,7 @@ class PFBToRawls(Translator):
 
         attributes = [make_op(key, value)
                       for key, value in record['object'].items() if value is not None]
-        relations = [make_op(relation['dst_name'], EntityReference(relation['dst_name'], relation['dst_id']))
+        relations = [make_op(relation['dst_name'], EntityReference(entityType=relation['dst_name'], entityName=relation['dst_id']))
                      for relation in record['relations']]
 
         return Entity(name, entity_type, [*attributes, *relations])
