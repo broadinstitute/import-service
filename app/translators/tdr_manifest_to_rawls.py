@@ -1,12 +1,12 @@
 import json
 import logging
 from typing import IO, Iterator
-from typing import List  # noqa
+from typing import List  # pylint: disable=unused-import
 
 from app.external.rawls_entity_model import (AddListMember, AddUpdateAttribute,
                                              CreateAttributeValueList, Entity,
                                              RemoveAttribute)
-from app.external.rawls_entity_model import AttributeOperation  # noqa
+from app.external.rawls_entity_model import AttributeOperation  # pylint: disable=unused-import
 from app.translators.translator import Translator
 
 
@@ -27,7 +27,7 @@ class TDRManifestToRawls(Translator):
         # the snapshot model: table names, primary keys, relationships
         snapshot = jso['snapshot']
         # the parquet export files
-        format = jso['format']['parquet']['location']  # noqa
+        format = jso['format']['parquet']['location']  # pylint: disable=redefined-builtin
 
         # build dict of table->parquet files for the exports
         exports = dict(map(lambda e: (e['name'], e['paths']), format['tables']))
@@ -61,10 +61,13 @@ class TDRManifestToRawls(Translator):
 
             recs.append(Entity(t, 'snapshottable', ops))
 
-        # TODO AS-1036: build relationship graph, determine proper ordering for tables
+        # TODO AS-1036: build relationship graph, determine proper ordering for tables.
+        # graphlib.TopologicalSorter should do it, based on snapshot relationships
         # TODO AS-1037: in proper table order,
-            # get new pet token as necessary, since pet may have expired
-            # parse all parquet files for this table into rawls json, add those attrs to the result
+            # get new pet token as necessary, since pet may have expired. May need to pass in the Import object
+            # to this translate method in order to have all the info we need to get a pet.
+            # parse all parquet files for this table into rawls json, add those attrs to the result. See line 59 for
+            # identifying all the parquet files
 
         return iter(recs)
 
