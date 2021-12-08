@@ -21,9 +21,7 @@ class TDRManifestToRawls(Translator):
     def translate(self, file_like: IO, file_type: str) -> Iterator[Entity]:
         logging.info(f'executing a TDRManifestToRawls translation for {file_type}: {file_like}')
         # read and parse entire manifest file
-        manifest_contents = file_like.read()
-        logging.info(f"manifest_contents: {manifest_contents}")
-        jso = json.loads(manifest_contents)
+        jso = json.loads(file_like)
 
         snapshot = jso['snapshot'] # the snapshot model: table names, primary keys, relationships
         format = jso['format']['parquet']['location'] # the parquet export files
