@@ -156,6 +156,8 @@ def validate_import_url(import_url: Optional[str], import_filetype: Optional[str
         return True
     elif import_filetype in FILETYPE_TRANSLATORS.keys() and any(actual_netloc.endswith(s) for s in VALID_NETLOCS):
         return True
+    elif import_filetype == "tdrexport" and parsedurl.scheme == "gs":
+        return True
     else:
         logging.warning(f"Unrecognized netloc or bucket for import: [{parsedurl.netloc}] from [{import_url}]")
         raise exceptions.InvalidPathException(import_url, user_info, "File cannot be imported from this URL.")
