@@ -15,17 +15,16 @@ class TDRTable:
 
 class TDRManifestParser:
     def __init__(self, jso: JSON):
-        self._jso = jso
-        self._tables = self._parse()
+        self._tables = self._parse(jso)
 
     def get_tables(self) -> List[TDRTable]:
         return self._tables
 
-    def _parse(self) -> List[TDRTable]:
+    def _parse(self, jso: JSON) -> List[TDRTable]:
         # the snapshot model: table names, primary keys, relationships
-        snapshot = self._jso['snapshot']
+        snapshot = jso['snapshot']
         # the parquet export files
-        parquet_location = self._jso['format']['parquet']['location']
+        parquet_location = jso['format']['parquet']['location']
 
         # build dict of table->parquet files for the exports
         exports = dict(map(lambda e: (e['name'], e['paths']), parquet_location['tables']))
