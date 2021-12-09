@@ -1,6 +1,6 @@
 import json
+
 from app.external.tdr_manifest import TDRManifestParser
-from urllib.parse import urlparse
 
 
 def test_manifest_parsing():
