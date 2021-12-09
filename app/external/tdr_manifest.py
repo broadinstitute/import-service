@@ -25,10 +25,10 @@ class TDRManifestParser:
         # the snapshot model: table names, primary keys, relationships
         snapshot = self._jso['snapshot']
         # the parquet export files
-        format = self._jso['format']['parquet']['location']  # pylint: disable=redefined-builtin
+        parquet_location = self._jso['format']['parquet']['location']
 
         # build dict of table->parquet files for the exports
-        exports = dict(map(lambda e: (e['name'], e['paths']), format['tables']))
+        exports = dict(map(lambda e: (e['name'], e['paths']), parquet_location['tables']))
 
         # TODO AS-1036: build relationship graph, determine proper ordering for tables.
         # graphlib.TopologicalSorter should do it, based on snapshot relationships
