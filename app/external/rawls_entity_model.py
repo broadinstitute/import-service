@@ -1,13 +1,17 @@
 from dataclasses import dataclass
-from typing import Any, Dict, Sequence, Union
+from typing import Sequence, Union
+
+from app.external import JSON
+
 
 @dataclass
 class EntityReference:
      entityName: str
      entityType: str
 
+
 # alias for attribute values
-AttributeValue = Union[bool, str, int, float, EntityReference, Dict[str, Any]]
+AttributeValue = Union[bool, str, int, float, EntityReference, JSON]
 
 # base class for operations
 @dataclass

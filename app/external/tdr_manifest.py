@@ -1,6 +1,7 @@
 from dataclasses import dataclass
-from typing import Any, Dict, List
+from typing import Dict, List
 
+from app.external import JSON
 from app.external.rawls_entity_model import EntityReference
 
 
@@ -13,7 +14,7 @@ class TDRTable:
 
 
 class TDRManifestParser:
-    def __init__(self, jso: Dict[str, Any]):
+    def __init__(self, jso: JSON):
         self._jso = jso
         self._tables = self._parse()
 
