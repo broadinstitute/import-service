@@ -105,9 +105,8 @@ def handle(msg: Dict[str, str]) -> ImportStatusResponse:
 
 
 def _stream_translate(import_id: str, source: IO, dest: IO, file_type: str, translator: Translator) -> None:
-    # returns Iterator[Entity]
     translated_entity_gen = translator.translate(source, file_type)  # doesn't actually translate, just returns a generator
-    # turn into dicts so they can be json-encoded
+    # translated_entity_gen returns an Iterator[Entity]. Turn those Entity objects into dicts so they can be json-encoded
     translated_gen = (asdict(e) for e in translated_entity_gen)
 
     start_time = time()
