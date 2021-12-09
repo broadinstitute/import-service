@@ -1,10 +1,13 @@
 from dataclasses import dataclass
-from typing import Any, Sequence
+from typing import Any, Dict, Sequence, Union
 
 @dataclass
 class EntityReference:
      entityName: str
      entityType: str
+
+# alias for attribute values
+AttributeValue = Union[bool, str, int, float, EntityReference, Dict[str, Any]]
 
 # base class for operations
 @dataclass
@@ -14,13 +17,13 @@ class AttributeOperation:
 @dataclass
 class AddUpdateAttribute(AttributeOperation):
     attributeName: str
-    addUpdateAttribute: Any
+    addUpdateAttribute: AttributeValue
     op: str = 'AddUpdateAttribute'
 
 @dataclass
 class AddListMember(AttributeOperation):
     attributeListName: str
-    newMember: Any
+    newMember: AttributeValue
     op: str = 'AddListMember'
 
 @dataclass
