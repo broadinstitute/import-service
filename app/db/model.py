@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import enum
 import logging
 import uuid
@@ -98,10 +100,6 @@ class ImportStatusResponse:
             "status": fields.String,
             "message": fields.String }
 
-# This is mypy shenanigans so functions inside the Import class can return an instance of type Import.
-# It's basically a forward declaration of the type.
-ImportT = TypeVar('ImportT', bound='Import')
-
 
 class Import(ImportServiceTable, EqMixin, Base):
     __tablename__ = 'imports'
@@ -143,10 +141,9 @@ class Import(ImportServiceTable, EqMixin, Base):
         self.is_upsert = is_upsert
 
     @classmethod
-    def get(cls, id: str, sess: DBSession) -> ImportT:
+    def get(cls, id: str, sess: DBSession) -> Import:
         """Used for getting a real, active Import object after closing a session."""
-        i: ImportT = sess.query(Import).filter(Import.id == id).one()
-        return i
+        return sess.query(Import).filter(Import.id == id).one()
 
     @classmethod
     def update_status_exclusively(cls, id: str, current_status: ImportStatus, new_status: ImportStatus, sess: DBSession) -> bool:
