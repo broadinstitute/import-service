@@ -27,10 +27,10 @@ class TDRManifestToRawls(Translator):
         tables = TDRManifestParser(jso).get_tables()
 
         recs = []
-        ops = [] # type: List[AttributeOperation]
 
         # for each table in the snapshot model, build the Rawls entities
         for t in tables:
+            ops = [] # type: List[AttributeOperation]
             ops.append(AddUpdateAttribute('tablename', t.name))
             ops.append(AddUpdateAttribute('primarykey', t.primary_key))
 
