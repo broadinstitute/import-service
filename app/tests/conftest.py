@@ -67,7 +67,7 @@ def fake_import() -> Iterator[model.Import]:
     yield model.Import("aa", "aa", "uuid", "project", "aa@aa.aa", "gs://aa/aa", "pfb")
 
 @pytest.fixture(scope="function")
-def fake_import_parquet() -> Iterator[model.Import]:
+def fake_import_tdr_manifest() -> Iterator[model.Import]:
     yield model.Import("bb", "bb", "uuid2", "project2", "bb@bb.bb", "gs://bb/bb", "tdrexport")
 
 @pytest.fixture(scope="function")
@@ -92,6 +92,10 @@ def fake_pfb() -> Iterator[IO]:
     with open("app/tests/empty.avro", 'rb') as out:
         yield out
 
+@pytest.fixture(scope="function")
+def fake_tdr_manifest() -> Iterator[IO]:
+    with open("app/tests/response_1638551384572.json", 'rb') as out:
+        yield out
 
 @pytest.fixture(scope="function")
 def fake_parquet() -> Iterator[IO]:

@@ -1,10 +1,9 @@
 import logging
 import os
+from dataclasses import dataclass
 
 import requests
-
 from app.util.exceptions import ISvcException
-from dataclasses import dataclass
 
 
 @dataclass
@@ -25,7 +24,6 @@ def get_workspace_uuid_and_project(workspace_namespace: str, workspace_name: str
         # just pass the error upwards
         logging.info(f"Got {resp.status_code} from Rawls for {workspace_namespace}/{workspace_name}: {resp.text}")
         raise ISvcException(resp.text, resp.status_code)
-
 
 def check_workspace_iam_action(workspace_namespace: str, workspace_name: str, action: str, bearer_token: str) -> bool:
     resp = requests.get(

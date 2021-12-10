@@ -1,30 +1,28 @@
-import flask
-import json
 import logging
+import os
 import traceback
+from dataclasses import asdict
+from json import JSONEncoder
+from time import time
+from typing import IO, Dict, Optional
+from urllib.parse import urlparse
+
+import flask
+import gcsfs.utils
+import requests.exceptions
+from gcsfs.core import GCSFileSystem
 
 from app.auth import service_auth
 from app.auth.userinfo import UserInfo
 from app.db import db
 from app.db.model import *
-from app.external import pubsub
-from app.translators import Translator, ParquetToRawls, PFBToRawls
-from app.util import http, exceptions
+from app.external import gcs, pubsub
+from app.translators import PFBToRawls, TDRManifestToRawls, Translator
+from app.util import exceptions, http
 from app.util.json import StreamArray
 
-from time import time
-from typing import Dict, Optional, IO
-import os
-from json import JSONEncoder
-
-from urllib.parse import urlparse
-
-from gcsfs.core import GCSFileSystem
-import gcsfs.utils
-import requests.exceptions
-
 # these filetypes get stream-translated
-FILETYPE_TRANSLATORS = {"pfb": PFBToRawls, "tdrexport": ParquetToRawls}
+FILETYPE_TRANSLATORS = {"pfb": PFBToRawls, "tdrexport": TDRManifestToRawls}
 
 # this filetype is accepted as-is
 FILETYPE_NOTRANSLATION = "rawlsjson"
@@ -58,7 +56,14 @@ def handle(msg: Dict[str, str]) -> ImportStatusResponse:
             gcs_project.mv(import_details.import_url, dest_file)
         else:
             logging.info(f"import {import_id} is of type {import_details.filetype}; attempting stream-translate ...")
-            with http.http_as_filelike(import_details.import_url) as pfb_file:
+
+            parsedurl = urlparse(import_details.import_url)
+            if import_details.filetype == "tdrexport" and parsedurl.scheme == "gs":
+                filereader = gcs.open_file(import_details.workspace_google_project, parsedurl.netloc, parsedurl.path, import_details.submitter)
+            else:
+                filereader = http.http_as_filelike(import_details.import_url)
+
+            with filereader as pfb_file:
                 with gcs_project.open(dest_file, 'wb') as dest_upsert:
                     _stream_translate(import_id, pfb_file, dest_upsert, import_details.filetype, translator = FILETYPE_TRANSLATORS[import_details.filetype]())
 
@@ -76,7 +81,7 @@ def handle(msg: Dict[str, str]) -> ImportStatusResponse:
         # Over time we should be able to narrow down the kinds of exception we might get, and perhaps
         # give users clearer messaging instead of logging them all.
         # For now, this is a last-ditch catch-all.
-        logging.error(f"Unexpcted error during translation for import {import_id}: {traceback.format_exc()}")
+        logging.error(f"Unexpected error during translation for import {import_id}: {traceback.format_exc()}")
         raise exceptions.FileTranslationException(import_details, e)
 
     with db.session_ctx() as sess:
@@ -100,7 +105,9 @@ def handle(msg: Dict[str, str]) -> ImportStatusResponse:
 
 
 def _stream_translate(import_id: str, source: IO, dest: IO, file_type: str, translator: Translator) -> None:
-    translated_gen = translator.translate(source, file_type)  # doesn't actually translate, just returns a generator
+    translated_entity_gen = translator.translate(source, file_type)  # doesn't actually translate, just returns a generator
+    # translated_entity_gen returns an Iterator[Entity]. Turn those Entity objects into dicts so they can be json-encoded
+    translated_gen = (asdict(e) for e in translated_entity_gen)
 
     start_time = time()
     last_log_time = time()
@@ -147,6 +154,8 @@ def validate_import_url(import_url: Optional[str], import_filetype: Optional[str
     if import_filetype == FILETYPE_NOTRANSLATION and actual_netloc == os.environ.get("BATCH_UPSERT_BUCKET"):
         return True
     elif import_filetype in FILETYPE_TRANSLATORS.keys() and any(actual_netloc.endswith(s) for s in VALID_NETLOCS):
+        return True
+    elif import_filetype == "tdrexport" and parsedurl.scheme == "gs":
         return True
     else:
         logging.warning(f"Unrecognized netloc or bucket for import: [{parsedurl.netloc}] from [{import_url}]")

@@ -1,29 +1,30 @@
-from app import translate, db
-from app.db import model
-from app.translators import Translator
-from app.server import requestutils
-from app.tests import testutils
-from typing import Iterator, Dict, IO, Any
-
 import io
 import os
+import unittest.mock as mock
+import urllib.error
+from typing import IO, Iterator
+
 import gcsfs.utils
 import memunit
-import urllib.error
-import unittest.mock as mock
 import pytest
+from app import db, translate
+from app.db import model
+from app.external.rawls_entity_model import Entity
+from app.server import requestutils
+from app.tests import testutils
+from app.translators import Translator
 
 
 class StreamyNoOpTranslator(Translator):
     """Well-behaved no-op translator: does nothing, while streaming"""
-    def translate(self, file_like: IO, file_type: str) -> Iterator[Dict[str, Any]]:
-        return ({line: line} for line in file_like)
+    def translate(self, file_like: IO, file_type: str) -> Iterator[Entity]:
+        return (Entity(line, 'line', []) for line in file_like)
 
 
 class BadNoOpTranslator(Translator):
     """Badly-behaved no-op translator: does nothing, using lots of memory"""
-    def translate(self, file_like: IO, file_type: str) -> Iterator[Dict[str, Any]]:
-        return iter([{line: line} for line in file_like])
+    def translate(self, file_like: IO, file_type: str) -> Iterator[Entity]:
+        return iter([Entity(line, 'line', []) for line in file_like])
 
 
 def get_memory_usage_mb():
@@ -71,8 +72,8 @@ def good_http_pfb(monkeypatch, fake_pfb):
     monkeypatch.setattr(translate.http, "http_as_filelike", mock.MagicMock(return_value=fake_pfb))
 
 @pytest.fixture(scope="function")
-def good_http_parquet(monkeypatch, fake_parquet):
-    monkeypatch.setattr(translate.http, "http_as_filelike", mock.MagicMock(return_value=fake_parquet))
+def good_http_tdr_manifest(monkeypatch, fake_tdr_manifest):
+    monkeypatch.setattr(translate.gcs, "open_file", mock.MagicMock(return_value=fake_tdr_manifest))
 
 @pytest.fixture(scope="function")
 def forbidden_http_pfb(monkeypatch):
@@ -124,7 +125,6 @@ def fake_publish_rawls(monkeypatch, pubsub_fake_env):
     monkeypatch.setattr(translate.pubsub, "publish_rawls", mm)
     yield mm
 
-
 @pytest.mark.usefixtures("good_http_pfb", "good_gcs_dest", "incoming_valid_pubsub")
 def test_golden_path_pfb(fake_import, fake_publish_rawls, client):
     """Everything is fine: the pfb is valid and retrievable, and we can write to the destination."""
@@ -145,21 +145,21 @@ def test_golden_path_pfb(fake_import, fake_publish_rawls, client):
     # rawls should have been told to do something
     fake_publish_rawls.assert_called_once()
 
-@pytest.mark.usefixtures("good_http_parquet", "good_gcs_dest", "incoming_valid_pubsub")
-def test_golden_path_parquet(fake_import_parquet, fake_publish_rawls, client):
-    """Everything is fine: the parquet file is valid and retrievable, and we can write to the destination."""
+@pytest.mark.usefixtures("good_http_tdr_manifest", "good_gcs_dest", "incoming_valid_pubsub")
+def test_golden_path_tdr_manifest(fake_import_tdr_manifest, fake_publish_rawls, client):
+    """Everything is fine: the tdr manifest file is valid and retrievable, and we can write to the destination."""
     with db.session_ctx() as sess:
-        sess.add(fake_import_parquet)
+        sess.add(fake_import_tdr_manifest)
 
     resp = client.post("/_ah/push-handlers/receive_messages",
-                       json=testutils.pubsub_json_body({"action":"translate", "import_id":fake_import_parquet.id}))
+                       json=testutils.pubsub_json_body({"action":"translate", "import_id":fake_import_tdr_manifest.id}))
 
     # result should be OK
     assert resp.status_code == 200
 
     # import should be updated to next step
     with db.session_ctx() as sess:
-        imp: model.Import = model.Import.get(fake_import_parquet.id, sess)
+        imp: model.Import = model.Import.get(fake_import_tdr_manifest.id, sess)
         assert imp.status == model.ImportStatus.ReadyForUpsert
 
     # rawls should have been told to do something
