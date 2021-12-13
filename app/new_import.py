@@ -14,8 +14,8 @@ def handle(request: flask.Request, ws_ns: str, ws_name: str) -> model.ImportStat
     # force parsing as json regardless of application/content-type, return None if errors
     request_json_opt = request.get_json(force=True, silent=True)
 
-    if type(request_json_opt) is not dict:
-        raise exceptions.BadJsonException(f"Input payload is not valid", audit_log = True)
+    if not isinstance(request_json_opt, dict):
+        raise exceptions.BadJsonException("Input payload is not valid", audit_log = True)
 
     request_json: dict = request_json_opt
 

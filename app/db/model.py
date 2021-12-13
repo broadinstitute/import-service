@@ -141,9 +141,9 @@ class Import(ImportServiceTable, EqMixin, Base):
         self.is_upsert = is_upsert
 
     @classmethod
-    def get(cls, id: str, sess: DBSession) -> Import:
+    def get(cls, import_id: str, sess: DBSession) -> Import:
         """Used for getting a real, active Import object after closing a session."""
-        return sess.query(Import).filter(Import.id == id).one()
+        return sess.query(Import).filter(Import.id == import_id).one()
 
     @classmethod
     def update_status_exclusively(cls, id: str, current_status: ImportStatus, new_status: ImportStatus, sess: DBSession) -> bool:
