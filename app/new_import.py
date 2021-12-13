@@ -4,6 +4,7 @@ from app import translate
 from app.db import db, model
 from app.external import sam, pubsub
 from app.auth import user_auth
+from app.util import exceptions
 
 
 def handle(request: flask.Request, ws_ns: str, ws_name: str) -> model.ImportStatusResponse:
@@ -11,7 +12,12 @@ def handle(request: flask.Request, ws_ns: str, ws_name: str) -> model.ImportStat
     user_info = sam.validate_user(access_token)
 
     # force parsing as json regardless of application/content-type, return None if errors
-    request_json = request.get_json(force=True, silent=True)
+    request_json_opt = request.get_json(force=True, silent=True)
+
+    if not isinstance(request_json_opt, dict):
+        raise exceptions.BadJsonException("Input payload is not valid", audit_log = True)
+
+    request_json: dict = request_json_opt
 
     # make sure the user is allowed to import to this workspace
     uuid_and_project = user_auth.workspace_uuid_and_project_with_auth(ws_ns, ws_name, access_token, "write")

@@ -1,21 +1,19 @@
-from google.cloud import pubsub_v1
+from google.cloud.pubsub_v1 import PublisherClient, SubscriberClient
 import os, contextlib
-
-from google.pubsub_v1 import PullRequest, AcknowledgeRequest
 
 from app.auth import service_auth
 from typing import Dict, List, Optional
 
-_publisher_client: Optional[pubsub_v1.PublisherClient] = None
-_subscriber_client: Optional[pubsub_v1.SubscriberClient] = None
+_publisher_client: Optional[PublisherClient] = None
+_subscriber_client: Optional[SubscriberClient] = None
 
 
-def _get_publisher_client() -> pubsub_v1.PublisherClient:
+def _get_publisher_client() -> PublisherClient:
     # global _publisher_client
     # if _publisher_client is None:
     #     _publisher_client = pubsub_v1.PublisherClient(credentials=service_auth.get_isvc_credential())
     # return _publisher_client
-    return pubsub_v1.PublisherClient(credentials=service_auth.get_isvc_credential())
+    return PublisherClient(credentials=service_auth.get_isvc_credential())
 
 
 def create_topic_and_sub() -> None:
@@ -46,12 +44,12 @@ def publish_rawls(data: Dict[str, str]) -> None:
     future.result()  # wait on the future so we know it's done
 
 
-def _get_subscriber_client() -> pubsub_v1.SubscriberClient:
+def _get_subscriber_client() -> SubscriberClient:
     # global _subscriber_client
     # if _subscriber_client is None:
     #     _subscriber_client = pubsub_v1.SubscriberClient(credentials=service_auth.get_isvc_credential())
     # return _subscriber_client
-    return pubsub_v1.SubscriberClient(credentials=service_auth.get_isvc_credential())
+    return SubscriberClient(credentials=service_auth.get_isvc_credential())
 
 
 def pull_self(num_messages: int):
