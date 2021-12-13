@@ -14,13 +14,13 @@ sqlalchemy==1.4.28
 sqlalchemy-stubs==0.4
 sqlalchemy-repr==0.0.2
 pymysql==1.0.2
-# google-cloud-logging==2.7.0       # install transitively
-# google-auth==2.3.3                # install transitively
+google-cloud-logging==2.7.0
+google-auth==2.3.3
 # google-cloud-iam==2.5.1           # why needed?
 google-api-python-client==2.33.0
 google-cloud-pubsub==2.9.0
 # oauth2client==4.1.3               # why needed?
-pypfb==0.5.0                      # 0.5.16, but that fails to install
+pypfb==0.5.0   # 0.5.16 is latest, but is not on pypi
 gcsfs==2021.11.1
 memunit==0.5.2
 # psutil==5.7.3                     # install as transitive from memunit
