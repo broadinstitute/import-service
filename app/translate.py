@@ -8,7 +8,7 @@ from typing import IO, Dict, Optional
 from urllib.parse import urlparse
 
 import flask
-import gcsfs.utils
+import gcsfs.retry
 import requests.exceptions
 from gcsfs.core import GCSFileSystem
 
@@ -67,7 +67,7 @@ def handle(msg: Dict[str, str]) -> ImportStatusResponse:
                 with gcs_project.open(dest_file, 'wb') as dest_upsert:
                     _stream_translate(import_id, pfb_file, dest_upsert, import_details.filetype, translator = FILETYPE_TRANSLATORS[import_details.filetype]())
 
-    except (FileNotFoundError, IOError, gcsfs.utils.HttpError, requests.exceptions.ProxyError) as e:
+    except (FileNotFoundError, IOError, gcsfs.retry.HttpError, requests.exceptions.ProxyError) as e:
         # These are errors thrown by the gcsfs library, see here:
         #   https://github.com/dask/gcsfs/blob/d7b832e13de6b5b0df00eeb7454c6547bf30d7b9/gcsfs/core.py#L151
         # Any of these indicate programmer error: import-service can't write to the batchUpsert json bucket, which

@@ -4,7 +4,7 @@ import unittest.mock as mock
 import urllib.error
 from typing import IO, Iterator
 
-import gcsfs.utils
+import gcsfs.retry
 import memunit
 import pytest
 from app import db, translate
@@ -116,7 +116,7 @@ def bad_gcs_dest(monkeypatch, pubsub_fake_env):
     gcsfs_mock = mock.MagicMock()
     monkeypatch.setattr(translate, "GCSFileSystem", gcsfs_mock)
     error_msg = {"message":"Anonymous caller does not have storage.objects.create access", "code":403}
-    gcsfs_mock.return_value.open.return_value.__exit__ = mock.MagicMock(side_effect = gcsfs.utils.HttpError(error_msg))
+    gcsfs_mock.return_value.open.return_value.__exit__ = mock.MagicMock(side_effect = gcsfs.retry.HttpError(error_msg))
 
 
 @pytest.fixture(scope="function")
