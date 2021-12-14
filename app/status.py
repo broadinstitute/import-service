@@ -92,4 +92,4 @@ def external_update_status(msg: Dict[str, str]) -> model.ImportStatusResponse:
         logging.warning(f"Failed to update status for import {import_id}: wanted {current_status}->{new_status}, actually {imp.status}.")
 
     # This goes back to Pub/Sub, nobody reads it
-    return model.ImportStatusResponse(import_id, new_status.name, None)
+    return model.ImportStatusResponse(import_id, new_status.name, imp.filetype, None)
