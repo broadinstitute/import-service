@@ -88,9 +88,10 @@ ModelDefinition = Dict[str, Type[fields.Raw]]
 # Note: this should really be a namedtuple but for https://github.com/noirbizarre/flask-restplus/issues/364
 # This is an easy fix in flask-restx if we decide to go this route.
 class ImportStatusResponse:
-    def __init__(self, jobId: str, status: str, message: Optional[str]):
+    def __init__(self, jobId: str, status: str, filetype: str, message: Optional[str]):
         self.jobId = jobId
         self.status = status
+        self.filetype = filetype
         self.message = message
 
     @classmethod
@@ -98,6 +99,7 @@ class ImportStatusResponse:
         return {
             "jobId": fields.String,
             "status": fields.String,
+            "filetype": fields.String,
             "message": fields.String }
 
 
@@ -164,4 +166,4 @@ class Import(ImportServiceTable, EqMixin, Base):
         self.status = ImportStatus.Error
 
     def to_status_response(self) -> ImportStatusResponse:
-        return ImportStatusResponse(self.id, self.status.name, self.error_message)
+        return ImportStatusResponse(self.id, self.status.name, self.filetype, self.error_message)
