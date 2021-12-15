@@ -53,7 +53,8 @@ class TDRManifestToRawls(Translator):
     def convert_parquet_file_to_entity_attributes(cls, file_like: IO):
         """Converts single parquet file to [[AddUpdateAttribute, AddUpdateAttribute, ..],
         [AddUpdateAttribute, AddUpdateAttribute, ..]...] with each element in the outer list representing
-        an enity/row's attributes.  For an entity type """
+        an enity/row's attributes.  For an entity type spanning multiple parquet files, calls to this
+        method should be accumulated into a single list"""
         pq_table = pq.read_table(file_like)
         res = []
         # for the planned usage where we would be passing in a single parquet file at a time, I believe that
@@ -62,6 +63,9 @@ class TDRManifestToRawls(Translator):
         # dataset = pq.ParquetDataset('cell_suspension')
         # dataset.read().to_batches()
         # it will create one batch per file in the cell_suspension directory
+        # collapse the last 4 lines to:
+        # return cls.convert_parquet_batch(pq_table.to_batches()[0])
+        # if we can confirm we'll always have one batch
         for b in pq_table.to_batches():
             res.extend(cls.convert_parquet_batch(b))
         return res
