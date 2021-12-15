@@ -20,3 +20,4 @@ gcsfs==2021.11.1
 memunit==0.5.2
 pyhumps==3.0.2
 flask-restx==0.5.1
+pyarrow==6.0.1

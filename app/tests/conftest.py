@@ -99,8 +99,7 @@ def fake_tdr_manifest() -> Iterator[IO]:
 
 @pytest.fixture(scope="function")
 def sample_tdr_parquet_file() -> IO:
-    with open("app/tests/data/process/process-000000000000.parquet", 'rb') as out:
-        yield out
+    return open("app/tests/data/process/process-000000000000.parquet", 'rb')
 
 @pytest.fixture(scope="function")
 def fake_parquet() -> Iterator[IO]:
