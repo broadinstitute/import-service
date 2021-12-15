@@ -63,7 +63,7 @@ class TDRManifestToRawls(Translator):
         # dataset = pq.ParquetDataset('cell_suspension')
         # dataset.read().to_batches()
         # it will create one batch per file in the cell_suspension directory
-        # collapse the last 4 lines to:
+        # collapse the last 4 lines of this method to:
         # return cls.convert_parquet_batch(pq_table.to_batches()[0])
         # if we can confirm we'll always have one batch
         for b in pq_table.to_batches():
