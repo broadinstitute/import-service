@@ -9,6 +9,7 @@ from app.external.rawls_entity_model import (AddListMember, AddUpdateAttribute,
                                              RemoveAttribute)
 from app.external.tdr_manifest import TDRManifestParser
 from app.translators.translator import Translator
+import pyarrow.parquet as pq
 
 
 class TDRManifestToRawls(Translator):
@@ -30,7 +31,7 @@ class TDRManifestToRawls(Translator):
 
         # for each table in the snapshot model, build the Rawls entities
         for t in tables:
-            ops = [] # type: List[AttributeOperation]
+            ops = []  # type: List[AttributeOperation]
             ops.append(AddUpdateAttribute('tablename', t.name))
             ops.append(AddUpdateAttribute('primarykey', t.primary_key))
 
@@ -47,3 +48,34 @@ class TDRManifestToRawls(Translator):
             recs.append(Entity(name=t.name, entityType='snapshottable', operations=ops))
 
         return iter(recs)
+
+    @classmethod
+    def convert_parquet_file_to_entity_attributes(cls, file_like: IO):
+        """Converts single parquet file to [[AddUpdateAttribute, AddUpdateAttribute, ..],
+        [AddUpdateAttribute, AddUpdateAttribute, ..]...] with each element in the outer list representing
+        an enity/row's attributes.  For an entity type """
+        pq_table = pq.read_table(file_like)
+        res = []
+        # for the planned usage where we would be passing in a single parquet file at a time, I believe that
+        # to_batches() will always return a single batch
+        # if you do something like
+        # dataset = pq.ParquetDataset('cell_suspension')
+        # dataset.read().to_batches()
+        # it will create one batch per file in the cell_suspension directory
+        for b in pq_table.to_batches():
+            res.extend(cls.convert_parquet_batch(b))
+        return res
+
+    @classmethod
+    def convert_parquet_batch(cls, batch):
+        dict_for_batch = batch.to_pydict()
+        return [cls.convert_parquet_row(dict_for_batch, i) for i in range(0, batch.num_rows)]
+
+    @classmethod
+    def convert_parquet_row(cls, dict_for_batch, row_idx):
+        # assumption that each row has entries for all columns, I think that's fair with parquet's columnar format?
+        return [cls.convert_parquet_attr(name, dict_for_batch[name][row_idx]) for name in dict_for_batch.keys()]
+
+    @classmethod
+    def convert_parquet_attr(cls, name, vale):
+        return AddUpdateAttribute(name, vale)
