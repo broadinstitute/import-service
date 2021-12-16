@@ -1,3 +1,4 @@
+import itertools
 import json
 import logging
 from typing import List  # pylint: disable=unused-import
@@ -8,11 +9,11 @@ import pyarrow
 
 from app.db.model import Import
 from app.external import gcs
-from app.external.rawls_entity_model import AttributeOperation  # pylint: disable=unused-import
+from app.external.rawls_entity_model import AttributeOperation, AttributeValue  # pylint: disable=unused-import
 from app.external.rawls_entity_model import (AddListMember, AddUpdateAttribute,
                                              CreateAttributeValueList, Entity,
                                              RemoveAttribute)
-from app.external.tdr_manifest import TDRManifestParser
+from app.external.tdr_manifest import TDRManifestParser, TDRTable
 from app.translators.translator import Translator
 
 import pandas as pd
@@ -33,9 +34,9 @@ class TDRManifestToRawls(Translator):
         # read and parse entire manifest file
         jso = json.load(file_like)
         tables = TDRManifestParser(jso).get_tables()
+        return itertools.chain(*self.translate_tables(import_details, tables))
 
-        recs = []
-
+    def translate_tables(self, import_details: Import, tables: List[TDRTable]) -> Iterator[Iterator[Entity]]:
         # for each table in the snapshot model, build the Rawls entities
         for t in tables:
             # ops = []  # type: List[AttributeOperation]
@@ -50,46 +51,42 @@ class TDRManifestToRawls(Translator):
             # ops.append(RemoveAttribute('parquetFiles'))
             # ops.append(CreateAttributeValueList('parquetFiles'))
             for f in t.parquet_files:
-                recs.append(self.translate_parquet_file(import_details, f, t.name, t.primary_key))
+                yield self.translate_parquet_file(import_details, f, t.name, t.primary_key)
                 # with gcs.open_file(import_details.workspace_google_project, 'bucket', 'path', import_details.submitter) as pqfile:
                 # ops.append(AddListMember('parquetFiles', f))
 
             # recs.append(Entity(name=t.name, entityType='snapshottable', operations=ops))
 
-        return iter(recs)
-
-    def translate_parquet_file(self, import_details: Import, filelocation: str, entity_type: str, pk: str):
+    def translate_parquet_file(self, import_details: Import, filelocation: str, entity_type: str, pk: str) -> Iterator[Entity]:
         logging.info(f'{import_details.id} attempting parquet export file {filelocation} ...')
         url = urlparse(filelocation)
         bucket = url.netloc
         path = url.path
         with gcs.open_file(import_details.workspace_google_project, bucket, path, import_details.submitter) as pqfile:
-            return list(self.convert_parquet_file_to_entity_attributes(pqfile, entity_type, pk))
+            return self.convert_parquet_file_to_entities(pqfile, entity_type, pk)
 
 
-    def convert_parquet_file_to_entity_attributes(self, file_like: IO, entity_type: str, pk: str):
-        """Converts single parquet file to [[AddUpdateAttribute, AddUpdateAttribute, ..],
-        [AddUpdateAttribute, AddUpdateAttribute, ..]...] with each element in the outer list representing
-        an enity/row's attributes.  For an entity type spanning multiple parquet files, calls to this
-        method should be accumulated into a single list"""
-        
-        # with pa.ipc.open_stream(file_like) as pqreader:
-        #     schema = pqreader.schema
-        #     for b in pqreader:
-        #         print(f'heres a batch, it has length {len(b)}')
-                # self.convert_parquet_batch(b)
-        
+    def convert_parquet_file_to_entities(self, file_like: IO, entity_type: str, pk: str) -> Iterator[Entity]:
+        """Converts single parquet file-like object to an iterator of Entity objects"""
+        # TODO: investigate parquet streaming, instead of reading the whole file into memory        
         pq_table: pyarrow.Table = pq.read_table(file_like)
+        df: pd.DataFrame = pq_table.to_pandas()
+        return self.translate_data_frame(df, pq_table.column_names, entity_type, pk)
 
-        df = pq_table.to_pandas()
+    def translate_data_frame(self, df: pd.DataFrame, column_names: List[str], entity_type: str, pk: str) -> Iterator[Entity]:
+        """convert a pandas dataframe - assumed from a Parquet file - to an iterator of Entity objects"""
         for index, row in df.iterrows():
-            ops = self.convert_parquet_row(row, pq_table.column_names)
-            # TODO: better primary key detection
+            ops = self.convert_parquet_row(row, column_names)
+            # TODO: better primary key detection/resilience?
             yield Entity(row[pk], entity_type, list(ops))
-
-    def convert_parquet_row(self, row, column_names):
+    
+    def convert_parquet_row(self, row: pd.Series, column_names: List[str]) -> Iterator[AddUpdateAttribute]:
+        """convert a single row of a pandas dataframe - assumed from a Parquet file - to an Entity"""
         for colname in column_names:
             yield self.convert_parquet_attr(colname, row[colname])
 
-    def convert_parquet_attr(self, name, value):
+    def convert_parquet_attr(self, name: str, value: AttributeValue):
+        """convert a single cell of a pandas dataframe - assumed from a Parquet file - to an AddUpdateAttribute"""
+        # TODO: if this cell should be a reference, create as a EntityReference instead.
+        # TODO: if this cell is an array, create as RemoveAttribute/CreateAttributeValueList/AddListMember(s) instead
         return AddUpdateAttribute(name, value)
