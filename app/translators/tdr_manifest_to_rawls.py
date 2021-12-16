@@ -29,7 +29,7 @@ class TDRManifestToRawls(Translator):
         logging.info(f'{import_details.id} executing a TDRManifestToRawls translation for {file_type}: {file_like}')
         tables = self.get_tables(file_like)
         return itertools.chain(*self.translate_tables(import_details, tables))
-    
+
     @classmethod
     def get_tables(cls, file_like: IO) -> List[TDRTable]:
         # read and parse entire manifest file
@@ -67,6 +67,10 @@ class ParquetTranslator:
     def translate_parquet_file_to_entities(self, file_like: IO) -> Iterator[Entity]:
         """Converts single parquet file-like object to an iterator of Entity objects."""
         # TODO: investigate parquet streaming, instead of reading the whole file into memory
+        # with pyarrow.ipc.open_stream(file_like) as reader:
+        #     assert reader.schema == 'foo'
+        #     entity_batches = (self.translate_data_frame(b.to_pandas(), b.column_names) for b in reader)
+        #     return itertools.chain(*entity_batches)
         pq_table: pyarrow.Table = pq.read_table(file_like)
         df: pd.DataFrame = pq_table.to_pandas()
         return self.translate_data_frame(df, pq_table.column_names)
