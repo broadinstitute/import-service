@@ -9,7 +9,7 @@ from app.external.rawls_entity_model import EntityReference
 class TDRTable:
     name: str
     primary_key: str
-    parquet_files: List[str] # TODO: list of urls instead? these are gs:// urls
+    parquet_files: List[str]
     reference_attrs: Dict[str, EntityReference] # column name -> reference
 
 
