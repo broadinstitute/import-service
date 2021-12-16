@@ -64,7 +64,7 @@ class TDRManifestToRawls(Translator):
         bucket = url.netloc
         path = url.path
         with gcs.open_file(import_details.workspace_google_project, bucket, path, import_details.submitter) as pqfile:
-            return self.convert_parquet_file_to_entity_attributes(pqfile, entity_type, pk)
+            return list(self.convert_parquet_file_to_entity_attributes(pqfile, entity_type, pk))
 
 
     def convert_parquet_file_to_entity_attributes(self, file_like: IO, entity_type: str, pk: str):
