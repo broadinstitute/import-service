@@ -1,6 +1,7 @@
 import itertools
 import json
 import logging
+import os
 from typing import List  # pylint: disable=unused-import
 from typing import IO, Iterator
 from urllib.parse import urlparse
@@ -40,45 +41,54 @@ class TDRManifestToRawls(Translator):
         """Converts a list of TDR tables, each of which contain urls to parquet files, to an iterator of Entity objects"""
         for t in tables:
             for f in t.parquet_files:
-                yield self.translate_parquet_file(import_details, f, t.name, t.primary_key)
+                pt = ParquetTranslator(t, f, import_details)
+                yield pt.translate()
 
-    def translate_parquet_file(self, import_details: Import, filelocation: str, entity_type: str, pk: str) -> Iterator[Entity]:
+class ParquetTranslator:
+    def __init__(self, table: TDRTable, filelocation: str, import_details: Import):
+        self.table = table
+        self.import_details = import_details
+        self.filelocation = filelocation
+        self.file_nickname = os.path.split(filelocation)[1]
+
+    def translate(self) -> Iterator[Entity]:
         """Converts a parquet file, represented as a url, to an iterator of Entity objects"""
-        logging.info(f'{import_details.id} attempting parquet export file {filelocation} ...')
-        url = urlparse(filelocation)
+        logging.debug(f'{self.import_details.id} attempting parquet translation of {self.file_nickname} from {self.filelocation} ...')
+        url = urlparse(self.filelocation)
         bucket = url.netloc
         path = url.path
         # TODO: the call to gcs.open_file will get a new pet key each time. This is overly aggressive; we could probably
         # reuse tokens to reduce API calls to Sam (and thus chances to fail). Ideally, when opening a file if we encounter
         # an auth error, we'd *then* get a new pet key and retry.
-        with gcs.open_file(import_details.workspace_google_project, bucket, path, import_details.submitter) as pqfile:
-            return self.convert_parquet_file_to_entities(pqfile, entity_type, pk)
+        with gcs.open_file(self.import_details.workspace_google_project, bucket, path, self.import_details.submitter) as pqfile:
+            return self.convert_parquet_file_to_entities(pqfile)
 
-    def convert_parquet_file_to_entities(self, file_like: IO, entity_type: str, pk: str) -> Iterator[Entity]:
+    def convert_parquet_file_to_entities(self, file_like: IO) -> Iterator[Entity]:
         """Converts single parquet file-like object to an iterator of Entity objects"""
         # TODO: investigate parquet streaming, instead of reading the whole file into memory        
         pq_table: pyarrow.Table = pq.read_table(file_like)
         df: pd.DataFrame = pq_table.to_pandas()
-        return self.translate_data_frame(df, pq_table.column_names, entity_type, pk)
+        return self.translate_data_frame(df, pq_table.column_names)
 
-    def translate_data_frame(self, df: pd.DataFrame, column_names: List[str], entity_type: str, pk: str) -> Iterator[Entity]:
+    def translate_data_frame(self, df: pd.DataFrame, column_names: List[str]) -> Iterator[Entity]:
         """convert a pandas dataframe - assumed from a Parquet file - to an iterator of Entity objects"""
+        logging.debug(f'{self.import_details.id} expecting {df.count} rows in {self.file_nickname} ...')
         for index, row in df.iterrows():
-            ops = self.convert_parquet_row(row, column_names, entity_type, pk)
+            ops = self.convert_parquet_row(row, column_names)
             # TODO: better primary key detection/resilience?
-            yield Entity(row[pk], entity_type, list(ops))
+            yield Entity(row[self.table.primary_key], self.table.name, list(ops))
     
-    def convert_parquet_row(self, row: pd.Series, column_names: List[str], entity_type: str, pk: str) -> Iterator[AddUpdateAttribute]:
+    def convert_parquet_row(self, row: pd.Series, column_names: List[str]) -> Iterator[AddUpdateAttribute]:
         """convert a single row of a pandas dataframe - assumed from a Parquet file - to an Entity"""
         # TODO: AS-1041 append import:snapshotid and import:timestamp attributes
         for colname in column_names:
-            yield self.convert_parquet_attr(colname, row[colname], entity_type, pk)
+            yield self.convert_parquet_attr(colname, row[colname])
 
-    def convert_parquet_attr(self, name: str, value: AttributeValue, entity_type: str, pk: str):
+    def convert_parquet_attr(self, name: str, value: AttributeValue):
         """convert a single cell of a pandas dataframe - assumed from a Parquet file - to an AddUpdateAttribute"""
         # {entity_type}_id is a reserved name. If the import contains a column named thusly,
         # move that column into the "import:" namespace to avoid conflicts
-        if (name != f'{entity_type}_id'):
+        if (name != f'{self.table.name}_id'):
             usable_name = name
         else:
             # TODO: need to enable new namespaces in Rawls. As of this writing, Rawls only supports 'pfb', 'library', and 'tag'

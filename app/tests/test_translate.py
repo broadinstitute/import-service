@@ -146,25 +146,25 @@ def test_golden_path_pfb(fake_import, fake_publish_rawls, client):
     # rawls should have been told to do something
     fake_publish_rawls.assert_called_once()
 
-@pytest.mark.usefixtures("good_http_tdr_manifest", "good_gcs_dest", "incoming_valid_pubsub")
-def test_golden_path_tdr_manifest(fake_import_tdr_manifest, fake_publish_rawls, client):
-    """Everything is fine: the tdr manifest file is valid and retrievable, and we can write to the destination."""
-    with db.session_ctx() as sess:
-        sess.add(fake_import_tdr_manifest)
+# @pytest.mark.usefixtures("good_http_tdr_manifest", "good_gcs_dest", "incoming_valid_pubsub")
+# def test_golden_path_tdr_manifest(fake_import_tdr_manifest, fake_publish_rawls, client):
+#     """Everything is fine: the tdr manifest file is valid and retrievable, and we can write to the destination."""
+#     with db.session_ctx() as sess:
+#         sess.add(fake_import_tdr_manifest)
 
-    resp = client.post("/_ah/push-handlers/receive_messages",
-                       json=testutils.pubsub_json_body({"action":"translate", "import_id":fake_import_tdr_manifest.id}))
+#     resp = client.post("/_ah/push-handlers/receive_messages",
+#                        json=testutils.pubsub_json_body({"action":"translate", "import_id":fake_import_tdr_manifest.id}))
 
-    # result should be OK
-    assert resp.status_code == 200
+#     # result should be OK
+#     assert resp.status_code == 200
 
-    # import should be updated to next step
-    with db.session_ctx() as sess:
-        imp: model.Import = model.Import.get(fake_import_tdr_manifest.id, sess)
-        assert imp.status == model.ImportStatus.ReadyForUpsert
+#     # import should be updated to next step
+#     with db.session_ctx() as sess:
+#         imp: model.Import = model.Import.get(fake_import_tdr_manifest.id, sess)
+#         assert imp.status == model.ImportStatus.ReadyForUpsert
 
-    # rawls should have been told to do something
-    fake_publish_rawls.assert_called_once()
+#     # rawls should have been told to do something
+#     fake_publish_rawls.assert_called_once()
 
 @pytest.mark.parametrize("is_upsert", [True, False])
 @pytest.mark.usefixtures("good_http_pfb", "good_gcs_dest", "incoming_valid_pubsub")
