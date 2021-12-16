@@ -1,7 +1,9 @@
+import io
 from datetime import datetime
 from typing import Generator
 
 import pandas as pd
+import pyarrow as pa
 import pyarrow.parquet as pq
 from app.db.model import Import
 from app.external.rawls_entity_model import AddUpdateAttribute
@@ -41,17 +43,30 @@ def get_fake_parquet_translator() -> ParquetTranslator:
     return ParquetTranslator(fake_table, fake_filelocation, fake_import_details)
 
 # file-like to ([Entity])
-def test_translate_parquet_file_to_entities(sample_tdr_parquet_file):
-    # TODO: can we programmatically generate a parquet file-like, so we explicitly know its contents?
+def test_translate_parquet_file_to_entities():
     translator = get_fake_parquet_translator()
 
-    entity_gen = translator.translate_parquet_file_to_entities(sample_tdr_parquet_file)
+    # programmatically generate a parquet file-like, so we explicitly know its contents
+    file_like = io.BytesIO()
+    d = {'datarepo_row_id': ['a', 'b', 'c'], 'one': [1, 2, 3], 'two': ['foo', 'bar', 'baz']}
+    df = pd.DataFrame(data=d)
+    table = pa.Table.from_pandas(df)
+    pq.write_table(table, file_like)
 
-    entities_to_add = list(entity_gen) # materialize
+    entities_gen = translator.translate_parquet_file_to_entities(file_like)
 
-    pq_table = pq.read_table(sample_tdr_parquet_file)
-    assert len(entities_to_add) == pq_table.num_rows
-    assert len(entities_to_add[0].operations) == pq_table.num_columns
+    assert isinstance(entities_gen, Generator)
+    entities = list(entities_gen)
+    assert len(entities) == 3
+    assert entities[0].name == 'a'
+    assert entities[0].entityType == 'unittest'
+    assert entities[0].operations == [AddUpdateAttribute('datarepo_row_id', 'a'), AddUpdateAttribute('one', 1), AddUpdateAttribute('two', 'foo')]
+    assert entities[1].name == 'b'
+    assert entities[1].entityType == 'unittest'
+    assert entities[1].operations == [AddUpdateAttribute('datarepo_row_id', 'b'), AddUpdateAttribute('one', 2), AddUpdateAttribute('two', 'bar')]
+    assert entities[2].name == 'c'
+    assert entities[2].entityType == 'unittest'
+    assert entities[2].operations == [AddUpdateAttribute('datarepo_row_id', 'c'), AddUpdateAttribute('one', 3), AddUpdateAttribute('two', 'baz')]
 
 # KVP to AttributeOperation
 def test_translate_parquet_attr():

@@ -77,7 +77,7 @@ class ParquetTranslator:
 
     def translate_data_frame(self, df: pd.DataFrame, column_names: List[str]) -> Iterator[Entity]:
         """Convert a pandas dataframe - assumed from a Parquet file - to an iterator of Entity objects."""
-        logging.info(f'{self.import_details.id} expecting {df.count()} rows in {self.file_nickname} ...')
+        logging.info(f'{self.import_details.id} expecting {len(df.index)} rows in {self.file_nickname} ...')
         for _, row in df.iterrows():
             ops = self.translate_parquet_row(row, column_names)
             # TODO: better primary key detection/resilience?
