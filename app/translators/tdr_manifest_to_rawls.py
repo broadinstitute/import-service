@@ -89,4 +89,8 @@ class TDRManifestToRawls(Translator):
         """convert a single cell of a pandas dataframe - assumed from a Parquet file - to an AddUpdateAttribute"""
         # TODO: if this cell should be a reference, create as a EntityReference instead.
         # TODO: if this cell is an array, create as RemoveAttribute/CreateAttributeValueList/AddListMember(s) instead
-        return AddUpdateAttribute(name, value)
+        if (isinstance(value, (str, int, float, bool))):
+            usable = value
+        else:
+            usable = str(value)
+        return AddUpdateAttribute(name, usable)
