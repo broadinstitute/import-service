@@ -1,3 +1,4 @@
+import copy
 import itertools
 import json
 import logging
@@ -64,16 +65,23 @@ class ParquetTranslator:
         with gcs.open_file(self.import_details.workspace_google_project, bucket, path, self.import_details.submitter) as pqfile:
             return self.translate_parquet_file_to_entities(pqfile)
 
+    # investigate parquet streaming, instead of reading the whole file into memory
+    # BUT, it looks like the export files use random-access binary format, not streaming format,
+    # so streaming is not possible.
+    #
+    # with pyarrow.ipc.open_stream(file_like) as reader:
+    #     assert reader.schema == 'foo'
+    #     entity_batches = (self.translate_data_frame(b.to_pandas(), b.column_names) for b in reader)
+    #     return itertools.chain(*entity_batches)
     def translate_parquet_file_to_entities(self, file_like: IO) -> Iterator[Entity]:
         """Converts single parquet file-like object to an iterator of Entity objects."""
-        # TODO: investigate parquet streaming, instead of reading the whole file into memory
-        # with pyarrow.ipc.open_stream(file_like) as reader:
-        #     assert reader.schema == 'foo'
-        #     entity_batches = (self.translate_data_frame(b.to_pandas(), b.column_names) for b in reader)
-        #     return itertools.chain(*entity_batches)
         pq_table: pyarrow.Table = pq.read_table(file_like)
-        df: pd.DataFrame = pq_table.to_pandas()
-        return self.translate_data_frame(df, pq_table.column_names)
+        column_names = copy.deepcopy(pq_table.column_names)
+        # see https://arrow.apache.org/docs/python/pandas.html#reducing-memory-use-in-table-to-pandas for discussion of
+        # memory-reducing options
+        df: pd.DataFrame = pq_table.to_pandas(split_blocks=True, self_destruct=True)
+        del pq_table
+        return self.translate_data_frame(df, column_names)
 
     def translate_data_frame(self, df: pd.DataFrame, column_names: List[str]) -> Iterator[Entity]:
         """Convert a pandas dataframe - assumed from a Parquet file - to an iterator of Entity objects."""
