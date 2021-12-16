@@ -97,11 +97,6 @@ def fake_tdr_manifest() -> Iterator[IO]:
     with open("app/tests/response_1638551384572.json", 'rb') as out:
         yield out
 
-# TODO: delete this and the process-N.parquet files, so we don't have "real" data committed
-# @pytest.fixture(scope="function")
-# def sample_tdr_parquet_file() -> IO:
-#     return open("app/tests/data/process/process-000000000000.parquet", 'rb')
-
 @pytest.fixture(scope="function")
 def fake_parquet() -> Iterator[IO]:
     with open("app/tests/empty.parquet", 'rb') as out:
