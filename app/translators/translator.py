@@ -7,5 +7,5 @@ from app.external.rawls_entity_model import Entity
 
 class Translator(ABC):
     @abstractmethod
-    def translate(self, import_details: Import, file_like: IO, file_type: str) -> Iterator[Entity]:
+    def translate(self, import_details: Import, file_like: IO) -> Iterator[Entity]:
         pass

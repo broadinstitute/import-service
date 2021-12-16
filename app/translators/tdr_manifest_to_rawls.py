@@ -26,8 +26,8 @@ class TDRManifestToRawls(Translator):
         defaults = {}
         self.options = {**defaults, **options}
 
-    def translate(self, import_details: Import, file_like: IO, file_type: str) -> Iterator[Entity]:
-        logging.info(f'{import_details.id} executing a TDRManifestToRawls translation for {file_type}: {file_like}')
+    def translate(self, import_details: Import, file_like: IO) -> Iterator[Entity]:
+        logging.info(f'{import_details.id} executing a TDRManifestToRawls translation for {import_details.filetype}: {file_like}')
         tables = self.get_tables(file_like)
         return itertools.chain(*self.translate_tables(import_details, tables))
 
