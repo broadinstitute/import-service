@@ -18,7 +18,7 @@ from app.translators.translator import Translator
 
 class TDRManifestToRawls(Translator):
     def __init__(self, options=None):
-        """Translator for Parquet files."""
+        """Translator for TDR manifests."""
         if options is None:
             options = {}
         # TODO AS-1037: set defaults for 'create references', 'use PK', etc?
@@ -29,13 +29,15 @@ class TDRManifestToRawls(Translator):
         logging.info(f'{import_details.id} executing a TDRManifestToRawls translation for {file_type}: {file_like}')
         tables = self.get_tables(file_like)
         return itertools.chain(*self.translate_tables(import_details, tables))
-
-    def get_tables(self, file_like: IO) -> List[TDRTable]:
+    
+    @classmethod
+    def get_tables(cls, file_like: IO) -> List[TDRTable]:
         # read and parse entire manifest file
         jso = json.load(file_like)
         return TDRManifestParser(jso).get_tables()
 
-    def translate_tables(self, import_details: Import, tables: List[TDRTable]) -> Iterator[Iterator[Entity]]:
+    @classmethod
+    def translate_tables(cls, import_details: Import, tables: List[TDRTable]) -> Iterator[Iterator[Entity]]:
         """Converts a list of TDR tables, each of which contain urls to parquet files, to an iterator of Entity objects."""
         for t in tables:
             for f in t.parquet_files:
@@ -44,6 +46,7 @@ class TDRManifestToRawls(Translator):
 
 class ParquetTranslator:
     def __init__(self, table: TDRTable, filelocation: str, import_details: Import):
+        """Translator for Parquet files coming from a TDR manifest."""
         self.table = table
         self.import_details = import_details
         self.filelocation = filelocation
@@ -69,15 +72,15 @@ class ParquetTranslator:
         return self.translate_data_frame(df, pq_table.column_names)
 
     def translate_data_frame(self, df: pd.DataFrame, column_names: List[str]) -> Iterator[Entity]:
-        """convert a pandas dataframe - assumed from a Parquet file - to an iterator of Entity objects."""
+        """Convert a pandas dataframe - assumed from a Parquet file - to an iterator of Entity objects."""
         logging.info(f'{self.import_details.id} expecting {df.count()} rows in {self.file_nickname} ...')
-        for index, row in df.iterrows():
+        for _, row in df.iterrows():
             ops = self.translate_parquet_row(row, column_names)
             # TODO: better primary key detection/resilience?
             yield Entity(row[self.table.primary_key], self.table.name, list(ops))
-    
+
     def translate_parquet_row(self, row: pd.Series, column_names: List[str]) -> Iterator[AddUpdateAttribute]:
-        """convert a single row of a pandas dataframe - assumed from a Parquet file - to an Entity."""
+        """Convert a single row of a pandas dataframe - assumed from a Parquet file - to an Entity."""
         # TODO: AS-1041 append import:snapshotid and import:timestamp attributes
         # self.convert_parquet_attr('pfb:timestamp', self.import_details.submit_time)
 
@@ -85,7 +88,7 @@ class ParquetTranslator:
             yield self.translate_parquet_attr(colname, row[colname])
 
     def translate_parquet_attr(self, name: str, value: AttributeValue):
-        """convert a single cell of a pandas dataframe - assumed from a Parquet file - to an AddUpdateAttribute."""
+        """Convert a single cell of a pandas dataframe - assumed from a Parquet file - to an AddUpdateAttribute."""
         # {entity_type}_id is a reserved name. If the import contains a column named thusly,
         # move that column into the "import:" namespace to avoid conflicts
         if (name != f'{self.table.name}_id'):

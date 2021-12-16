@@ -66,12 +66,9 @@ def test_translate_parquet_attr():
     assert translator.translate_parquet_attr('foo', 'astring') == AddUpdateAttribute('foo', 'astring')
     assert translator.translate_parquet_attr('foo', 123) == AddUpdateAttribute('foo', 123)
     assert translator.translate_parquet_attr('foo', 456.78) == AddUpdateAttribute('foo', 456.78)
-    
+
     curtime = datetime.now()
     assert translator.translate_parquet_attr('foo', curtime) == AddUpdateAttribute('foo', str(curtime))
 
     arr = ['a', 'b', 'c']
     assert translator.translate_parquet_attr('foo', arr) == AddUpdateAttribute('foo', str(arr))
-
-
-
