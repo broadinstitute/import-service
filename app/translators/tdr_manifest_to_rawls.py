@@ -2,23 +2,18 @@ import itertools
 import json
 import logging
 import os
-from typing import List  # pylint: disable=unused-import
-from typing import IO, Iterator
+from typing import IO, Iterator, List
 from urllib.parse import urlparse
 
+import pandas as pd
 import pyarrow
-
+import pyarrow.parquet as pq
 from app.db.model import Import
 from app.external import gcs
-from app.external.rawls_entity_model import AttributeOperation, AttributeValue  # pylint: disable=unused-import
-from app.external.rawls_entity_model import (AddListMember, AddUpdateAttribute,
-                                             CreateAttributeValueList, Entity,
-                                             RemoveAttribute)
+from app.external.rawls_entity_model import (AddUpdateAttribute,
+                                             AttributeValue, Entity)
 from app.external.tdr_manifest import TDRManifestParser, TDRTable
 from app.translators.translator import Translator
-
-import pandas as pd
-import pyarrow.parquet as pq
 
 
 class TDRManifestToRawls(Translator):
@@ -75,7 +70,7 @@ class ParquetTranslator:
 
     def translate_data_frame(self, df: pd.DataFrame, column_names: List[str]) -> Iterator[Entity]:
         """convert a pandas dataframe - assumed from a Parquet file - to an iterator of Entity objects"""
-        logging.info(f'{self.import_details.id} expecting {df.count} rows in {self.file_nickname} ...')
+        logging.info(f'{self.import_details.id} expecting {df.count()} rows in {self.file_nickname} ...')
         for index, row in df.iterrows():
             ops = self.translate_parquet_row(row, column_names)
             # TODO: better primary key detection/resilience?

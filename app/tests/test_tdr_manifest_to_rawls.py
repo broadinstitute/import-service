@@ -1,11 +1,13 @@
-from typing import Generator, List, Sequence
+from datetime import datetime
+from typing import Generator
+
 import pandas as pd
 import pyarrow.parquet as pq
 from app.db.model import Import
 from app.external.rawls_entity_model import AddUpdateAttribute
 from app.external.tdr_manifest import TDRTable
+from app.translators.tdr_manifest_to_rawls import ParquetTranslator
 
-from app.translators.tdr_manifest_to_rawls import ParquetTranslator, TDRManifestToRawls
 
 # data frame to ([Entity])
 def test_translate_data_frame():
@@ -32,13 +34,16 @@ def test_translate_data_frame():
     assert entities[2].entityType == 'unittest'
     assert entities[2].operations == [AddUpdateAttribute('datarepo_row_id', 'c'), AddUpdateAttribute('one', 3), AddUpdateAttribute('two', 'baz')]
 
-# file-like to ([Entity])
-def test_translate_parquet_file_to_entities(sample_tdr_parquet_file):
-    # TODO: can we programmatically generate a parquet file-like, so we explicitly know its contents?
+def get_fake_parquet_translator() -> ParquetTranslator:
     fake_table = TDRTable('unittest', 'datarepo_row_id', [], {})
     fake_filelocation = "doesntmatter"
     fake_import_details = Import('workspace_name:', 'workspace_ns', 'workspace_uuid', 'workspace_google_project', 'submitter', 'import_url', 'filetype', True)
-    translator = ParquetTranslator(fake_table, fake_filelocation, fake_import_details)
+    return ParquetTranslator(fake_table, fake_filelocation, fake_import_details)
+
+# file-like to ([Entity])
+def test_translate_parquet_file_to_entities(sample_tdr_parquet_file):
+    # TODO: can we programmatically generate a parquet file-like, so we explicitly know its contents?
+    translator = get_fake_parquet_translator()
 
     entity_gen = translator.translate_parquet_file_to_entities(sample_tdr_parquet_file)
 
@@ -49,8 +54,24 @@ def test_translate_parquet_file_to_entities(sample_tdr_parquet_file):
     assert len(entities_to_add[0].operations) == pq_table.num_columns
 
 # KVP to AttributeOperation
-def test_translate_parquet_attr(sample_tdr_parquet_file):
-    # TODO: test ok name/value
-    # TODO: test non-serializable attr value, such as a Timestamp
-    # TODO: test {entity_type}_id namespacing
-    assert True
+def test_translate_parquet_attr():
+    translator = get_fake_parquet_translator()
+    # translator has entityType 'unittest', so 'unittest_id' should be namespaced
+    assert translator.translate_parquet_attr('unittest_id', 123) == AddUpdateAttribute('pfb:unittest_id', 123)
+    assert translator.translate_parquet_attr('somethingelse', 123) == AddUpdateAttribute('somethingelse', 123)
+    assert translator.translate_parquet_attr('datarepo_row_id', 123) == AddUpdateAttribute('datarepo_row_id', 123)
+
+
+    assert translator.translate_parquet_attr('foo', True) == AddUpdateAttribute('foo', True)
+    assert translator.translate_parquet_attr('foo', 'astring') == AddUpdateAttribute('foo', 'astring')
+    assert translator.translate_parquet_attr('foo', 123) == AddUpdateAttribute('foo', 123)
+    assert translator.translate_parquet_attr('foo', 456.78) == AddUpdateAttribute('foo', 456.78)
+    
+    curtime = datetime.now()
+    assert translator.translate_parquet_attr('foo', curtime) == AddUpdateAttribute('foo', str(curtime))
+
+    arr = ['a', 'b', 'c']
+    assert translator.translate_parquet_attr('foo', arr) == AddUpdateAttribute('foo', str(arr))
+
+
+
