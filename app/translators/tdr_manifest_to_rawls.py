@@ -32,10 +32,13 @@ class TDRManifestToRawls(Translator):
 
     def translate(self, import_details: Import, file_like: IO, file_type: str) -> Iterator[Entity]:
         logging.info(f'{import_details.id} executing a TDRManifestToRawls translation for {file_type}: {file_like}')
+        tables = self.get_tables(file_like)
+        return itertools.chain(*self.translate_tables(import_details, tables))
+
+    def get_tables(self, file_like: IO) -> List[TDRTable]:
         # read and parse entire manifest file
         jso = json.load(file_like)
-        tables = TDRManifestParser(jso).get_tables()
-        return itertools.chain(*self.translate_tables(import_details, tables))
+        return TDRManifestParser(jso).get_tables()
 
     def translate_tables(self, import_details: Import, tables: List[TDRTable]) -> Iterator[Iterator[Entity]]:
         """Converts a list of TDR tables, each of which contain urls to parquet files, to an iterator of Entity objects"""
@@ -53,7 +56,7 @@ class ParquetTranslator:
 
     def translate(self) -> Iterator[Entity]:
         """Converts a parquet file, represented as a url, to an iterator of Entity objects"""
-        logging.debug(f'{self.import_details.id} attempting parquet translation of {self.file_nickname} from {self.filelocation} ...')
+        logging.info(f'{self.import_details.id} attempting parquet translation of {self.file_nickname} from {self.filelocation} ...')
         url = urlparse(self.filelocation)
         bucket = url.netloc
         path = url.path
@@ -61,9 +64,9 @@ class ParquetTranslator:
         # reuse tokens to reduce API calls to Sam (and thus chances to fail). Ideally, when opening a file if we encounter
         # an auth error, we'd *then* get a new pet key and retry.
         with gcs.open_file(self.import_details.workspace_google_project, bucket, path, self.import_details.submitter) as pqfile:
-            return self.convert_parquet_file_to_entities(pqfile)
+            return self.translate_parquet_file_to_entities(pqfile)
 
-    def convert_parquet_file_to_entities(self, file_like: IO) -> Iterator[Entity]:
+    def translate_parquet_file_to_entities(self, file_like: IO) -> Iterator[Entity]:
         """Converts single parquet file-like object to an iterator of Entity objects"""
         # TODO: investigate parquet streaming, instead of reading the whole file into memory        
         pq_table: pyarrow.Table = pq.read_table(file_like)
@@ -72,19 +75,21 @@ class ParquetTranslator:
 
     def translate_data_frame(self, df: pd.DataFrame, column_names: List[str]) -> Iterator[Entity]:
         """convert a pandas dataframe - assumed from a Parquet file - to an iterator of Entity objects"""
-        logging.debug(f'{self.import_details.id} expecting {df.count} rows in {self.file_nickname} ...')
+        logging.info(f'{self.import_details.id} expecting {df.count} rows in {self.file_nickname} ...')
         for index, row in df.iterrows():
-            ops = self.convert_parquet_row(row, column_names)
+            ops = self.translate_parquet_row(row, column_names)
             # TODO: better primary key detection/resilience?
             yield Entity(row[self.table.primary_key], self.table.name, list(ops))
     
-    def convert_parquet_row(self, row: pd.Series, column_names: List[str]) -> Iterator[AddUpdateAttribute]:
+    def translate_parquet_row(self, row: pd.Series, column_names: List[str]) -> Iterator[AddUpdateAttribute]:
         """convert a single row of a pandas dataframe - assumed from a Parquet file - to an Entity"""
         # TODO: AS-1041 append import:snapshotid and import:timestamp attributes
-        for colname in column_names:
-            yield self.convert_parquet_attr(colname, row[colname])
+        # self.convert_parquet_attr('pfb:timestamp', self.import_details.submit_time)
 
-    def convert_parquet_attr(self, name: str, value: AttributeValue):
+        for colname in column_names:
+            yield self.translate_parquet_attr(colname, row[colname])
+
+    def translate_parquet_attr(self, name: str, value: AttributeValue):
         """convert a single cell of a pandas dataframe - assumed from a Parquet file - to an AddUpdateAttribute"""
         # {entity_type}_id is a reserved name. If the import contains a column named thusly,
         # move that column into the "import:" namespace to avoid conflicts

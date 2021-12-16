@@ -16,9 +16,17 @@ class TDRTable:
 class TDRManifestParser:
     def __init__(self, jso: JSON):
         self._tables = self._parse(jso)
+        self._snapshotid = jso['snapshot']['id']
+        self._snapshotname = jso['snapshot']['name']
 
     def get_tables(self) -> List[TDRTable]:
         return self._tables
+
+    def get_snapshot_id(self) -> str:
+        return self._snapshotid
+
+    def get_snapshot_name(self) -> str:
+        return self._snapshotname
 
     def _parse(self, jso: JSON) -> List[TDRTable]:
         # the snapshot model: table names, primary keys, relationships

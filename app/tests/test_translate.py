@@ -126,6 +126,7 @@ def fake_publish_rawls(monkeypatch, pubsub_fake_env):
     monkeypatch.setattr(translate.pubsub, "publish_rawls", mm)
     yield mm
 
+
 @pytest.mark.usefixtures("good_http_pfb", "good_gcs_dest", "incoming_valid_pubsub")
 def test_golden_path_pfb(fake_import, fake_publish_rawls, client):
     """Everything is fine: the pfb is valid and retrievable, and we can write to the destination."""
@@ -146,6 +147,10 @@ def test_golden_path_pfb(fake_import, fake_publish_rawls, client):
     # rawls should have been told to do something
     fake_publish_rawls.assert_called_once()
 
+
+###### TODO: figure out how to mock TDRManifestToRawls such that when it reads the TDR export manifest, 
+###### then reads each parquet file referenced in that manifest, we inject fake parquet files and avoid
+###### real read attempts into GCS
 # @pytest.mark.usefixtures("good_http_tdr_manifest", "good_gcs_dest", "incoming_valid_pubsub")
 # def test_golden_path_tdr_manifest(fake_import_tdr_manifest, fake_publish_rawls, client):
 #     """Everything is fine: the tdr manifest file is valid and retrievable, and we can write to the destination."""

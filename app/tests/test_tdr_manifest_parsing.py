@@ -8,7 +8,8 @@ def test_manifest_parsing():
     jso = json.load(open('./app/tests/response_1638551384572.json'))
 
     # parse into tables
-    tables = TDRManifestParser(jso).get_tables()
+    parsed = TDRManifestParser(jso)
+    tables = parsed.get_tables()
     assert len(tables) == 27
     for t in tables:
         assert len(t.parquet_files) > 0, f"table {t.name} should have parquet export files"
@@ -22,7 +23,8 @@ def test_manifest_parsing():
     "sequence", "project", "person", "signature", "photo", "regulation", "annotation", "lab", "edges", "xray",
     "test", "vial", "process", "test_result", "room", "chemical", "letter", "species", "reading", "genome"]
 
+    assert parsed.get_snapshot_id() == '9516afec-583f-11ec-bf63-0242ac130002'
+    assert parsed.get_snapshot_name() == 'unit_test_snapshot'
     assert (set(all_table_names) == set(expected_table_names))
 
 # TODO: add tests for table ordering based on references, any other features
-
