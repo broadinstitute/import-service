@@ -88,8 +88,13 @@ class ParquetTranslator:
         logging.info(f'{self.import_details.id} expecting {len(df.index)} rows in {self.file_nickname} ...')
         for _, row in df.iterrows():
             ops = self.translate_parquet_row(row, column_names)
-            # TODO: better primary key detection/resilience?
-            yield Entity(row[self.table.primary_key], self.table.name, list(ops))
+            # we should never encounter a case where the primary key is missing, but let's be safe:
+            entity_name = row.get(self.table.primary_key)
+            if entity_name is None:
+                logging.info(f'{self.import_details.id} found a row with no pk "{self.table.primary_key}" value; skipping this row: ${row}')
+                continue
+            else:
+                yield Entity(str(entity_name), self.table.name, list(ops))
 
     def translate_parquet_row(self, row: pd.Series, column_names: List[str]) -> Iterator[AddUpdateAttribute]:
         """Convert a single row of a pandas dataframe - assumed from a Parquet file - to an Entity."""
