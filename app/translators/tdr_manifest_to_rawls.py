@@ -76,15 +76,23 @@ class TDRManifestToRawls(Translator):
 
     def convert_parquet_attr(self, name: str, value: AttributeValue, entity_type: str, pk: str):
         """convert a single cell of a pandas dataframe - assumed from a Parquet file - to an AddUpdateAttribute"""
-        # TODO: AS-1038 if this cell should be a reference, create as a EntityReference instead.
-        # TODO: if this cell is an array, create as RemoveAttribute/CreateAttributeValueList/AddListMember(s) instead
+        # {entity_type}_id is a reserved name. If the import contains a column named thusly,
+        # move that column into the "import:" namespace to avoid conflicts
         if (name != f'{entity_type}_id'):
             usable_name = name
         else:
-            usable_name = f'import:{name}'
+            # TODO: need to enable new namespaces in Rawls. As of this writing, Rawls only supports 'pfb', 'library', and 'tag'
+            # in addition to the default namespace. For now, use the pfb namespace just so we can see it working
+            usable_name = f'pfb:{name}'
 
+        # BigQuery/Parquet can contain datatypes that the Rawls model doesn't handle and/or are not
+        # natively serializable into JSON, such as Timestamps. Inspect the types we know about,
+        # and str() the rest of them.
+        # TODO: AS-1038 if this cell should be a reference, create as a EntityReference instead.
+        # TODO: if this cell is an array, create as RemoveAttribute/CreateAttributeValueList/AddListMember(s) instead
         if (isinstance(value, (str, int, float, bool))):
             usable_value = value
         else:
             usable_value = str(value)
+
         return AddUpdateAttribute(usable_name, usable_value)
