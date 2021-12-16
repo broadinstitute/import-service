@@ -15,7 +15,7 @@ from gcsfs.core import GCSFileSystem
 from app.auth import service_auth
 from app.auth.userinfo import UserInfo
 from app.db import db
-from app.db.model import *
+from app.db.model import Import, ImportStatus, ImportStatusResponse
 from app.external import gcs, pubsub
 from app.translators import PFBToRawls, TDRManifestToRawls, Translator
 from app.util import exceptions, http

@@ -148,7 +148,7 @@ def test_golden_path_pfb(fake_import, fake_publish_rawls, client):
     fake_publish_rawls.assert_called_once()
 
 
-###### TODO: figure out how to mock TDRManifestToRawls such that when it reads the TDR export manifest, 
+###### TODO: figure out how to mock TDRManifestToRawls such that when it reads the TDR export manifest,
 ###### then reads each parquet file referenced in that manifest, we inject fake parquet files and avoid
 ###### real read attempts into GCS
 # @pytest.mark.usefixtures("good_http_tdr_manifest", "good_gcs_dest", "incoming_valid_pubsub")
