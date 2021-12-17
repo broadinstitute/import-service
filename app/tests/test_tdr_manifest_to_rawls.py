@@ -1,6 +1,6 @@
 import io
 from datetime import datetime
-from typing import Generator
+from typing import IO, Dict, Generator
 
 import numpy as np
 import pandas as pd
@@ -43,16 +43,19 @@ def get_fake_parquet_translator() -> ParquetTranslator:
     fake_import_details = Import('workspace_name:', 'workspace_ns', 'workspace_uuid', 'workspace_google_project', 'submitter', 'import_url', 'filetype', True)
     return ParquetTranslator(fake_table, fake_filelocation, fake_import_details)
 
+def data_dict_to_file_like(d: Dict) -> IO:
+    file_like = io.BytesIO()
+    df = pd.DataFrame(data=d)
+    table = pa.Table.from_pandas(df)
+    pq.write_table(table, file_like)
+    return file_like
+
 # file-like to ([Entity])
 def test_translate_parquet_file_to_entities():
     translator = get_fake_parquet_translator()
 
     # programmatically generate a parquet file-like, so we explicitly know its contents
-    file_like = io.BytesIO()
-    d = {'datarepo_row_id': ['a', 'b', 'c'], 'one': [1, 2, 3], 'two': ['foo', 'bar', 'baz']}
-    df = pd.DataFrame(data=d)
-    table = pa.Table.from_pandas(df)
-    pq.write_table(table, file_like)
+    file_like = data_dict_to_file_like({'datarepo_row_id': ['a', 'b', 'c'], 'one': [1, 2, 3], 'two': ['foo', 'bar', 'baz']})
 
     entities_gen = translator.translate_parquet_file_to_entities(file_like)
 
@@ -78,11 +81,7 @@ def test_translate_parquet_file_with_missing_pk():
 
     # programmatically generate a parquet file-like, so we explicitly know its contents
     # note the differences in this data frame as compared to get_fake_parquet_translator()
-    file_like = io.BytesIO()
-    d = {'datarepo_row_id': ['a', 'b', 'c'], 'custompk': ['first', None, 'third'], 'two': ['foo', 'bar', 'baz']}
-    df = pd.DataFrame(data=d)
-    table = pa.Table.from_pandas(df)
-    pq.write_table(table, file_like)
+    file_like = data_dict_to_file_like({'datarepo_row_id': ['a', 'b', 'c'], 'custompk': ['first', None, 'third'], 'two': ['foo', 'bar', 'baz']})
 
     entities_gen = translator.translate_parquet_file_to_entities(file_like)
 
@@ -105,15 +104,11 @@ def test_translate_parquet_file_with_array_attrs():
 
     # programmatically generate a parquet file-like, so we explicitly know its contents
     # note the differences in this data frame as compared to get_fake_parquet_translator()
-    file_like = io.BytesIO()
-    d = {'datarepo_row_id': ['a', 'b', 'c'], 'custompk': ['first', 'second', 'third'], 'arrayattr': [
+    file_like = data_dict_to_file_like({'datarepo_row_id': ['a', 'b', 'c'], 'custompk': ['first', 'second', 'third'], 'arrayattr': [
         ['Philip', 'Glass'],
         ['Wolfgang', 'Amadeus', 'Mozart'],
         ['Dmitri', 'Shostakovich']
-    ]}
-    df = pd.DataFrame(data=d)
-    table = pa.Table.from_pandas(df)
-    pq.write_table(table, file_like)
+    ]})
 
     entities_gen = translator.translate_parquet_file_to_entities(file_like)
 
