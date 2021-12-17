@@ -22,7 +22,7 @@ class TDRManifestToRawls(Translator):
         """Translator for TDR manifests."""
         if options is None:
             options = {}
-        # TODO AS-1037: set defaults for 'create references', 'use PK', etc?
+        # do we need any options for import behavior, such as 'create references', 'use PK', 'resolve DRS', etc?
         defaults = {}
         self.options = {**defaults, **options}
 
@@ -59,7 +59,7 @@ class ParquetTranslator:
         url = urlparse(self.filelocation)
         bucket = url.netloc
         path = url.path
-        # TODO: the call to gcs.open_file will get a new pet key each time. This is overly aggressive; we could probably
+        # TODO AS-1073: the call to gcs.open_file will get a new pet key each time. This is overly aggressive; we could probably
         # reuse tokens to reduce API calls to Sam (and thus chances to fail). Ideally, when opening a file if we encounter
         # an auth error, we'd *then* get a new pet key and retry.
         with gcs.open_file(self.import_details.workspace_google_project, bucket, path, self.import_details.submitter) as pqfile:
@@ -98,8 +98,11 @@ class ParquetTranslator:
 
     def translate_parquet_row(self, row: pd.Series, column_names: List[str]) -> Iterator[AddUpdateAttribute]:
         """Convert a single row of a pandas dataframe - assumed from a Parquet file - to an Entity."""
-        # TODO: AS-1041 append import:snapshotid and import:timestamp attributes
+        # TODO AS-1041: append snapshotid and timestamp attributes, using a non-default namespace to avoid conflicts
+        # we have the timestamp from the import_details object:
         # self.convert_parquet_attr('pfb:timestamp', self.import_details.submit_time)
+        # but we don't currently have the snapshotid, you'll need to find a way to pass that info down to here
+        # the snapshotid is available from TDRManifestParser.get_snapshot_id (which isn't available here)
 
         for colname in column_names:
             yield self.translate_parquet_attr(colname, row[colname])
@@ -111,15 +114,16 @@ class ParquetTranslator:
         if (name != f'{self.table.name}_id'):
             usable_name = name
         else:
-            # TODO: need to enable new namespaces in Rawls. As of this writing, Rawls only supports 'pfb', 'library', and 'tag'
+            # TODO AS-1040: need to enable new namespaces in Rawls. As of this writing, Rawls only supports 'pfb', 'library', and 'tag'
             # in addition to the default namespace. For now, use the pfb namespace just so we can see it working
             usable_name = f'pfb:{name}'
 
         # BigQuery/Parquet can contain datatypes that the Rawls model doesn't handle and/or are not
         # natively serializable into JSON, such as Timestamps. Inspect the types we know about,
         # and str() the rest of them.
-        # TODO: AS-1038 if this cell should be a reference, create as a EntityReference instead.
-        # TODO: if this cell is an array, create as RemoveAttribute/CreateAttributeValueList/AddListMember(s) instead
+        # TODO AS-1038: if this cell should be a reference, create as a EntityReference instead.
+        # TODO AS-1072: if this cell is an array, create as RemoveAttribute/CreateAttributeValueList/AddListMember(s) instead
+        # finally, if this cell is an array of references, create as RemoveAttribute/CreateAttributeEntityReferenceList/AddListMember(s) instead
         if (isinstance(value, (str, int, float, bool))):
             usable_value = value
         else:

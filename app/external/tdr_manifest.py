@@ -43,6 +43,8 @@ class TDRManifestParser:
         tables = []
 
         # for each table in the snapshot model, extract the table name and primary key
+        # TODO AS-1044: loop through tables in the order determined by AS-1036, so we
+        # import dependants before the tables that depend on them
         for t in snapshot['tables']:
             table_name = t['name']
 
@@ -59,7 +61,8 @@ class TDRManifestParser:
                 else:
                     pk = 'datarepo_row_id'
 
-                # TODO: parse out reference attrs
+                # TODO AS-1036: from the "relationships" key in the manifest, save the valid reference attributes
+                # to reference_attrs. A reference is valid iff the "to" column is the primary key of the "to" table.
 
                 table = TDRTable(name=table_name, primary_key=pk, parquet_files=exports[table_name], reference_attrs={})
                 tables.append(table)
