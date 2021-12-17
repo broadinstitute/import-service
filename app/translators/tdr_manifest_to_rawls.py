@@ -6,13 +6,17 @@ import os
 from typing import IO, Iterator, List
 from urllib.parse import urlparse
 
+import numpy as np
 import pandas as pd
 import pyarrow
 import pyarrow.parquet as pq
 from app.db.model import Import
 from app.external import gcs
-from app.external.rawls_entity_model import (AddUpdateAttribute,
-                                             AttributeValue, Entity)
+from app.external.rawls_entity_model import (AddListMember, AddUpdateAttribute,
+                                             AttributeOperation,
+                                             AttributeValue,
+                                             CreateAttributeValueList, Entity,
+                                             EntityReference, RemoveAttribute)
 from app.external.tdr_manifest import TDRManifestParser, TDRTable
 from app.translators.translator import Translator
 
@@ -96,7 +100,7 @@ class ParquetTranslator:
             else:
                 yield Entity(str(entity_name), self.table.name, list(ops))
 
-    def translate_parquet_row(self, row: pd.Series, column_names: List[str]) -> Iterator[AddUpdateAttribute]:
+    def translate_parquet_row(self, row: pd.Series, column_names: List[str]) -> List[AttributeOperation]:
         """Convert a single row of a pandas dataframe - assumed from a Parquet file - to an Entity."""
         # TODO AS-1041: append snapshotid and timestamp attributes, using a non-default namespace to avoid conflicts
         # we have the timestamp from the import_details object:
@@ -104,10 +108,10 @@ class ParquetTranslator:
         # but we don't currently have the snapshotid, you'll need to find a way to pass that info down to here
         # the snapshotid is available from TDRManifestParser.get_snapshot_id (which isn't available here)
 
-        for colname in column_names:
-            yield self.translate_parquet_attr(colname, row[colname])
+        all_attr_ops = [self.translate_parquet_attr(colname, row[colname]) for colname in column_names]
+        return list(itertools.chain(*all_attr_ops))
 
-    def translate_parquet_attr(self, name: str, value: AttributeValue):
+    def translate_parquet_attr(self, name: str, value) -> List[AttributeOperation]:
         """Convert a single cell of a pandas dataframe - assumed from a Parquet file - to an AddUpdateAttribute."""
         # {entity_type}_id is a reserved name. If the import contains a column named thusly,
         # move that column into the "import:" namespace to avoid conflicts
@@ -118,15 +122,38 @@ class ParquetTranslator:
             # in addition to the default namespace. For now, use the pfb namespace just so we can see it working
             usable_name = f'pfb:{name}'
 
-        # BigQuery/Parquet can contain datatypes that the Rawls model doesn't handle and/or are not
-        # natively serializable into JSON, such as Timestamps. Inspect the types we know about,
-        # and str() the rest of them.
-        # TODO AS-1038: if this cell should be a reference, create as a EntityReference instead.
-        # TODO AS-1072: if this cell is an array, create as RemoveAttribute/CreateAttributeValueList/AddListMember(s) instead
-        # finally, if this cell is an array of references, create as RemoveAttribute/CreateAttributeEntityReferenceList/AddListMember(s) instead
-        if (isinstance(value, (str, int, float, bool))):
-            usable_value = value
-        else:
-            usable_value = str(value)
+        # TODO: AS-1038 detect/create references
+        is_reference = False
+        is_array = isinstance(value, np.ndarray)
 
-        return AddUpdateAttribute(usable_name, usable_value)
+        if not is_reference and not is_array:
+            # most common case, results in AddUpdateAttribute
+            return [AddUpdateAttribute(usable_name, self.create_attribute_value(value))]
+        elif is_reference and is_array:
+            # TODO: AS-1038 detect/create references
+            # RemoveAttribute/CreateAttributeEntityReferenceList/AddListMember(s)
+            return []
+        elif is_array:
+            ops = [AddListMember(usable_name, self.create_attribute_value(v)) for v in value]
+            return [RemoveAttribute(usable_name), CreateAttributeValueList(usable_name), *ops]
+        else: # elif is_reference:
+            # TODO: AS-1038 detect/create references
+            # AddUpdateAttribute(name, EntityReference(value))
+            return []
+
+    @classmethod
+    def create_attribute_value(cls, value, is_reference: bool = False, reference_target_type = None) -> AttributeValue:
+        if is_reference:
+            return EntityReference(str(value), reference_target_type)
+        elif isinstance(value, (str, int, float, bool)):
+            return value
+        else:
+            # test if this is a numpy.ndarray member
+            item_op = getattr(value, "item", None)
+            if item_op is not None and callable(item_op):
+                return value.item()
+            else:
+                # BigQuery/Parquet can contain datatypes that the Rawls model doesn't handle and/or are not
+                # natively serializable into JSON, such as Timestamps. Inspect the types we know about,
+                # and str() the rest of them.
+                return str(value)
