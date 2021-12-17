@@ -1,6 +1,7 @@
 import base64
 from typing import IO, Iterator, Set, Tuple
 
+from app.db.model import Import
 from app.external.rawls_entity_model import (AddUpdateAttribute, Entity,
                                              EntityReference)
 from app.translators.translator import Translator
@@ -14,7 +15,7 @@ class PFBToRawls(Translator):
         defaults = {'b64-decode-enums': False, 'prefix-object-ids': True}
         self.options = {**defaults, **options}
 
-    def translate(self, file_like: IO, file_type: str) -> Iterator[Entity]:
+    def translate(self, import_details: Import, file_like: IO) -> Iterator[Entity]:
         with PFBReader(file_like) as reader:
             schema = reader.schema
             enums = self.list_enums(schema)
@@ -25,7 +26,7 @@ class PFBToRawls(Translator):
             # more than once.
             for record in reader:
                 if record['name'] != 'Metadata':
-                    yield self.translate_record(record, enums, file_type)
+                    yield self.translate_record(record, enums, import_details.filetype)
 
     def translate_record(self, record, enums, file_type) -> Entity:
         entity_type = record['name']

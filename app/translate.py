@@ -15,7 +15,7 @@ from gcsfs.core import GCSFileSystem
 from app.auth import service_auth
 from app.auth.userinfo import UserInfo
 from app.db import db
-from app.db.model import *
+from app.db.model import Import, ImportStatus, ImportStatusResponse
 from app.external import gcs, pubsub
 from app.translators import PFBToRawls, TDRManifestToRawls, Translator
 from app.util import exceptions, http
@@ -65,7 +65,7 @@ def handle(msg: Dict[str, str]) -> ImportStatusResponse:
 
             with filereader as pfb_file:
                 with gcs_project.open(dest_file, 'wb') as dest_upsert:
-                    _stream_translate(import_id, pfb_file, dest_upsert, import_details.filetype, translator = FILETYPE_TRANSLATORS[import_details.filetype]())
+                    _stream_translate(import_details, pfb_file, dest_upsert, translator = FILETYPE_TRANSLATORS[import_details.filetype]())
 
     except (FileNotFoundError, IOError, gcsfs.retry.HttpError, requests.exceptions.ProxyError) as e:
         # These are errors thrown by the gcsfs library, see here:
@@ -104,8 +104,8 @@ def handle(msg: Dict[str, str]) -> ImportStatusResponse:
     return ImportStatusResponse(import_id, ImportStatus.ReadyForUpsert.name, import_details.filetype, None)
 
 
-def _stream_translate(import_id: str, source: IO, dest: IO, file_type: str, translator: Translator) -> None:
-    translated_entity_gen = translator.translate(source, file_type)  # doesn't actually translate, just returns a generator
+def _stream_translate(import_details: Import, source: IO, dest: IO, translator: Translator) -> None:
+    translated_entity_gen = translator.translate(import_details, source)  # doesn't actually translate, just returns a generator
     # translated_entity_gen returns an Iterator[Entity]. Turn those Entity objects into dicts so they can be json-encoded
     translated_gen = (asdict(e) for e in translated_entity_gen)
 
@@ -118,7 +118,7 @@ def _stream_translate(import_id: str, source: IO, dest: IO, file_type: str, tran
         num_chunks = num_chunks + 1
         if (chunk_time - last_log_time >= 30):
             elapsed = chunk_time - start_time
-            logging.info(f"still translating for import {import_id}: total time {elapsed}s, chunks processed {num_chunks}")
+            logging.info(f"still translating for import {import_details.id}: total time {elapsed}s, chunks processed {num_chunks}")
             last_log_time = chunk_time
 
         dest.write(chunk.encode())  # encodes as utf-8 by default

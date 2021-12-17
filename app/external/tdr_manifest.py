@@ -9,16 +9,24 @@ from app.external.rawls_entity_model import EntityReference
 class TDRTable:
     name: str
     primary_key: str
-    parquet_files: List[str] # TODO: list of urls instead? these are gs:// urls
+    parquet_files: List[str]
     reference_attrs: Dict[str, EntityReference] # column name -> reference
 
 
 class TDRManifestParser:
     def __init__(self, jso: JSON):
         self._tables = self._parse(jso)
+        self._snapshotid = jso['snapshot']['id']
+        self._snapshotname = jso['snapshot']['name']
 
     def get_tables(self) -> List[TDRTable]:
         return self._tables
+
+    def get_snapshot_id(self) -> str:
+        return self._snapshotid
+
+    def get_snapshot_name(self) -> str:
+        return self._snapshotname
 
     def _parse(self, jso: JSON) -> List[TDRTable]:
         # the snapshot model: table names, primary keys, relationships
