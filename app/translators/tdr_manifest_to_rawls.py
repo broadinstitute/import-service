@@ -151,7 +151,7 @@ class ParquetTranslator:
             # test if this is a numpy.ndarray member
             item_op = getattr(value, "item", None)
             if item_op is not None and callable(item_op):
-                return value.item()
+                return cls.create_attribute_value(value.item())
             else:
                 # BigQuery/Parquet can contain datatypes that the Rawls model doesn't handle and/or are not
                 # natively serializable into JSON, such as Timestamps. Inspect the types we know about,
