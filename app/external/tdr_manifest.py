@@ -62,7 +62,7 @@ class TDRManifestParser:
                     pk = 'datarepo_row_id'
 
                 # TODO AS-1036: from the "relationships" key in the manifest, save the valid reference attributes
-                # to reference_attrs. A reference is valid iif the "to" column is the primary key of the "to" table.
+                # to reference_attrs. A reference is valid iff the "to" column is the primary key of the "to" table.
 
                 table = TDRTable(name=table_name, primary_key=pk, parquet_files=exports[table_name], reference_attrs={})
                 tables.append(table)
