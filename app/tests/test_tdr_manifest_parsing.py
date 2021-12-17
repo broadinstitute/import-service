@@ -27,4 +27,4 @@ def test_manifest_parsing():
     assert parsed.get_snapshot_name() == 'unit_test_snapshot'
     assert (set(all_table_names) == set(expected_table_names))
 
-# TODO: add tests for table ordering based on references, any other features
+# TODO AS-1044: add tests for table ordering based on references, any other features

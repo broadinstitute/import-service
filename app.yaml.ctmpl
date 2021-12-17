@@ -55,7 +55,7 @@ env_variables:
  PUBSUB_TOKEN: {{$pubSubToken}}
  PUBSUB_ACCOUNT: "import-service@terra-importservice-{{$env}}.iam.gserviceaccount.com"
 
- # TODO: this needs to match the Terraform'd tfvars for the environment.
+ # this needs to match the Terraform'd tfvars for the environment.
  # expect it to be importservice.firecloud.org for production and importservice.<env>.test.firecloud.org otherwise
  PUBSUB_AUDIENCE:   {{if eq $env "prod"}}"importservice.firecloud.org"{{else}}"importservice.{{$env}}.test.firecloud.org"{{end}}
 
