@@ -1,8 +1,14 @@
+from collections import defaultdict
 from dataclasses import dataclass
+from graphlib import TopologicalSorter
 from typing import Dict, List
+
+from pydantic import main
+from sqlalchemy.sql.sqltypes import String
 
 from app.external import JSON
 from app.external.rawls_entity_model import EntityReference
+from app.external.tdr_model import Relationship, TDRManifest
 
 
 @dataclass
@@ -15,9 +21,10 @@ class TDRTable:
 
 class TDRManifestParser:
     def __init__(self, jso: JSON):
-        self._tables = self._parse(jso)
-        self._snapshotid = jso['snapshot']['id']
-        self._snapshotname = jso['snapshot']['name']
+        manifest = TDRManifest(**jso)
+        self._tables = self._parse(manifest)
+        self._snapshotid = manifest.snapshot.id
+        self._snapshotname = manifest.snapshot.name
 
     def get_tables(self) -> List[TDRTable]:
         return self._tables
@@ -28,30 +35,32 @@ class TDRManifestParser:
     def get_snapshot_name(self) -> str:
         return self._snapshotname
 
-    def _parse(self, jso: JSON) -> List[TDRTable]:
+    def _parse(self, manifest: TDRManifest) -> List[TDRTable]:
         # the snapshot model: table names, primary keys, relationships
-        snapshot = jso['snapshot']
+        snapshot = manifest.snapshot
         # the parquet export files
-        parquet_location = jso['format']['parquet']['location']
+        parquet_location = manifest.format.parquet.location
 
         # build dict of table->parquet files for the exports
-        exports = dict(map(lambda e: (e['name'], e['paths']), parquet_location['tables']))
+        exports = dict(map(lambda e: (e.name, e.paths), parquet_location.tables))
 
-        # TODO AS-1036: build relationship graph, determine proper ordering for tables.
-        # graphlib.TopologicalSorter should do it, based on snapshot relationships
+        # get the topological ordering of the tables, so add tables to rawls in the correct order to resolve references
+        ordering = TDRManifestParser.get_ordering(manifest.snapshot.relationships)
+        ordering_key_fn = lambda table: ordering.index(table) if table in ordering else -1
+        ordered_tables = sorted(snapshot.tables, key=ordering_key_fn)
 
-        tables = []
+        tdr_tables = []
 
         # for each table in the snapshot model, extract the table name and primary key
         # TODO AS-1044: loop through tables in the order determined by AS-1036, so we
         # import dependants before the tables that depend on them
-        for t in snapshot['tables']:
-            table_name = t['name']
+        for t in ordered_tables:
+            table_name = t.name
 
             # don't bother dealing with this table if it has no exported parquet files
             if table_name in exports:
                 # extract primary key
-                tdr_pk = t['primaryKey']
+                tdr_pk = t.primaryKey
                 if tdr_pk is None:
                     pk = 'datarepo_row_id'
                 elif not isinstance(tdr_pk, list):
@@ -63,9 +72,24 @@ class TDRManifestParser:
 
                 # TODO AS-1036: from the "relationships" key in the manifest, save the valid reference attributes
                 # to reference_attrs. A reference is valid iff the "to" column is the primary key of the "to" table.
+                
 
-                table = TDRTable(name=table_name, primary_key=pk, parquet_files=exports[table_name], reference_attrs={})
-                tables.append(table)
+                tdr_table = TDRTable(name=table_name, primary_key=pk, parquet_files=exports[table_name], reference_attrs={})
+                tdr_tables.append(tdr_table)
         
-        return tables
+        return tdr_tables
+
+
+    def get_ordering(relationships: List[Relationship]) -> List[String]:
+        ## Build a relationship graph of all the relationships
+        relationship_graph = defaultdict(lambda : set())
+        for relationship in relationships:
+            from_table = relationship.from_.table
+            to_table = relationship.to.table
+            relationship_graph[from_table].add(to_table)
+
+        ## Return a topological ordering of the relationship graph
+        ## TODO handle exception
+        ts = TopologicalSorter(relationship_graph)
+        return list(ts.static_order())
 
