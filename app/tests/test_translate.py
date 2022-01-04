@@ -2,6 +2,7 @@ import io
 import os
 import unittest.mock as mock
 import urllib.error
+from contextlib import contextmanager
 from typing import IO, Iterator
 
 import gcsfs.retry
@@ -77,6 +78,26 @@ def good_http_pfb(monkeypatch, fake_pfb):
 def good_http_tdr_manifest(monkeypatch, fake_tdr_manifest):
     monkeypatch.setattr(translate.gcs, "open_file", mock.MagicMock(return_value=fake_tdr_manifest))
 
+# method to patch in for end-to-end tdr manifest tests; returns either the fake_tdr_manifest or the fake_parquet,
+# based on input args. Inside the tdr manifest translator, we use gcs.open_file first to open the json manifest,
+# then again to open each parquet file. When patching a mock response for gcs_open_file for these tests,
+# we need to be dynamic based on the file path being read.
+#
+# N.B. this copy/pastes the fake_parquet() and fake_tdr_manifest() implementations from conftest.py. I can't get the
+# multiple layers of fixtures to work correctly together so a copy/paste seemed an ok solution.
+@contextmanager
+def open_tdr_manifest_or_parquet_file(project: str, bucket: str, path: str, submitter: str) -> Iterator[IO]:
+    if path.endswith('parquet'):
+        with open("app/tests/empty.parquet", 'rb') as out:
+            yield out
+    else:
+        with open("app/tests/response_1638551384572.json", 'rb') as out:
+            yield out
+
+@pytest.fixture(scope="function")
+def good_tdr_manifest_or_parquet_file(monkeypatch):
+    monkeypatch.setattr(translate.gcs, "open_file", open_tdr_manifest_or_parquet_file)
+
 @pytest.fixture(scope="function")
 def forbidden_http_pfb(monkeypatch):
     mm = mock.MagicMock(side_effect=urllib.error.HTTPError("http://bad.pfb", 403, "Forbidden", {}, None))
@@ -149,28 +170,25 @@ def test_golden_path_pfb(fake_import, fake_publish_rawls, client):
     fake_publish_rawls.assert_called_once()
 
 
-###### TODO: figure out how to mock TDRManifestToRawls such that when it reads the TDR export manifest,
-###### then reads each parquet file referenced in that manifest, we inject fake parquet files and avoid
-###### real read attempts into GCS
-# @pytest.mark.usefixtures("good_http_tdr_manifest", "good_gcs_dest", "incoming_valid_pubsub")
-# def test_golden_path_tdr_manifest(fake_import_tdr_manifest, fake_publish_rawls, client):
-#     """Everything is fine: the tdr manifest file is valid and retrievable, and we can write to the destination."""
-#     with db.session_ctx() as sess:
-#         sess.add(fake_import_tdr_manifest)
+@pytest.mark.usefixtures("good_tdr_manifest_or_parquet_file", "good_gcs_dest", "incoming_valid_pubsub")
+def test_golden_path_tdr_manifest(fake_import_tdr_manifest, fake_publish_rawls, client):
+    """Everything is fine: the tdr manifest file is valid and retrievable, and we can write to the destination."""
+    with db.session_ctx() as sess:
+        sess.add(fake_import_tdr_manifest)
 
-#     resp = client.post("/_ah/push-handlers/receive_messages",
-#                        json=testutils.pubsub_json_body({"action":"translate", "import_id":fake_import_tdr_manifest.id}))
+    resp = client.post("/_ah/push-handlers/receive_messages",
+                       json=testutils.pubsub_json_body({"action":"translate", "import_id":fake_import_tdr_manifest.id}))
 
-#     # result should be OK
-#     assert resp.status_code == 200
+    # result should be OK
+    assert resp.status_code == 200
 
-#     # import should be updated to next step
-#     with db.session_ctx() as sess:
-#         imp: model.Import = model.Import.get(fake_import_tdr_manifest.id, sess)
-#         assert imp.status == model.ImportStatus.ReadyForUpsert
+    # import should be updated to next step
+    with db.session_ctx() as sess:
+        imp: model.Import = model.Import.get(fake_import_tdr_manifest.id, sess)
+        assert imp.status == model.ImportStatus.ReadyForUpsert
 
-#     # rawls should have been told to do something
-#     fake_publish_rawls.assert_called_once()
+    # rawls should have been told to do something
+    fake_publish_rawls.assert_called_once()
 
 @pytest.mark.parametrize("is_upsert", [True, False])
 @pytest.mark.usefixtures("good_http_pfb", "good_gcs_dest", "incoming_valid_pubsub")
