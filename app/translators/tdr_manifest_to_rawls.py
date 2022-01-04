@@ -102,20 +102,21 @@ class ParquetTranslator:
 
     def translate_parquet_row(self, row: pd.Series, column_names: List[str]) -> List[AttributeOperation]:
         """Convert a single row of a pandas dataframe - assumed from a Parquet file - to an Entity."""
-        # TODO AS-1041: append snapshotid and timestamp attributes, using a non-default namespace to avoid conflicts
-        # we have the timestamp from the import_details object:
-        # self.convert_parquet_attr('pfb:timestamp', self.import_details.submit_time)
-        # but we don't currently have the snapshotid, you'll need to find a way to pass that info down to here
+        # annotate row with the timestamp of the import
+        tsattr = self.translate_parquet_attr('timestamp', self.import_details.submit_time.isoformat(), 'import')
+
+        # TODO AS-1041: annotate row with the snapshotid from TDR
+        # we don't currently have the snapshotid, you'll need to find a way to pass that info down to here
         # the snapshotid is available from TDRManifestParser.get_snapshot_id (which isn't available here)
 
         all_attr_ops = [self.translate_parquet_attr(colname, row[colname]) for colname in column_names]
-        return list(itertools.chain(*all_attr_ops))
+        return list(itertools.chain(*all_attr_ops, tsattr))
 
-    def translate_parquet_attr(self, name: str, value) -> List[AttributeOperation]:
+    def translate_parquet_attr(self, name: str, value, namespace: str = "tdr") -> List[AttributeOperation]:
         """Convert a single cell of a pandas dataframe - assumed from a Parquet file - to an AddUpdateAttribute."""
         # add all attributes to the "tdr:" namespace to avoid  conflicts,
         # e.g. with {entity_type}_id which is a is a reserved name in Rawls.
-        usable_name = f'tdr:{name}'
+        usable_name = f'{namespace}:{name}'
 
         # TODO: AS-1038 detect/create references
         is_reference = False

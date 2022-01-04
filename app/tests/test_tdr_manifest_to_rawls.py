@@ -11,6 +11,8 @@ from app.external.rawls_entity_model import AddListMember, AddUpdateAttribute, C
 from app.external.tdr_manifest import TDRTable
 from app.translators.tdr_manifest_to_rawls import ParquetTranslator
 
+def _import_timestamp(dt: datetime) -> AddUpdateAttribute:
+    return AddUpdateAttribute('import:timestamp', dt.isoformat())
 
 # data frame to ([Entity])
 def test_translate_data_frame():
@@ -18,9 +20,12 @@ def test_translate_data_frame():
     df = pd.DataFrame(data=d)
     column_names = ['datarepo_row_id', 'one', 'two']
 
+    now = datetime.now()
+
     fake_table = TDRTable('unittest', 'datarepo_row_id', [], {})
     fake_filelocation = "doesntmatter"
     fake_import_details = Import('workspace_name:', 'workspace_ns', 'workspace_uuid', 'workspace_google_project', 'submitter', 'import_url', 'filetype', True)
+    fake_import_details.submit_time = now # ensure we know the submit_time
     translator = ParquetTranslator(fake_table, fake_filelocation, fake_import_details)
 
     entities_gen = translator.translate_data_frame(df, column_names)
@@ -29,18 +34,19 @@ def test_translate_data_frame():
     assert len(entities) == 3
     assert entities[0].name == 'a'
     assert entities[0].entityType == 'unittest'
-    assert entities[0].operations == [AddUpdateAttribute('tdr:datarepo_row_id', 'a'), AddUpdateAttribute('tdr:one', 1), AddUpdateAttribute('tdr:two', 'foo')]
+    assert entities[0].operations == [AddUpdateAttribute('tdr:datarepo_row_id', 'a'), AddUpdateAttribute('tdr:one', 1), AddUpdateAttribute('tdr:two', 'foo'), _import_timestamp(now)]
     assert entities[1].name == 'b'
     assert entities[1].entityType == 'unittest'
-    assert entities[1].operations == [AddUpdateAttribute('tdr:datarepo_row_id', 'b'), AddUpdateAttribute('tdr:one', 2), AddUpdateAttribute('tdr:two', 'bar')]
+    assert entities[1].operations == [AddUpdateAttribute('tdr:datarepo_row_id', 'b'), AddUpdateAttribute('tdr:one', 2), AddUpdateAttribute('tdr:two', 'bar'), _import_timestamp(now)]
     assert entities[2].name == 'c'
     assert entities[2].entityType == 'unittest'
-    assert entities[2].operations == [AddUpdateAttribute('tdr:datarepo_row_id', 'c'), AddUpdateAttribute('tdr:one', 3), AddUpdateAttribute('tdr:two', 'baz')]
+    assert entities[2].operations == [AddUpdateAttribute('tdr:datarepo_row_id', 'c'), AddUpdateAttribute('tdr:one', 3), AddUpdateAttribute('tdr:two', 'baz'), _import_timestamp(now)]
 
-def get_fake_parquet_translator() -> ParquetTranslator:
+def get_fake_parquet_translator(import_submit_time: datetime = datetime.now()) -> ParquetTranslator:
     fake_table = TDRTable('unittest', 'datarepo_row_id', [], {})
     fake_filelocation = "doesntmatter"
     fake_import_details = Import('workspace_name:', 'workspace_ns', 'workspace_uuid', 'workspace_google_project', 'submitter', 'import_url', 'filetype', True)
+    fake_import_details.submit_time = import_submit_time # ensure we know the submit_time
     return ParquetTranslator(fake_table, fake_filelocation, fake_import_details)
 
 def data_dict_to_file_like(d: Dict) -> IO:
@@ -52,7 +58,9 @@ def data_dict_to_file_like(d: Dict) -> IO:
 
 # file-like to ([Entity])
 def test_translate_parquet_file_to_entities():
-    translator = get_fake_parquet_translator()
+    now = datetime.now()
+
+    translator = get_fake_parquet_translator(now)
 
     # programmatically generate a parquet file-like, so we explicitly know its contents
     file_like = data_dict_to_file_like({'datarepo_row_id': ['a', 'b', 'c'], 'one': [1, 2, 3], 'two': ['foo', 'bar', 'baz']})
@@ -64,19 +72,22 @@ def test_translate_parquet_file_to_entities():
     assert len(entities) == 3
     assert entities[0].name == 'a'
     assert entities[0].entityType == 'unittest'
-    assert entities[0].operations == [AddUpdateAttribute('tdr:datarepo_row_id', 'a'), AddUpdateAttribute('tdr:one', 1), AddUpdateAttribute('tdr:two', 'foo')]
+    assert entities[0].operations == [AddUpdateAttribute('tdr:datarepo_row_id', 'a'), AddUpdateAttribute('tdr:one', 1), AddUpdateAttribute('tdr:two', 'foo'), _import_timestamp(now)]
     assert entities[1].name == 'b'
     assert entities[1].entityType == 'unittest'
-    assert entities[1].operations == [AddUpdateAttribute('tdr:datarepo_row_id', 'b'), AddUpdateAttribute('tdr:one', 2), AddUpdateAttribute('tdr:two', 'bar')]
+    assert entities[1].operations == [AddUpdateAttribute('tdr:datarepo_row_id', 'b'), AddUpdateAttribute('tdr:one', 2), AddUpdateAttribute('tdr:two', 'bar'), _import_timestamp(now)]
     assert entities[2].name == 'c'
     assert entities[2].entityType == 'unittest'
-    assert entities[2].operations == [AddUpdateAttribute('tdr:datarepo_row_id', 'c'), AddUpdateAttribute('tdr:one', 3), AddUpdateAttribute('tdr:two', 'baz')]
+    assert entities[2].operations == [AddUpdateAttribute('tdr:datarepo_row_id', 'c'), AddUpdateAttribute('tdr:one', 3), AddUpdateAttribute('tdr:two', 'baz'), _import_timestamp(now)]
 
 # file-like to ([Entity])
 def test_translate_parquet_file_with_missing_pk():
+    now = datetime.now()
+
     fake_table = TDRTable('unittest', 'custompk', [], {})
     fake_filelocation = "doesntmatter"
     fake_import_details = Import('workspace_name:', 'workspace_ns', 'workspace_uuid', 'workspace_google_project', 'submitter', 'import_url', 'filetype', True)
+    fake_import_details.submit_time = now # ensure we know the submit_time
     translator = ParquetTranslator(fake_table, fake_filelocation, fake_import_details)
 
     # programmatically generate a parquet file-like, so we explicitly know its contents
@@ -90,16 +101,19 @@ def test_translate_parquet_file_with_missing_pk():
     assert len(entities) == 2
     assert entities[0].name == 'first'
     assert entities[0].entityType == 'unittest'
-    assert entities[0].operations == [AddUpdateAttribute('tdr:datarepo_row_id', 'a'), AddUpdateAttribute('tdr:custompk', 'first'), AddUpdateAttribute('tdr:two', 'foo')]
+    assert entities[0].operations == [AddUpdateAttribute('tdr:datarepo_row_id', 'a'), AddUpdateAttribute('tdr:custompk', 'first'), AddUpdateAttribute('tdr:two', 'foo'), _import_timestamp(now)]
     assert entities[1].name == 'third'
     assert entities[1].entityType == 'unittest'
-    assert entities[1].operations == [AddUpdateAttribute('tdr:datarepo_row_id', 'c'), AddUpdateAttribute('tdr:custompk', 'third'), AddUpdateAttribute('tdr:two', 'baz')]
+    assert entities[1].operations == [AddUpdateAttribute('tdr:datarepo_row_id', 'c'), AddUpdateAttribute('tdr:custompk', 'third'), AddUpdateAttribute('tdr:two', 'baz'), _import_timestamp(now)]
 
 # file-like to ([Entity])
 def test_translate_parquet_file_with_array_attrs():
+    now = datetime.now()
+
     fake_table = TDRTable('unittest', 'custompk', [], {})
     fake_filelocation = "doesntmatter"
     fake_import_details = Import('workspace_name:', 'workspace_ns', 'workspace_uuid', 'workspace_google_project', 'submitter', 'import_url', 'filetype', True)
+    fake_import_details.submit_time = now # ensure we know the submit_time
     translator = ParquetTranslator(fake_table, fake_filelocation, fake_import_details)
 
     # programmatically generate a parquet file-like, so we explicitly know its contents
@@ -119,19 +133,22 @@ def test_translate_parquet_file_with_array_attrs():
     assert entities[0].entityType == 'unittest'
     assert entities[0].operations == [AddUpdateAttribute('tdr:datarepo_row_id', 'a'), AddUpdateAttribute('tdr:custompk', 'first'),
         RemoveAttribute('tdr:arrayattr'), CreateAttributeValueList('tdr:arrayattr'),
-        AddListMember('tdr:arrayattr', 'Philip'), AddListMember('tdr:arrayattr', 'Glass')
+        AddListMember('tdr:arrayattr', 'Philip'), AddListMember('tdr:arrayattr', 'Glass'),
+        _import_timestamp(now)
     ]
     assert entities[1].name == 'second'
     assert entities[1].entityType == 'unittest'
     assert entities[1].operations == [AddUpdateAttribute('tdr:datarepo_row_id', 'b'), AddUpdateAttribute('tdr:custompk', 'second'),
         RemoveAttribute('tdr:arrayattr'), CreateAttributeValueList('tdr:arrayattr'),
-        AddListMember('tdr:arrayattr', 'Wolfgang'), AddListMember('tdr:arrayattr', 'Amadeus'), AddListMember('tdr:arrayattr', 'Mozart')
+        AddListMember('tdr:arrayattr', 'Wolfgang'), AddListMember('tdr:arrayattr', 'Amadeus'), AddListMember('tdr:arrayattr', 'Mozart'),
+        _import_timestamp(now)
     ]
     assert entities[2].name == 'third'
     assert entities[2].entityType == 'unittest'
     assert entities[2].operations == [AddUpdateAttribute('tdr:datarepo_row_id', 'c'), AddUpdateAttribute('tdr:custompk', 'third'),
         RemoveAttribute('tdr:arrayattr'), CreateAttributeValueList('tdr:arrayattr'),
-        AddListMember('tdr:arrayattr', 'Dmitri'), AddListMember('tdr:arrayattr', 'Shostakovich')
+        AddListMember('tdr:arrayattr', 'Dmitri'), AddListMember('tdr:arrayattr', 'Shostakovich'),
+        _import_timestamp(now)
     ]
 
 # KVP to AttributeOperation
