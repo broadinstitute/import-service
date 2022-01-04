@@ -113,14 +113,9 @@ class ParquetTranslator:
 
     def translate_parquet_attr(self, name: str, value) -> List[AttributeOperation]:
         """Convert a single cell of a pandas dataframe - assumed from a Parquet file - to an AddUpdateAttribute."""
-        # {entity_type}_id is a reserved name. If the import contains a column named thusly,
-        # move that column into the "import:" namespace to avoid conflicts
-        if (name != f'{self.table.name}_id'):
-            usable_name = name
-        else:
-            # TODO AS-1040: need to enable new namespaces in Rawls. As of this writing, Rawls only supports 'pfb', 'library', and 'tag'
-            # in addition to the default namespace. For now, use the pfb namespace just so we can see it working
-            usable_name = f'pfb:{name}'
+        # add all attributes to the "tdr:" namespace to avoid  conflicts,
+        # e.g. with {entity_type}_id which is a is a reserved name in Rawls.
+        usable_name = f'tdr:{name}'
 
         # TODO: AS-1038 detect/create references
         is_reference = False
