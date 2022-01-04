@@ -35,7 +35,7 @@ class TDRManifestToRawls(Translator):
         jso = json.load(file_like)
         parsed_manifest = TDRManifestParser(jso)
         source_snapshot_id = parsed_manifest.get_snapshot_id()
-        tables = parsed_manifest.get_tables(file_like)
+        tables = parsed_manifest.get_tables()
         return itertools.chain(*self.translate_tables(import_details, source_snapshot_id, tables))
 
     @classmethod
