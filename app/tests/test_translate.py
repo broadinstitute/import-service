@@ -14,6 +14,7 @@ from app.server import requestutils
 from app.tests import testutils
 from app.translators import Translator
 
+os.environ.setdefault("BATCH_UPSERT_BUCKET", "unittest-allowed-bucket")
 
 class StreamyNoOpTranslator(Translator):
     """Well-behaved no-op translator: does nothing, while streaming"""
