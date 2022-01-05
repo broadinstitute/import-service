@@ -9,7 +9,7 @@ from gcsfs.core import GCSFileSystem
 # this method is broken out from translate.py to make it easy to mock in unit tests.
 
 @contextmanager
-def open_file(project: str, bucket: str, path: str, submitter: str, auth_key: Dict[str, Any] = {}) -> Iterator[IO]:
+def open_file(project: str, bucket: str, path: str, submitter: str, auth_key: Dict[str, Any] = None) -> Iterator[IO]:
     if auth_key:
         logging.debug(f'using supplied auth key to read {path}')
     else:

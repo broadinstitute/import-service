@@ -51,7 +51,7 @@ class TDRManifestToRawls(Translator):
                 yield pt.translate()
 
 class ParquetTranslator:
-    def __init__(self, table: TDRTable, filelocation: str, import_details: Import, auth_key: Dict[str, Any] = {}):
+    def __init__(self, table: TDRTable, filelocation: str, import_details: Import, auth_key: Dict[str, Any] = None):
         """Translator for Parquet files coming from a TDR manifest."""
         self.table = table
         self.import_details = import_details
@@ -65,9 +65,6 @@ class ParquetTranslator:
         url = urlparse(self.filelocation)
         bucket = url.netloc
         path = url.path
-        # TODO AS-1073: the call to gcs.open_file will get a new pet key each time. This is overly aggressive; we could probably
-        # reuse tokens to reduce API calls to Sam (and thus chances to fail). Ideally, when opening a file if we encounter
-        # an auth error, we'd *then* get a new pet key and retry.
         with gcs.open_file(self.import_details.workspace_google_project, bucket, path, self.import_details.submitter, self.auth_key) as pqfile:
             return self.translate_parquet_file_to_entities(pqfile)
 
