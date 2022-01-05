@@ -15,6 +15,9 @@ from app.server import requestutils
 from app.tests import testutils
 from app.translators import Translator
 
+# necessary to set this env var for unit tests; at runtime this is set by app.yaml
+# if we don't set it here, assertions that compare gs:// paths can fail with
+# an error where expected is "unittest-allowed-bucket" but actual is "None"
 os.environ.setdefault("BATCH_UPSERT_BUCKET", "unittest-allowed-bucket")
 
 class StreamyNoOpTranslator(Translator):
