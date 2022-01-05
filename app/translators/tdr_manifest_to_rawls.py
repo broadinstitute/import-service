@@ -32,30 +32,28 @@ class TDRManifestToRawls(Translator):
 
     def translate(self, import_details: Import, file_like: IO) -> Iterator[Entity]:
         logging.info(f'{import_details.id} executing a TDRManifestToRawls translation for {import_details.filetype}: {file_like}')
-        tables = self.get_tables(file_like)
-        return itertools.chain(*self.translate_tables(import_details, tables))
-
-    @classmethod
-    def get_tables(cls, file_like: IO) -> List[TDRTable]:
-        # read and parse entire manifest file
         jso = json.load(file_like)
-        return TDRManifestParser(jso).get_tables()
+        parsed_manifest = TDRManifestParser(jso)
+        source_snapshot_id = parsed_manifest.get_snapshot_id()
+        tables = parsed_manifest.get_tables()
+        return itertools.chain(*self.translate_tables(import_details, source_snapshot_id, tables))
 
     @classmethod
-    def translate_tables(cls, import_details: Import, tables: List[TDRTable]) -> Iterator[Iterator[Entity]]:
+    def translate_tables(cls, import_details: Import, source_snapshot_id: str, tables: List[TDRTable]) -> Iterator[Iterator[Entity]]:
         """Converts a list of TDR tables, each of which contain urls to parquet files, to an iterator of Entity objects."""
         for t in tables:
             for f in t.parquet_files:
-                pt = ParquetTranslator(t, f, import_details)
+                pt = ParquetTranslator(t, f, import_details, source_snapshot_id)
                 yield pt.translate()
 
 class ParquetTranslator:
-    def __init__(self, table: TDRTable, filelocation: str, import_details: Import):
+    def __init__(self, table: TDRTable, filelocation: str, import_details: Import, source_snapshot_id: str):
         """Translator for Parquet files coming from a TDR manifest."""
         self.table = table
         self.import_details = import_details
         self.filelocation = filelocation
         self.file_nickname = os.path.split(filelocation)[1]
+        self.source_snapshot_id = source_snapshot_id
 
     def translate(self) -> Iterator[Entity]:
         """Converts a parquet file, represented as a url, to an iterator of Entity objects."""
@@ -102,25 +100,19 @@ class ParquetTranslator:
 
     def translate_parquet_row(self, row: pd.Series, column_names: List[str]) -> List[AttributeOperation]:
         """Convert a single row of a pandas dataframe - assumed from a Parquet file - to an Entity."""
-        # TODO AS-1041: append snapshotid and timestamp attributes, using a non-default namespace to avoid conflicts
-        # we have the timestamp from the import_details object:
-        # self.convert_parquet_attr('pfb:timestamp', self.import_details.submit_time)
-        # but we don't currently have the snapshotid, you'll need to find a way to pass that info down to here
-        # the snapshotid is available from TDRManifestParser.get_snapshot_id (which isn't available here)
+        # annotate row with the timestamp of the import
+        tsattr = self.translate_parquet_attr('timestamp', self.import_details.submit_time.isoformat(), 'import')
+        # annotate row with the snapshotid from TDR
+        sourceidattr = self.translate_parquet_attr('snapshot_id', self.source_snapshot_id, 'import')
 
         all_attr_ops = [self.translate_parquet_attr(colname, row[colname]) for colname in column_names]
-        return list(itertools.chain(*all_attr_ops))
+        return list(itertools.chain(*all_attr_ops, sourceidattr, tsattr))
 
-    def translate_parquet_attr(self, name: str, value) -> List[AttributeOperation]:
+    def translate_parquet_attr(self, name: str, value, namespace: str = "tdr") -> List[AttributeOperation]:
         """Convert a single cell of a pandas dataframe - assumed from a Parquet file - to an AddUpdateAttribute."""
-        # {entity_type}_id is a reserved name. If the import contains a column named thusly,
-        # move that column into the "import:" namespace to avoid conflicts
-        if (name != f'{self.table.name}_id'):
-            usable_name = name
-        else:
-            # TODO AS-1040: need to enable new namespaces in Rawls. As of this writing, Rawls only supports 'pfb', 'library', and 'tag'
-            # in addition to the default namespace. For now, use the pfb namespace just so we can see it working
-            usable_name = f'pfb:{name}'
+        # add all attributes to the "tdr:" namespace to avoid  conflicts,
+        # e.g. with {entity_type}_id which is a is a reserved name in Rawls.
+        usable_name = f'{namespace}:{name}'
 
         # TODO: AS-1038 detect/create references
         is_reference = False
