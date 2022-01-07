@@ -2,7 +2,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from graphlib import TopologicalSorter
 from itertools import groupby
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from pydantic import main
 
@@ -45,7 +45,7 @@ class TDRManifestParser:
         exports = dict(map(lambda e: (e.name, e.paths), parquet_location.tables))
 
         # don't bother dealing with this table if it has no exported parquet files
-        tables_for_export: List[Table] = filter(lambda t: t.name in exports, snapshot.tables)
+        tables_for_export: List[Table] = list(filter(lambda t: t.name in exports, snapshot.tables))
 
         # get the topological ordering of the tables, so we add tables to rawls in the correct order to resolve references
         ordering = TDRManifestParser.get_ordering(manifest.snapshot.relationships)
@@ -55,28 +55,32 @@ class TDRManifestParser:
         table_to_primary_key: Dict[str, str] = \
             {t.name: TDRManifestParser.get_primary_key(t) for t in ordered_tables}
         
-        table_to_relationships: TDRManifestParser.get_table_to_relationships(manifest.snapshot.relationships)
+        table_to_relationships: Dict[str, List[Relationship]] = \
+            TDRManifestParser.get_table_to_relationships(manifest.snapshot.relationships)
 
         # for each table in the snapshot model, extract the table name and primary key
         # import tables in order, so we import dependants before the tables that depend on them
-        tdr_tables = map(
+        tdr_tables = list(map(
             lambda table: TDRTable(
                 name=table.name,
-                primary_key=table_to_primary_key[table],
+                primary_key=table_to_primary_key[table.name],
                 parquet_files=exports[table.name],
                 reference_attrs=TDRManifestParser.get_reference_attrs(table_to_relationships[table.name], table_to_primary_key)
-            ), ordered_tables
-        )
+            ), 
+            ordered_tables
+        ))
 
         return tdr_tables
 
 
+    @staticmethod
     def get_table_to_relationships(relationships: List[Relationship]):
         table_to_relationships = defaultdict(lambda: [])
         for r in relationships:
             table_to_relationships[r.from_.table].append(r)
 
 
+    @staticmethod
     def get_primary_key(table: Table):
         # extract primary key
         tdr_pk = table.primaryKey
@@ -92,8 +96,9 @@ class TDRManifestParser:
     
 
     # from the "relationships" key in the manifest, save the valid reference attributes to reference_attrs.
+    @staticmethod
     def get_reference_attrs(relationships: List[Relationship], table_to_primary_key: Dict[str, str]) -> Dict[str, str]:
-        def relationship_to_reference(r: Relationship) -> List[Tuple(str, str)]:
+        def relationship_to_reference(r: Relationship) -> Optional[Tuple[str, str]]:
             # A reference is valid iff the "to" column is the primary key of the "to" table.
             primary_key = table_to_primary_key[r.to.table]
             if primary_key != r.to.column:
@@ -101,10 +106,10 @@ class TDRManifestParser:
             else:
                 return (r.from_.column, r.to.table)
 
-        reference_attrs = filter(None, relationships.map(relationship_to_reference))
-        return dict(reference_attrs)
+        reference_attrs: Dict[str, str] = dict(filter(None, map(relationship_to_reference, relationships)))
+        return reference_attrs
 
-
+    @staticmethod
     def get_ordering(relationships: List[Relationship]) -> List[str]:
         ## Build a relationship graph of all the relationships
         relationship_graph = defaultdict(lambda : set())
