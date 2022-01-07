@@ -18,7 +18,7 @@ def test_manifest_parsing():
 
     all_table_names = map(lambda t: t.name, tables)
 
-    # hardcoded to match the values in /Users/davidan/work/src/import-service/app/tests/response_1638551384572.json
+    # hardcoded to match the values in ./app/tests/response_1638551384572.json
     expected_table_names = ["messages", "location", "cost", "product", "footnote", "diagram", "graphic",
     "sequence", "project", "person", "signature", "photo", "regulation", "annotation", "lab", "edges", "xray",
     "test", "vial", "process", "test_result", "room", "chemical", "letter", "species", "reading", "genome"]
@@ -28,3 +28,4 @@ def test_manifest_parsing():
     assert (set(all_table_names) == set(expected_table_names))
 
 # TODO AS-1044: add tests for table ordering based on references, any other features
+
