@@ -108,6 +108,11 @@ def sam_valid_user(monkeypatch):
     monkeypatch.setattr("app.external.sam.validate_user",
                         mock.MagicMock(return_value=userinfo.UserInfo("123456", "hello@bees.com", True)))
 
+@pytest.fixture(scope="function")
+def sam_valid_pet_key(monkeypatch):
+    monkeypatch.setattr("app.external.sam.admin_get_pet_key",
+                        mock.MagicMock(return_value={}))
+
 
 @pytest.fixture(scope="function")
 def user_has_ws_access(monkeypatch):

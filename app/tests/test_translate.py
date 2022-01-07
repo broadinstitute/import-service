@@ -3,7 +3,7 @@ import os
 import unittest.mock as mock
 import urllib.error
 from contextlib import contextmanager
-from typing import IO, Iterator
+from typing import IO, Any, Dict, Iterator
 
 import gcsfs.retry
 import memunit
@@ -89,7 +89,7 @@ def good_http_tdr_manifest(monkeypatch, fake_tdr_manifest):
 # N.B. this copy/pastes the fake_parquet() and fake_tdr_manifest() implementations from conftest.py. I can't get the
 # multiple layers of fixtures to work correctly together so a copy/paste seemed an ok solution.
 @contextmanager
-def open_tdr_manifest_or_parquet_file(project: str, bucket: str, path: str, submitter: str) -> Iterator[IO]:
+def open_tdr_manifest_or_parquet_file(project: str, bucket: str, path: str, submitter: str, pet_key: Dict[str, Any] = None) -> Iterator[IO]:
     if path.endswith('parquet'):
         with open("app/tests/empty.parquet", 'rb') as out:
             yield out
@@ -173,7 +173,7 @@ def test_golden_path_pfb(fake_import, fake_publish_rawls, client):
     fake_publish_rawls.assert_called_once()
 
 
-@pytest.mark.usefixtures("good_tdr_manifest_or_parquet_file", "good_gcs_dest", "incoming_valid_pubsub")
+@pytest.mark.usefixtures("good_tdr_manifest_or_parquet_file", "good_gcs_dest", "incoming_valid_pubsub", "sam_valid_pet_key")
 def test_golden_path_tdr_manifest(fake_import_tdr_manifest, fake_publish_rawls, client):
     """Everything is fine: the tdr manifest file is valid and retrievable, and we can write to the destination."""
     with db.session_ctx() as sess:

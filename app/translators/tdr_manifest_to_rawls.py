@@ -3,7 +3,7 @@ import itertools
 import json
 import logging
 import os
-from typing import IO, Iterator, List
+from typing import IO, Any, Dict, Iterator, List
 from urllib.parse import urlparse
 
 import numpy as np
@@ -11,7 +11,7 @@ import pandas as pd
 import pyarrow
 import pyarrow.parquet as pq
 from app.db.model import Import
-from app.external import gcs
+from app.external import gcs, sam
 from app.external.rawls_entity_model import (AddListMember, AddUpdateAttribute,
                                              AttributeOperation,
                                              AttributeValue,
@@ -41,17 +41,19 @@ class TDRManifestToRawls(Translator):
     @classmethod
     def translate_tables(cls, import_details: Import, source_snapshot_id: str, tables: List[TDRTable]) -> Iterator[Iterator[Entity]]:
         """Converts a list of TDR tables, each of which contain urls to parquet files, to an iterator of Entity objects."""
+        pet_key = sam.admin_get_pet_key(import_details.workspace_google_project, import_details.submitter)
         for t in tables:
             for f in t.parquet_files:
-                pt = ParquetTranslator(t, f, import_details, source_snapshot_id)
+                pt = ParquetTranslator(t, f, import_details, source_snapshot_id, pet_key)
                 yield pt.translate()
 
 class ParquetTranslator:
-    def __init__(self, table: TDRTable, filelocation: str, import_details: Import, source_snapshot_id: str):
+    def __init__(self, table: TDRTable, filelocation: str, import_details: Import, source_snapshot_id: str, auth_key: Dict[str, Any] = None):
         """Translator for Parquet files coming from a TDR manifest."""
         self.table = table
         self.import_details = import_details
         self.filelocation = filelocation
+        self.auth_key = auth_key
         self.file_nickname = os.path.split(filelocation)[1]
         self.source_snapshot_id = source_snapshot_id
 
@@ -61,10 +63,7 @@ class ParquetTranslator:
         url = urlparse(self.filelocation)
         bucket = url.netloc
         path = url.path
-        # TODO AS-1073: the call to gcs.open_file will get a new pet key each time. This is overly aggressive; we could probably
-        # reuse tokens to reduce API calls to Sam (and thus chances to fail). Ideally, when opening a file if we encounter
-        # an auth error, we'd *then* get a new pet key and retry.
-        with gcs.open_file(self.import_details.workspace_google_project, bucket, path, self.import_details.submitter) as pqfile:
+        with gcs.open_file(self.import_details.workspace_google_project, bucket, path, self.import_details.submitter, self.auth_key) as pqfile:
             return self.translate_parquet_file_to_entities(pqfile)
 
     # investigate parquet streaming, instead of reading the whole file into memory
