@@ -49,7 +49,7 @@ class TDRManifestParser:
 
         # get the topological ordering of the tables, so we add tables to rawls in the correct order to resolve references
         ordering = TDRManifestParser.get_ordering(manifest.snapshot.relationships)
-        ordering_key_fn = lambda table: ordering.index(table) if table in ordering else -1
+        ordering_key_fn = lambda table: ordering.index(table.name) if table.name in ordering else -1
         ordered_tables = sorted(tables_for_export, key=ordering_key_fn)
 
         table_to_primary_key: Dict[str, str] = \
@@ -74,14 +74,15 @@ class TDRManifestParser:
 
 
     @staticmethod
-    def get_table_to_relationships(relationships: List[Relationship]):
+    def get_table_to_relationships(relationships: List[Relationship]) -> Dict[str, str]:
         table_to_relationships = defaultdict(lambda: [])
         for r in relationships:
             table_to_relationships[r.from_.table].append(r)
+        return table_to_relationships
 
 
     @staticmethod
-    def get_primary_key(table: Table):
+    def get_primary_key(table: Table) -> str:
         # extract primary key
         tdr_pk = table.primaryKey
         if tdr_pk is None:

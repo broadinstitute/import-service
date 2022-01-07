@@ -1,4 +1,5 @@
 import json
+import pytest
 
 from app.external.tdr_manifest import TDRManifestParser
 
@@ -37,7 +38,7 @@ def test_manifest_ordering_by_reference():
     tables = parsed.get_tables()
 
     def get_table_indices(tableName: str):
-        [i for i,t in enumerate(tables) if t.name == tableName]
+        return [i for i,t in enumerate(tables) if t.name == tableName]
 
     #  Dependency Tree:
     #      product
@@ -54,19 +55,20 @@ def test_manifest_ordering_by_reference():
     cost_index = get_table_indices("cost")[0]
     location_index = get_table_indices("location")[0]
     assert(product_index > footnote_index)
+    assert(product_index > cost_index)
     assert(footnote_index > diagram_index)
     assert(diagram_index > messages_index)
-    assert(cost_index > product_index)
-    assert(location_index > cost_index)
+    assert(cost_index > location_index)
 
 def test_cyclic_manifest_ordering_error():
-    jso = json.load(open(resource_path + 'tdr_response_with_cycle.json'))
+    with pytest.raises(Exception):
+        jso = json.load(open(resource_path + 'tdr_response_with_cycle.json'))
 
-    # parse into tables
-    parsed = TDRManifestParser(jso)
-    parsed.get_tables()
+        # parse into tables
+        parsed = TDRManifestParser(jso)
+        parsed.get_tables()
 
-    # we shouldn't reach this
-    assert(False)
+        # we shouldn't reach this
+        assert(False)
 
  
