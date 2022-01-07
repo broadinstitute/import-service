@@ -72,14 +72,12 @@ class TDRManifestParser:
 
         return tdr_tables
 
-
     @staticmethod
     def get_table_to_relationships(relationships: List[Relationship]) -> Dict[str, str]:
         table_to_relationships = defaultdict(lambda: [])
         for r in relationships:
             table_to_relationships[r.from_.table].append(r)
         return table_to_relationships
-
 
     @staticmethod
     def get_primary_key(table: Table) -> str:
@@ -95,7 +93,6 @@ class TDRManifestParser:
             pk = 'datarepo_row_id'
         return pk
     
-
     # from the "relationships" key in the manifest, save the valid reference attributes to reference_attrs.
     @staticmethod
     def get_reference_attrs(relationships: List[Relationship], table_to_primary_key: Dict[str, str]) -> Dict[str, str]:
