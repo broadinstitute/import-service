@@ -29,7 +29,8 @@ def test_manifest_parsing():
     assert parsed.get_snapshot_name() == 'unit_test_snapshot'
     assert (set(all_table_names) == set(expected_table_names))
 
-# TODO AS-1044: add tests for table ordering based on references, any other features
+
+# tests for table ordering based on references
 def test_manifest_ordering_by_reference():
     jso = json.load(open(resource_path + 'tdr_response_with_no_cycle.json'))
 
@@ -60,6 +61,11 @@ def test_manifest_ordering_by_reference():
     assert(diagram_index > messages_index)
     assert(cost_index > location_index)
 
+    product_table = tables[product_index]
+    assert(product_table.reference_attrs["test_column"] == "footnote")
+    assert(product_table.reference_attrs["test_column2"] == "cost")
+
+
 def test_cyclic_manifest_ordering_error():
     with pytest.raises(Exception):
         jso = json.load(open(resource_path + 'tdr_response_with_cycle.json'))
@@ -68,7 +74,30 @@ def test_cyclic_manifest_ordering_error():
         parsed = TDRManifestParser(jso)
         parsed.get_tables()
 
-        # we shouldn't reach this
-        assert(False)
+        # we shouldn't reach this point
 
  
+def test_invalid_primary_keys_in_relationships():
+    jso = json.load(open(resource_path + 'tdr_response_invalid_primary_key_relationships.json'))
+
+    # parse into tables
+    parsed = TDRManifestParser(jso)
+    tables = parsed.get_tables()
+
+    def get_table_indices(tableName: str):
+        return [i for i,t in enumerate(tables) if t.name == tableName]
+
+    #  Dependency Tree:
+    #  product 
+    #    | (this relationship uses an invalid primary key, so the reference won't be captured)
+    # footnote  
+    #    |
+    # diagram
+    product_index = get_table_indices("product")[0]
+    footnote_index = get_table_indices("footnote")[0]
+
+    product_table = tables[product_index]
+    footnote_table = tables[footnote_index]
+    assert(len(product_table.reference_attrs) == 0)
+    assert(footnote_table.reference_attrs["test_column"] == "diagram")
+    

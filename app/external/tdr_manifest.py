@@ -112,6 +112,18 @@ class TDRManifestParser:
 
     @staticmethod
     def get_ordering(relationships: List[Relationship]) -> List[str]:
+        """Creates ordering for parsing tables. 
+        
+        Given a list of relationships between tables, tables that are depended on must be parsed before the tables
+        that depend on them. Here an ordering is created to ensure tables are created in the correct order.
+
+        Args:
+            relationships - list of relationships
+        Returns:
+            ordering of tables as a list of tablenames in the order they should be processed
+        Raises:
+            CyclicError - error thrown if there is cycle created by the relationships
+        """
         ## Build a relationship graph of all the relationships
         relationship_graph = defaultdict(lambda : set())
         for relationship in relationships:
