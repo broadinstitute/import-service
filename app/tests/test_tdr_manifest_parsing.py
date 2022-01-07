@@ -76,7 +76,7 @@ def test_cyclic_manifest_ordering_error():
 
         # we shouldn't reach this point
 
- 
+
 def test_invalid_primary_keys_in_relationships():
     jso = json.load(open(resource_path + 'tdr_response_invalid_primary_key_relationships.json'))
 
@@ -88,9 +88,9 @@ def test_invalid_primary_keys_in_relationships():
         return [i for i,t in enumerate(tables) if t.name == tableName]
 
     #  Dependency Tree:
-    #  product 
+    #  product
     #    | (this relationship uses an invalid primary key, so the reference won't be captured)
-    # footnote  
+    # footnote
     #    |
     # diagram
     product_index = get_table_indices("product")[0]
@@ -100,4 +100,4 @@ def test_invalid_primary_keys_in_relationships():
     footnote_table = tables[footnote_index]
     assert(len(product_table.reference_attrs) == 0)
     assert(footnote_table.reference_attrs["test_column"] == "diagram")
-    
+
