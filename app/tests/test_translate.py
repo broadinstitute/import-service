@@ -94,7 +94,7 @@ def open_tdr_manifest_or_parquet_file(project: str, bucket: str, path: str, subm
         with open("app/tests/empty.parquet", 'rb') as out:
             yield out
     else:
-        with open("app/tests/response_1638551384572.json", 'rb') as out:
+        with open("app/tests/resources/test_tdr_response.json", 'rb') as out:
             yield out
 
 @pytest.fixture(scope="function")
