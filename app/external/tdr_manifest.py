@@ -73,7 +73,7 @@ class TDRManifestParser:
         return tdr_tables
 
     @staticmethod
-    def get_table_to_relationships(relationships: List[Relationship]) -> Dict[str, str]:
+    def get_table_to_relationships(relationships: List[Relationship]) -> Dict[str, List[Relationship]]:
         table_to_relationships = defaultdict(lambda: [])
         for r in relationships:
             table_to_relationships[r.from_.table].append(r)
