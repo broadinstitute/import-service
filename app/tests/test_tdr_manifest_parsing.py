@@ -2,10 +2,11 @@ import json
 
 from app.external.tdr_manifest import TDRManifestParser
 
+resource_path = './app/tests/resources/'
 
 def test_manifest_parsing():
     # read the file into a raw dict
-    jso = json.load(open('./app/tests/response_1638551384572.json'))
+    jso = json.load(open(resource_path + 'test_tdr_response.json'))
 
     # parse into tables
     parsed = TDRManifestParser(jso)
@@ -18,7 +19,7 @@ def test_manifest_parsing():
 
     all_table_names = map(lambda t: t.name, tables)
 
-    # hardcoded to match the values in ./app/tests/response_1638551384572.json
+    # hardcoded to match the values in test response
     expected_table_names = ["messages", "location", "cost", "product", "footnote", "diagram", "graphic",
     "sequence", "project", "person", "signature", "photo", "regulation", "annotation", "lab", "edges", "xray",
     "test", "vial", "process", "test_result", "room", "chemical", "letter", "species", "reading", "genome"]
@@ -28,4 +29,44 @@ def test_manifest_parsing():
     assert (set(all_table_names) == set(expected_table_names))
 
 # TODO AS-1044: add tests for table ordering based on references, any other features
+def test_manifest_ordering_by_reference():
+    jso = json.load(open(resource_path + 'tdr_response_with_no_cycle.json'))
 
+    # parse into tables
+    parsed = TDRManifestParser(jso)
+    tables = parsed.get_tables()
+
+    def get_table_indices(tableName: str):
+        [i for i,t in enumerate(tables) if t.name == tableName]
+
+    #  Dependency Tree:
+    #      product
+    #      /     \
+    # footnote   cost
+    #    |         |
+    #  diagram    location
+    #    |
+    #  messages
+    product_index = get_table_indices("product")[0]
+    footnote_index = get_table_indices("footnote")[0]
+    diagram_index = get_table_indices("diagram")[0]
+    messages_index = get_table_indices("messages")[0]
+    cost_index = get_table_indices("cost")[0]
+    location_index = get_table_indices("location")[0]
+    assert(product_index > footnote_index)
+    assert(footnote_index > diagram_index)
+    assert(diagram_index > messages_index)
+    assert(cost_index > product_index)
+    assert(location_index > cost_index)
+
+def test_cyclic_manifest_ordering_error():
+    jso = json.load(open(resource_path + 'tdr_response_with_cycle.json'))
+
+    # parse into tables
+    parsed = TDRManifestParser(jso)
+    parsed.get_tables()
+
+    # we shouldn't reach this
+    assert(False)
+
+ 
