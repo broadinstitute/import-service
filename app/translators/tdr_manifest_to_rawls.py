@@ -33,7 +33,7 @@ class TDRManifestToRawls(Translator):
     def translate(self, import_details: Import, file_like: IO) -> Iterator[Entity]:
         logging.info(f'{import_details.id} executing a TDRManifestToRawls translation for {import_details.filetype}: {file_like}')
         jso = json.load(file_like)
-        parsed_manifest = TDRManifestParser(jso)
+        parsed_manifest = TDRManifestParser(jso, import_details.id)
         source_snapshot_id = parsed_manifest.get_snapshot_id()
         tables = parsed_manifest.get_tables()
         return itertools.chain(*self.translate_tables(import_details, source_snapshot_id, tables))
