@@ -10,7 +10,7 @@ def test_manifest_parsing():
     jso = json.load(open(resource_path + 'test_tdr_response.json'))
 
     # parse into tables
-    parsed = TDRManifestParser(jso)
+    parsed = TDRManifestParser(jso, "test-job-id")
     tables = parsed.get_tables()
     assert len(tables) == 27
     for t in tables:
@@ -35,7 +35,7 @@ def test_manifest_ordering_by_reference():
     jso = json.load(open(resource_path + 'tdr_response_with_no_cycle.json'))
 
     # parse into tables
-    parsed = TDRManifestParser(jso)
+    parsed = TDRManifestParser(jso, "test-job-id")
     tables = parsed.get_tables()
 
     def get_table_indices(tableName: str):
@@ -71,7 +71,7 @@ def test_cyclic_manifest_ordering_error():
         jso = json.load(open(resource_path + 'tdr_response_with_cycle.json'))
 
         # parse into tables
-        parsed = TDRManifestParser(jso)
+        parsed = TDRManifestParser(jso, "test-job-id")
         parsed.get_tables()
 
         # we shouldn't reach this point
@@ -81,7 +81,7 @@ def test_invalid_primary_keys_in_relationships():
     jso = json.load(open(resource_path + 'tdr_response_invalid_primary_key_relationships.json'))
 
     # parse into tables
-    parsed = TDRManifestParser(jso)
+    parsed = TDRManifestParser(jso, "test-job-id")
     tables = parsed.get_tables()
 
     def get_table_indices(tableName: str):

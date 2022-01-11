@@ -23,10 +23,10 @@ class TDRTable:
 class TDRManifestParser:
     def __init__(self, jso: JSON, import_id: str):
         manifest = TDRManifest(**jso)
-        self._tables = self._parse(manifest)
         self._snapshotid = manifest.snapshot.id
         self._snapshotname = manifest.snapshot.name
         self._import_id = import_id
+        self._tables = self._parse(manifest)
 
     def get_tables(self) -> List[TDRTable]:
         return self._tables
