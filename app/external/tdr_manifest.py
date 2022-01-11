@@ -2,6 +2,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from graphlib import TopologicalSorter
 from itertools import groupby
+import logging
 from typing import Dict, List, Optional, Tuple
 
 from pydantic import main
@@ -20,11 +21,12 @@ class TDRTable:
 
 
 class TDRManifestParser:
-    def __init__(self, jso: JSON):
+    def __init__(self, jso: JSON, import_id: str):
         manifest = TDRManifest(**jso)
         self._tables = self._parse(manifest)
         self._snapshotid = manifest.snapshot.id
         self._snapshotname = manifest.snapshot.name
+        self._import_id = import_id
 
     def get_tables(self) -> List[TDRTable]:
         return self._tables
@@ -65,7 +67,7 @@ class TDRManifestParser:
                 name=table.name,
                 primary_key=table_to_primary_key[table.name],
                 parquet_files=exports[table.name],
-                reference_attrs=TDRManifestParser.get_reference_attrs(table_to_relationships[table.name], table_to_primary_key)
+                reference_attrs=self.get_reference_attrs(table_to_relationships[table.name], table_to_primary_key)
             ), 
             ordered_tables
         ))
@@ -94,12 +96,14 @@ class TDRManifestParser:
         return pk
     
     # from the "relationships" key in the manifest, save the valid reference attributes to reference_attrs.
-    @staticmethod
-    def get_reference_attrs(relationships: List[Relationship], table_to_primary_key: Dict[str, str]) -> Dict[str, str]:
+    def get_reference_attrs(self, relationships: List[Relationship], table_to_primary_key: Dict[str, str]) -> Dict[str, str]:
         def relationship_to_reference(r: Relationship) -> Optional[Tuple[str, str]]:
             # A reference is valid iff the "to" column is the primary key of the "to" table.
             primary_key = table_to_primary_key[r.to.table]
             if primary_key != r.to.column:
+                logging.info("TDR snapshot contains a relationship from table: %s column: %s to table: %s column: %s but %s \
+                    is not the primary key of %s. import-job-id: %s, snapshot-id: %s", r.from_.table, r.from_.column, r.to.table, r.to.column, r.to.column, 
+                    r.to.table, self._import_id, self._snapshotid)
                 return None
             else:
                 return (r.from_.column, r.to.table)

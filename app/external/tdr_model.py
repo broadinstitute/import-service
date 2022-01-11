@@ -1,4 +1,5 @@
 ## Pydantic model for TDR Manifest file, generated using https://github.com/koxudaxi/datamodel-code-generator
+## TODO: remove in favor of tdr-client swagger definition https://broadworkbench.atlassian.net/browse/AJ-221
 from typing import Any, List
 
 from pydantic import BaseModel, Field
