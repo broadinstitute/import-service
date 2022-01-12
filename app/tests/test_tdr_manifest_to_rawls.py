@@ -191,3 +191,43 @@ def test_translate_parquet_attr_arrays():
     assert translator.translate_parquet_attr('myarray', np.array([time1, time2])) == [
         RemoveAttribute('tdr:myarray'), CreateAttributeValueList('tdr:myarray'),
         AddListMember('tdr:myarray', str(time1)), AddListMember('tdr:myarray', str(time2))]
+
+def test_translate_parquet_attr_null():
+    translator = get_fake_parquet_translator()
+
+    assert translator.translate_parquet_attr('containsnull', None) == [AddUpdateAttribute('tdr:containsnull', None)]
+
+def test_translate_parquet_attr_NaN():
+    translator = get_fake_parquet_translator()
+
+    assert translator.translate_parquet_attr('containsNaN', np.nan) == [AddUpdateAttribute('tdr:containsNaN', None)]
+
+def test_translate_parquet_attr_arrays_containing_null():
+    translator = get_fake_parquet_translator()
+
+    assert translator.translate_parquet_attr('myarray', np.array([1, 2, None, 4])) == [
+        RemoveAttribute('tdr:myarray'), CreateAttributeValueList('tdr:myarray'),
+        AddListMember('tdr:myarray', 1), AddListMember('tdr:myarray', 2),
+        AddListMember('tdr:myarray', None), AddListMember('tdr:myarray', 4)]
+
+    assert translator.translate_parquet_attr('myarray', np.array(['foo', None, 'bar'])) == [
+        RemoveAttribute('tdr:myarray'), CreateAttributeValueList('tdr:myarray'),
+        AddListMember('tdr:myarray', 'foo'), AddListMember('tdr:myarray', None), AddListMember('tdr:myarray', 'bar')]
+
+    assert translator.translate_parquet_attr('myarray', np.array([False, None, True])) == [
+        RemoveAttribute('tdr:myarray'), CreateAttributeValueList('tdr:myarray'),
+        AddListMember('tdr:myarray', False), AddListMember('tdr:myarray', None), AddListMember('tdr:myarray', True)]
+
+    time1 = datetime.now()
+    time2 = datetime.now()
+    assert translator.translate_parquet_attr('myarray', np.array([time1, None, time2])) == [
+        RemoveAttribute('tdr:myarray'), CreateAttributeValueList('tdr:myarray'),
+        AddListMember('tdr:myarray', str(time1)), AddListMember('tdr:myarray', None),AddListMember('tdr:myarray', str(time2))]
+
+def test_translate_parquet_attr_arrays_containing_NaN():
+    translator = get_fake_parquet_translator()
+
+    assert translator.translate_parquet_attr('myarray', np.array([1, 2, np.nan, 4])) == [
+        RemoveAttribute('tdr:myarray'), CreateAttributeValueList('tdr:myarray'),
+        AddListMember('tdr:myarray', 1), AddListMember('tdr:myarray', 2),
+        AddListMember('tdr:myarray', None), AddListMember('tdr:myarray', 4)]
