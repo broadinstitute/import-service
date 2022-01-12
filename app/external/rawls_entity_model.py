@@ -11,7 +11,7 @@ class EntityReference:
 
 
 # alias for attribute values
-AttributeValue = Union[bool, str, int, float, EntityReference, JSON]
+AttributeValue = Union[bool, str, int, float, EntityReference, None, JSON]
 
 # base class for operations
 @dataclass
