@@ -8,7 +8,7 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 from app.db.model import Import
-from app.external.rawls_entity_model import AddListMember, AddUpdateAttribute, CreateAttributeValueList, RemoveAttribute
+from app.external.rawls_entity_model import AddListMember, AddUpdateAttribute, CreateAttributeEntityReferenceList, CreateAttributeValueList, EntityReference, RemoveAttribute
 from app.external.tdr_manifest import TDRTable
 from app.translators.tdr_manifest_to_rawls import ParquetTranslator
 
@@ -48,7 +48,7 @@ def test_translate_data_frame():
     assert entities[2].operations == [AddUpdateAttribute('tdr:datarepo_row_id', 'c'), AddUpdateAttribute('tdr:one', 3), AddUpdateAttribute('tdr:two', 'baz'), _import_sourceid(random_snapshot_id), _import_timestamp(now)]
 
 def get_fake_parquet_translator(import_submit_time: datetime = datetime.now()) -> ParquetTranslator:
-    fake_table = TDRTable('unittest', 'datarepo_row_id', [], {})
+    fake_table = TDRTable('unittest', 'datarepo_row_id', [], {'test_ref_column': 'other_entity_type'})
     fake_filelocation = "doesntmatter"
     fake_import_details = Import('workspace_name:', 'workspace_ns', 'workspace_uuid', 'workspace_google_project', 'submitter', 'import_url', 'filetype', True)
     fake_import_details.submit_time = import_submit_time # ensure we know the submit_time
@@ -169,6 +169,10 @@ def test_translate_parquet_attr():
     assert translator.translate_parquet_attr('foo', 123) == [AddUpdateAttribute('tdr:foo', 123)]
     assert translator.translate_parquet_attr('foo', 456.78) == [AddUpdateAttribute('tdr:foo', 456.78)]
 
+    # entity reference attribute tests
+    assert translator.translate_parquet_attr('test_ref_column', 'some_sample') == \
+        [AddUpdateAttribute('tdr:test_ref_column', EntityReference('some_sample', 'other_entity_type'))]
+
     curtime = datetime.now()
     assert translator.translate_parquet_attr('foo', curtime) == [AddUpdateAttribute('tdr:foo', str(curtime))]
 
@@ -191,3 +195,12 @@ def test_translate_parquet_attr_arrays():
     assert translator.translate_parquet_attr('myarray', np.array([time1, time2])) == [
         RemoveAttribute('tdr:myarray'), CreateAttributeValueList('tdr:myarray'),
         AddListMember('tdr:myarray', str(time1)), AddListMember('tdr:myarray', str(time2))]
+
+def test_translate_parq_reference_arrays():
+    translator = get_fake_parquet_translator()
+
+    assert translator.translate_parquet_attr('test_ref_column', np.array(['sample1', 'sample2'])) == [
+        RemoveAttribute('tdr:test_ref_column'), CreateAttributeEntityReferenceList('tdr:test_ref_column'),
+        AddListMember('tdr:test_ref_column', EntityReference('sample1', 'other_entity_type')),
+        AddListMember('tdr:test_ref_column', EntityReference('sample2', 'other_entity_type'))
+    ]
