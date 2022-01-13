@@ -1,14 +1,15 @@
 import io
 import uuid
 from datetime import datetime
-from typing import IO, Dict, Generator
+from typing import IO, Dict, Generator, Sequence
 
 import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 from app.db.model import Import
-from app.external.rawls_entity_model import AddListMember, AddUpdateAttribute, CreateAttributeEntityReferenceList, CreateAttributeValueList, EntityReference, RemoveAttribute
+from app.external.rawls_entity_model import AddListMember, AddUpdateAttribute, AttributeOperation, \
+    CreateAttributeEntityReferenceList, CreateAttributeValueList, Entity, EntityReference, RemoveAttribute
 from app.external.tdr_manifest import TDRTable
 from app.translators.tdr_manifest_to_rawls import ParquetTranslator
 
@@ -204,3 +205,69 @@ def test_translate_parq_reference_arrays():
         AddListMember('tdr:test_ref_column', EntityReference('sample1', 'other_entity_type')),
         AddListMember('tdr:test_ref_column', EntityReference('sample2', 'other_entity_type'))
     ]
+
+def test_translate_parquet_attr_null():
+    translator = get_fake_parquet_translator()
+
+    assert translator.translate_parquet_attr('containsnull', None) == [AddUpdateAttribute('tdr:containsnull', None)]
+
+def test_translate_parquet_attr_NaN():
+    translator = get_fake_parquet_translator()
+
+    assert translator.translate_parquet_attr('containsNaN', np.nan) == [AddUpdateAttribute('tdr:containsNaN', None)]
+
+def test_translate_parquet_attr_arrays_containing_null():
+    translator = get_fake_parquet_translator()
+
+    assert translator.translate_parquet_attr('myarray', np.array([1, 2, None, 4])) == [
+        RemoveAttribute('tdr:myarray'), CreateAttributeValueList('tdr:myarray'),
+        AddListMember('tdr:myarray', 1), AddListMember('tdr:myarray', 2),
+        AddListMember('tdr:myarray', None), AddListMember('tdr:myarray', 4)]
+
+    assert translator.translate_parquet_attr('myarray', np.array(['foo', None, 'bar'])) == [
+        RemoveAttribute('tdr:myarray'), CreateAttributeValueList('tdr:myarray'),
+        AddListMember('tdr:myarray', 'foo'), AddListMember('tdr:myarray', None), AddListMember('tdr:myarray', 'bar')]
+
+    assert translator.translate_parquet_attr('myarray', np.array([False, None, True])) == [
+        RemoveAttribute('tdr:myarray'), CreateAttributeValueList('tdr:myarray'),
+        AddListMember('tdr:myarray', False), AddListMember('tdr:myarray', None), AddListMember('tdr:myarray', True)]
+
+    time1 = datetime.now()
+    time2 = datetime.now()
+    assert translator.translate_parquet_attr('myarray', np.array([time1, None, time2])) == [
+        RemoveAttribute('tdr:myarray'), CreateAttributeValueList('tdr:myarray'),
+        AddListMember('tdr:myarray', str(time1)), AddListMember('tdr:myarray', None),AddListMember('tdr:myarray', str(time2))]
+
+def test_translate_parquet_attr_arrays_containing_NaN():
+    translator = get_fake_parquet_translator()
+
+    assert translator.translate_parquet_attr('myarray', np.array([1, 2, np.nan, 4])) == [
+        RemoveAttribute('tdr:myarray'), CreateAttributeValueList('tdr:myarray'),
+        AddListMember('tdr:myarray', 1), AddListMember('tdr:myarray', 2),
+        AddListMember('tdr:myarray', None), AddListMember('tdr:myarray', 4)]
+
+def test_actual_parquet_file_with_NaN():
+    translator = get_fake_parquet_translator()
+
+    def find_add_update_attr(ops: Sequence[AttributeOperation], attrname: str) -> AddUpdateAttribute:
+        return next(i for i in ops if isinstance(i, AddUpdateAttribute) and i.attributeName == attrname)
+
+    def assert_attr_value(ops: Sequence[AttributeOperation], attrname: str, expected):
+        attr = find_add_update_attr(e.operations, attrname)
+        assert attr.addUpdateAttribute == expected
+
+    # 1000 Genomes public data. This Parquet file contains one row. That row
+    # contains nulls in float and boolean columns
+    with open('app/tests/resources/1000_Genomes_1row_sample_info.parquet', 'rb') as file_like:
+        entities = list(translator.translate_parquet_file_to_entities(file_like))
+        assert len(entities) == 1
+        e: Entity = entities[0]
+        assert len(e.operations) == 65
+        # spot-check a few of the attributes
+        assert_attr_value(e.operations, 'tdr:VerifyBam_LC_Affy_Chip', None) # Float, contains null in BQ
+        assert_attr_value(e.operations, 'tdr:VerifyBam_E_Affy_Chip', None) # Float, contains null in BQ
+        assert_attr_value(e.operations, 'tdr:Grandparents', '') # String, contains empty string in BQ
+        assert_attr_value(e.operations, 'tdr:VerifyBam_LC_Omni_Chip', 0.00026) # Float, contains 2.6E-4 in BQ
+        assert_attr_value(e.operations, 'tdr:In_Final_Phase_Variant_Calling', True) # Boolean, contains true in BQ
+        assert_attr_value(e.operations, 'tdr:In_Low_Coverage_Pilot', None)  # Boolean, contains null in BQ
+        assert_attr_value(e.operations, 'tdr:Population_Description', 'British in England and Scotland') # String, contains 'British in England and Scotland' in BQ

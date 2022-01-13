@@ -133,7 +133,11 @@ class ParquetTranslator:
     def create_attribute_value(self, value, is_reference: bool = False, reference_target_type = None) -> AttributeValue:
         if is_reference:
             return EntityReference(str(value), reference_target_type)
-        elif isinstance(value, (str, int, float, bool)):
+        elif isinstance(value, (int, float)):
+            if np.isnan(value):
+                return None
+            return value
+        elif value is None or isinstance(value, (str, bool)):
             return value
         else:
             # test if this is a numpy.ndarray member
