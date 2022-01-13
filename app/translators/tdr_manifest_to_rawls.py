@@ -14,7 +14,7 @@ from app.db.model import Import
 from app.external import gcs, sam
 from app.external.rawls_entity_model import (AddListMember, AddUpdateAttribute,
                                              AttributeOperation,
-                                             AttributeValue,
+                                             AttributeValue, CreateAttributeEntityReferenceList,
                                              CreateAttributeValueList, Entity,
                                              EntityReference, RemoveAttribute)
 from app.external.tdr_manifest import TDRManifestParser, TDRTable
@@ -113,27 +113,24 @@ class ParquetTranslator:
         # e.g. with {entity_type}_id which is a is a reserved name in Rawls.
         usable_name = f'{namespace}:{name}'
 
-        # TODO: AS-1038 detect/create references
-        is_reference = False
+        # Check if value is a reference, check if it's an array for finding ops
+        is_reference = name in self.table.reference_attrs
+        reference_target_type = self.table.reference_attrs.get(name, None)
         is_array = isinstance(value, np.ndarray)
 
-        if not is_reference and not is_array:
+        if not is_array:
             # most common case, results in AddUpdateAttribute
-            return [AddUpdateAttribute(usable_name, self.create_attribute_value(value))]
+            return [AddUpdateAttribute(usable_name, self.create_attribute_value(value, is_reference, reference_target_type))]
         elif is_reference and is_array:
-            # TODO: AS-1038 detect/create references
-            # RemoveAttribute/CreateAttributeEntityReferenceList/AddListMember(s)
-            return []
-        elif is_array:
+            # list of entity references, results in a CreateAttributeEntityReferenceList
+            ops = [AddListMember(usable_name, self.create_attribute_value(v, is_reference, reference_target_type)) for v in value]
+            return [RemoveAttribute(usable_name), CreateAttributeEntityReferenceList(usable_name), *ops]
+        else: # elif not is_reference and is_array, adds a list of values (non-entity references)
             ops = [AddListMember(usable_name, self.create_attribute_value(v)) for v in value]
             return [RemoveAttribute(usable_name), CreateAttributeValueList(usable_name), *ops]
-        else: # elif is_reference:
-            # TODO: AS-1038 detect/create references
-            # AddUpdateAttribute(name, EntityReference(value))
-            return []
 
     @classmethod
-    def create_attribute_value(cls, value, is_reference: bool = False, reference_target_type = None) -> AttributeValue:
+    def create_attribute_value(self, value, is_reference: bool = False, reference_target_type = None) -> AttributeValue:
         if is_reference:
             return EntityReference(str(value), reference_target_type)
         elif isinstance(value, (int, float)):
@@ -146,7 +143,7 @@ class ParquetTranslator:
             # test if this is a numpy.ndarray member
             item_op = getattr(value, "item", None)
             if item_op is not None and callable(item_op):
-                return cls.create_attribute_value(value.item())
+                return self.create_attribute_value(value.item())
             else:
                 # BigQuery/Parquet can contain datatypes that the Rawls model doesn't handle and/or are not
                 # natively serializable into JSON, such as Timestamps. Inspect the types we know about,
