@@ -9,6 +9,7 @@ from urllib.parse import urlparse
 import numpy as np
 import pandas as pd
 import pyarrow
+import pyarrow.dataset as ds
 import pyarrow.parquet as pq
 from app.db.model import Import
 from app.external import gcs, sam
@@ -63,8 +64,8 @@ class ParquetTranslator:
         url = urlparse(self.filelocation)
         bucket = url.netloc
         path = url.path
-        with gcs.open_file(self.import_details.workspace_google_project, bucket, path, self.import_details.submitter, self.auth_key) as pqfile:
-            return self.translate_parquet_file_to_entities(pqfile)
+        fs = gcs.get_gcs_filesystem(self.import_details.workspace_google_project, self.import_details.submitter, self.auth_key)
+        return self.translate_parquet_file_to_entities(gs, bucket,  path)
 
     # investigate parquet streaming, instead of reading the whole file into memory
     # BUT, it looks like the export files use random-access binary format, not streaming format,
@@ -77,12 +78,18 @@ class ParquetTranslator:
     def translate_parquet_file_to_entities(self, file_like: IO) -> Iterator[Entity]:
         """Converts single parquet file-like object to an iterator of Entity objects."""
         pq_table: pyarrow.Table = pq.read_table(file_like)
-        column_names = copy.deepcopy(pq_table.column_names)
-        # see https://arrow.apache.org/docs/python/pandas.html#reducing-memory-use-in-table-to-pandas for discussion of
-        # memory-reducing options
-        df: pd.DataFrame = pq_table.to_pandas(split_blocks=True, self_destruct=True)
-        del pq_table
-        return self.translate_data_frame(df, column_names)
+        pq_dataset: pyarrow.Dataset = ds.dataset(pq_table)
+        column_names = copy.deepcopy(pq_dataset.schema.names)
+
+        # since max file size is 1 GB for parquet files exported from big query, investigate breaking
+        # parquet files up. even with batches, the full parquet file is read into memory. We use batches
+        # because this limits the number of rows we expand into a pandas df at once
+        batches = pq_dataset.scanner(batch_size=1000).to_batches()
+
+        for batch in batches:
+            df: pd.DataFrame = batch.to_pandas(split_blocks=True, self_destruct=True)
+            del batch
+            yield from self.translate_data_frame(df, column_names)
 
     def translate_data_frame(self, df: pd.DataFrame, column_names: List[str]) -> Iterator[Entity]:
         """Convert a pandas dataframe - assumed from a Parquet file - to an iterator of Entity objects."""
