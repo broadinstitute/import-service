@@ -1,6 +1,7 @@
 import flask.testing
 import jsonschema
 import pytest
+from app.external.rawls import RawlsWorkspaceResponse
 
 from app.tests import testutils
 from app import new_import, translate
@@ -82,6 +83,28 @@ def test_user_cant_see_workspace(client):
 def test_user_cant_write_to_workspace(client):
     resp = client.post('/namespace/name/imports', json=good_json, headers=good_headers)
     assert resp.status_code == 403
+
+# mock function for test_user_cant_read_policies_of_workspace:
+# returns ok when asked if the user has "write", but returns 456 when asked if the user has "read_policies"
+def mock_auth_for_read_policies(workspace_ns: str, workspace_name: str, bearer_token: str, sam_action: str = "read") -> RawlsWorkspaceResponse:
+    if sam_action == "write":
+        return RawlsWorkspaceResponse(workspace_id="workspaceId", google_project="googleProject")
+    elif sam_action == "read_policies":
+        # specify 456 status code to disambiguate the read_policies response from any other response code
+        raise exceptions.ISvcException("user does not have read_policies", 456)
+    else:
+        raise Exception(f"unexpected sam action: ${sam_action}")
+
+@pytest.mark.usefixtures(
+    "sam_valid_user",
+    testutils.fxpatch(
+        "app.auth.user_auth.workspace_uuid_and_project_with_auth",
+        side_effect = mock_auth_for_read_policies))
+def test_user_cant_read_policies_of_workspace(client):
+    # the read_policies check only happens for tdrexport. Ensure the json we use for test is tdrexport:
+    snapshotjson = {"path": f"https://{translate.VALID_NETLOCS[0]}/some/path", "filetype": "tdrexport"}
+    resp = client.post('/namespace/name/imports', json=snapshotjson, headers=good_headers)
+    assert resp.status_code == 456 # normally will return 403, using 456 here for disambiguation
 
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
 def test_is_upsert_defaults_true_when_missing_from_json(client):
