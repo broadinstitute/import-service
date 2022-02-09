@@ -1,0 +1,26 @@
+import logging
+import requests
+import os
+
+READER_POLICY_NAME = 'reader'
+
+## TODO make this correct 
+def add_snapshot_policy_member(snapshot_id: str, policy_name: str, member_email: str, bearer_token: str):
+    """Add a member to a snapshot policy"""
+    resp = requests.post(
+        f"{os.environ.get('TDR_URL')}/api/repository/v1/snapshots/{snapshot_id}/policies/{policy_name}/members",
+        headers={"Authorization": bearer_token},
+        data={'email': member_email}
+    )
+
+    if resp.ok:
+        # TODO validate json schema, add typing for response
+        return True
+    elif resp.status_code == 403:
+        # TODO: check for permissions issue (not writer, no canShare permission) and report this
+        logging.error(f"User doesn't have permissions to share snapshot {snapshot_id} policy {policy_name} with {member_email}")
+        return False
+    else:
+        # TODO: otherwise report error
+        logging.error(f"Error syncing snapshot permissions for snapshot {snapshot_id} policy {policy_name}", resp)
+        return False

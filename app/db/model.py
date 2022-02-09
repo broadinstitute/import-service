@@ -9,7 +9,8 @@ from sqlalchemy import Column, DateTime, String
 from sqlalchemy.schema import Table
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import validates
-from sqlalchemy.sql.sqltypes import Boolean
+from sqlalchemy.sql.expression import update
+from sqlalchemy.sql.sqltypes import JSON, Boolean
 from sqlalchemy_repr import RepresentableBase
 from app.db import DBSession
 
@@ -118,6 +119,9 @@ class Import(ImportServiceTable, EqMixin, Base):
     filetype = Column(String(10), nullable=False)
     error_message = Column(String(2048), nullable=True)
     is_upsert = Column(Boolean, nullable=False, default=True)
+    json_attributes = Column(JSON, nullable=False)
+
+    SNAPSHOT_FIELD_NAME = 'snapshot_id'
 
     @validates('error_message')
     def truncate(self, key, value):
@@ -141,6 +145,7 @@ class Import(ImportServiceTable, EqMixin, Base):
         self.filetype = filetype
         self.error_message = None
         self.is_upsert = is_upsert
+        self.json_attributes = {}
 
     @classmethod
     def get(cls, import_id: str, sess: DBSession) -> Import:
@@ -160,6 +165,21 @@ class Import(ImportServiceTable, EqMixin, Base):
             .values(status=new_status)
         num_affected_rows = sess.execute(update).rowcount
         return num_affected_rows > 0
+    
+    @classmethod
+    def save_snapshot_id_exclusively(cls, import_job_id: str, snapshot_id: str, sess: DBSession) -> bool:
+        """Given a snapshot id, save it to the import record, recording it in the json_attributes field."""
+
+        logging.info(f"Attempting to save snapshot id {snapshot_id} for import {import_job_id} ...")
+
+        update = Import.__table__.update() \
+            .where(Import.id == id) \
+            .values(json_attributes=cls.build_json_dict(snapshot_id))
+        num_affected_rows = sess.execute(update).rowcount
+        return num_affected_rows > 0
+    
+    def get_snapshot_id(self) -> String:
+        return self.json_attributes[Import.SNAPSHOT_FIELD_NAME]
 
     def write_error(self, msg: str) -> None:
         self.error_message = msg
@@ -167,3 +187,9 @@ class Import(ImportServiceTable, EqMixin, Base):
 
     def to_status_response(self) -> ImportStatusResponse:
         return ImportStatusResponse(self.id, self.status.name, self.filetype, self.error_message)
+
+    def build_json_dict(snapshot_id: str):
+        json_dict = {}
+        if (snapshot_id != None):
+            json_dict[Import.SNAPSHOT_FIELD_NAME] = snapshot_id
+        return json_dict

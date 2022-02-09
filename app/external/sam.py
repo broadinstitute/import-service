@@ -16,6 +16,7 @@ DEFAULT_PET_SCOPES = [
     "https://www.googleapis.com/auth/userinfo.email",
     "https://www.googleapis.com/auth/userinfo.profile"
 ]
+WORKSPACE_RESOURCE = "workspace"
 
 
 def validate_user(bearer_token: str) -> UserInfo:
@@ -62,6 +63,22 @@ def get_user_action_on_resource(resource_type: str, resource_id: str, action: st
         logging.debug(f"Got {resp.status_code} from Sam while checking {action} on resource {resource_type}/{resource_id}: {resp.text}")
         raise ISvcException(resp.text, resp.status_code)
 
+def list_policies_for_resource(resource_type: str, resource_id: str, bearer_token: str) -> object:
+    """Returns a list of the policies for a resource"""
+    resp = requests.get(
+        f"{os.environ.get('SAM_URL')}/api/resources/v2/{resource_type}/{resource_id}/policies",
+        headers={"Authorization": bearer_token}
+    )
+
+    if resp.ok:
+        # TODO validate json schema, add typing for response
+        return resp.json()
+    elif resp.status_code == 403:
+        # TODO: check for permissions issue (not writer, no canShare permission) and report this
+        pass
+    else:
+        # TODO: otherwise report error
+        pass
 
 def _creds_from_key(key_info: dict, scopes: Optional[List[str]] = None) -> service_account.Credentials:
     """Given a service account key dict from Sam, turn it into a set of Credentials, refreshed with the specified scopes."""
