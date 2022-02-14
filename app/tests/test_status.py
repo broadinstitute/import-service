@@ -1,7 +1,7 @@
 import pytest
+import unittest.mock as mock
 
 from app import translate
-from app.auth import userinfo
 from app.db import db
 from app.db.model import *
 from app.server.requestutils import PUBSUB_STATUS_NOTOK
@@ -89,7 +89,9 @@ def test_tdr_upsert_completed_status(fake_import, client):
     """External service moves import from existing status to wherever."""
     with db.session_ctx() as sess:
         sess.add(fake_import)
-        Import.save_snapshot_id_exclusively(fake_import.id, "fake_snapshot_id", sess)
+    
+    with db.session_ctx() as sess2:
+        Import.save_snapshot_id_exclusively(fake_import.id, "fake_snapshot_id", sess2)
 
     # sam return a list of policies
     list_of_policies = [{
@@ -101,15 +103,18 @@ def test_tdr_upsert_completed_status(fake_import, client):
             "actions": ["read"]
     }}]
     
+    # monkey patch sam and tdr
     with testutils.patch_request("app.external.sam", "get", 200, json=list_of_policies):
         with testutils.patch_request("app.external.tdr", "post", 200):
-            resp = client.post("/_ah/push-handlers/receive_messages",
-                        json=testutils.pubsub_json_body({"action": "status", "import_id": fake_import.id,
-                                                            "current_status": "Upserting",
-                                                            "new_status": "Done"}))
+            with mock.patch("app.external.sam.admin_get_pet_token") as mock_token:
+                mock_token.return_value = "fake_token"
+                resp = client.post("/_ah/push-handlers/receive_messages",
+                                json=testutils.pubsub_json_body({"action": "status", "import_id": fake_import.id,
+                                                                    "current_status": "Upserting",
+                                                                    "new_status": "Done"}))
 
-    with db.session_ctx() as sess2:
-        imp: Import = Import.get(fake_import.id, sess2)
+    with db.session_ctx() as sess3:
+        imp: Import = Import.get(fake_import.id, sess3)
         assert imp.status == ImportStatus.Done
 
     assert resp.status_code == 200

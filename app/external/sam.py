@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Optional
 
 from google.auth.transport import requests as grequests
 from google.oauth2 import service_account
+from pydantic import BaseModel
 
 from app.util.exceptions import AuthorizationException, ISvcException
 from app.auth.userinfo import UserInfo
@@ -19,17 +20,17 @@ DEFAULT_PET_SCOPES = [
 ]
 WORKSPACE_RESOURCE = "workspace"
 
-@dataclass
-class Policy:
+
+class Policy(BaseModel):
     memberEmails: List[str]
     actions: List[str]
     roles: List[str]
 
-@dataclass
-class PolicyResponse:
+class PolicyResponse(BaseModel):
     policyName: str
     policy: Policy
     email: str
+
 
 def validate_user(bearer_token: str) -> UserInfo:
     schema = {
@@ -126,7 +127,7 @@ def list_policies_for_resource(resource_type: str, resource_id: str, bearer_toke
     if resp.ok:
         policies = resp.json()
         jsonschema.validate(policies, schema=schema)
-        return list(map(lambda policy: PolicyResponse(**policy), policies))
+        return list(map(PolicyResponse.parse_obj, policies))
     elif resp.status_code == 403:
         logging.error(f"User doesn't have permissions to list policies for resource {resource_type}, {resource_id}")
         raise AuthorizationException(resp.text)

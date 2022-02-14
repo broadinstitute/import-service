@@ -21,7 +21,6 @@ def sync_permissions_if_necessary(import_job_id: str, import_status: ImportStatu
         # this should mean we aren't doing a tdr-export
         return # no sync required since no snapshot present
     
-    # 4.call syncPermissions(workspace_id, snapshot_id)
     sync_permissions(import_details)
 
 def sync_permissions(import_details: Import):

@@ -177,7 +177,7 @@ class Import(ImportServiceTable, EqMixin, Base):
         logging.info(f"Attempting to save snapshot id {snapshot_id} for import {import_job_id} ...")
 
         update = Import.__table__.update() \
-            .where(Import.id == id) \
+            .where(Import.id == import_job_id) \
             .values(json_attributes=cls.build_json_dict(snapshot_id))
         num_affected_rows = sess.execute(update).rowcount
         return num_affected_rows > 0

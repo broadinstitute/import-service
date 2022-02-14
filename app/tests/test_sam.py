@@ -86,12 +86,12 @@ def test_list_policies_for_resource():
         }}]
     
     list_response = [sam.PolicyResponse(
-        "readerThing", 
-        sam.Policy(["test@broad.io"], ["read"], ["owner"]),
-        "testtest@broad.io"
+        policyName="readerThing", 
+        policy=sam.Policy(memberEmails=["test@broad.io"], actions=["read"], roles=["owner"]),
+        email="testtest@broad.io"
     )]
     with testutils.patch_request("app.external.sam", "get", 200, json=list_of_policies):
-        assert sam.validate_user("ya29.bearer_token") == list_response
+        assert sam.list_policies_for_resource("resourceType", "some_id", "ya29.bearer_token") == list_response
 
 
 @pytest.mark.usefixtures(
