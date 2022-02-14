@@ -84,6 +84,36 @@ def test_good_update_status(fake_import, client):
 
     assert resp.status_code == 200
 
+@pytest.mark.usefixtures("incoming_valid_pubsub")
+def test_tdr_upsert_completed_status(fake_import, client):
+    """External service moves import from existing status to wherever."""
+    with db.session_ctx() as sess:
+        sess.add(fake_import)
+        Import.save_snapshot_id_exclusively(fake_import.id, "fake_snapshot_id", sess)
+
+    # sam return a list of policies
+    list_of_policies = [{
+        "email": "testtest@broad.io", 
+        "policyName": "readerThing", 
+        "policy": {
+            "roles": ["owner"],
+            "memberEmails": ["test@broad.io"],
+            "actions": ["read"]
+    }}]
+    
+    with testutils.patch_request("app.external.sam", "get", 200, json=list_of_policies):
+        with testutils.patch_request("app.external.tdr", "post", 200):
+            resp = client.post("/_ah/push-handlers/receive_messages",
+                        json=testutils.pubsub_json_body({"action": "status", "import_id": fake_import.id,
+                                                            "current_status": "Upserting",
+                                                            "new_status": "Done"}))
+
+    with db.session_ctx() as sess2:
+        imp: Import = Import.get(fake_import.id, sess2)
+        assert imp.status == ImportStatus.Done
+
+    assert resp.status_code == 200
+
 
 @pytest.mark.usefixtures("incoming_valid_pubsub")
 def test_good_update_status_wrong_current(fake_import, client):

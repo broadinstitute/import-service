@@ -63,6 +63,37 @@ def test_get_user_action_on_resource():
         assert sam.get_user_action_on_resource("rtype", "resource_id", "action", "bearer")
 
 
+def test_list_policies_for_resource():
+    # sam returns an error
+    with testutils.patch_request("app.external.sam", "get", 403):
+        with pytest.raises(exceptions.ISvcException) as excinfo:
+            sam.list_policies_for_resource("resourceType", "some_id", "ya29.bearer_token")
+            assert excinfo.value.http_status == 403
+    
+    # sam returns wrong json
+    with testutils.patch_request("app.external.sam", "get", 200, json=[1, 2, 3]):  # numbers not objects
+        with pytest.raises(jsonschema.ValidationError):
+            sam.list_policies_for_resource("resourceType", "some_id", "ya29.bearer_token")
+
+    # sam return a list of policies
+    list_of_policies = [{
+        "email": "testtest@broad.io", 
+        "policyName": "readerThing", 
+        "policy": {
+            "roles": ["owner"],
+            "memberEmails": ["test@broad.io"],
+            "actions": ["read"]
+        }}]
+    
+    list_response = [sam.PolicyResponse(
+        "readerThing", 
+        sam.Policy(["test@broad.io"], ["read"], ["owner"]),
+        "testtest@broad.io"
+    )]
+    with testutils.patch_request("app.external.sam", "get", 200, json=list_of_policies):
+        assert sam.validate_user("ya29.bearer_token") == list_response
+
+
 @pytest.mark.usefixtures(
     testutils.fxpatch(
         "app.auth.service_auth.get_isvc_token",

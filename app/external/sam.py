@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 import os
 
 import jsonschema
@@ -18,6 +19,17 @@ DEFAULT_PET_SCOPES = [
 ]
 WORKSPACE_RESOURCE = "workspace"
 
+@dataclass
+class Policy:
+    memberEmails: List[str]
+    actions: List[str]
+    roles: List[str]
+
+@dataclass
+class PolicyResponse:
+    policyName: str
+    policy: Policy
+    email: str
 
 def validate_user(bearer_token: str) -> UserInfo:
     schema = {
@@ -63,22 +75,65 @@ def get_user_action_on_resource(resource_type: str, resource_id: str, action: st
         logging.debug(f"Got {resp.status_code} from Sam while checking {action} on resource {resource_type}/{resource_id}: {resp.text}")
         raise ISvcException(resp.text, resp.status_code)
 
-def list_policies_for_resource(resource_type: str, resource_id: str, bearer_token: str) -> object:
+def list_policies_for_resource(resource_type: str, resource_id: str, bearer_token: str) -> List[PolicyResponse]:
     """Returns a list of the policies for a resource"""
+    schema = {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "type": "array",
+        "items": [
+            {
+                "type": "object",
+                "properties": {
+                    "policyName": { "type": "string" },
+                    "policy": {
+                        "type": "object",
+                        "properties": {
+                            "memberEmails": {
+                                "type": "array",
+                                "items": [{ "type": "string" }]
+                            },
+                            "actions": {
+                                "type": "array",
+                                "items": [{ "type": "string" }]
+                            },
+                            "roles": {
+                                "type": "array",
+                                "items": [{ "type": "string" }]
+                            }
+                        },
+                        "required": [
+                            "memberEmails",
+                            "actions",
+                            "roles"
+                        ]
+                    },
+                    "email": { "type": "string" }
+                },
+                "required": [
+                    "policyName",
+                    "policy",
+                    "email"
+                ]
+            }
+        ]
+    }
+
     resp = requests.get(
         f"{os.environ.get('SAM_URL')}/api/resources/v2/{resource_type}/{resource_id}/policies",
         headers={"Authorization": bearer_token}
     )
 
     if resp.ok:
-        # TODO validate json schema, add typing for response
-        return resp.json()
+        policies = resp.json()
+        jsonschema.validate(policies, schema=schema)
+        return list(map(lambda policy: PolicyResponse(**policy), policies))
     elif resp.status_code == 403:
-        # TODO: check for permissions issue (not writer, no canShare permission) and report this
-        pass
+        logging.error(f"User doesn't have permissions to list policies for resource {resource_type}, {resource_id}")
+        raise AuthorizationException(resp.text)
     else:
-        # TODO: otherwise report error
-        pass
+        logging.error(f"Error calling list_policies_for_resource {resource_type}, {resource_id}", resp)
+        raise ISvcException(resp.text, resp.status_code)
+
 
 def _creds_from_key(key_info: dict, scopes: Optional[List[str]] = None) -> service_account.Credentials:
     """Given a service account key dict from Sam, turn it into a set of Credentials, refreshed with the specified scopes."""

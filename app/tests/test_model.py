@@ -2,7 +2,6 @@ import pytest
 
 from app.db import db, model
 from app.db.model import ImportStatus
-from typing import Iterator, Dict, IO, Any
 import copy
 
 
@@ -88,3 +87,14 @@ def test_import_is_upsert_allows_setting_false(is_upsert):
         is_upsert=is_upsert)
 
     assert new_import.is_upsert == is_upsert
+
+def test_save_snapshot_id_exclusively(fake_import: model.Import):
+    with db.session_ctx() as sess:
+        sess.add(fake_import)
+
+    with db.session_ctx() as sess2:
+        updated = model.Import.save_snapshot_id_exclusively(fake_import.id, "fake_snapshot_id", sess2)
+        assert updated
+
+        updated_import = model.Import.get(fake_import.id, sess2)
+        assert updated_import.get_snapshot_id() == "fake_snapshot_id"

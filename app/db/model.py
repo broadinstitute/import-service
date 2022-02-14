@@ -10,7 +10,7 @@ from sqlalchemy.schema import Table
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import validates
 from sqlalchemy.sql.expression import update
-from sqlalchemy.sql.sqltypes import JSON, Boolean
+from sqlalchemy.sql.sqltypes import Boolean, JSON
 from sqlalchemy_repr import RepresentableBase
 from app.db import DBSession
 
@@ -46,8 +46,12 @@ if TYPE_CHECKING:
 
     class Enum(TypeEngine[T]):
         def __init__(self, enum: Type[T]) -> None: ...
+    
+    #class JSON(TypeEngine[T]):
+    #    def __init__(self, json: Type[T]) -> None: ...
 else:
     from sqlalchemy import Enum
+    from sqlalchemy.sql.sqltypes import JSON
 
 
 @enum.unique
@@ -178,7 +182,7 @@ class Import(ImportServiceTable, EqMixin, Base):
         num_affected_rows = sess.execute(update).rowcount
         return num_affected_rows > 0
     
-    def get_snapshot_id(self) -> String:
+    def get_snapshot_id(self) -> str:
         return self.json_attributes[Import.SNAPSHOT_FIELD_NAME]
 
     def write_error(self, msg: str) -> None:
@@ -188,6 +192,7 @@ class Import(ImportServiceTable, EqMixin, Base):
     def to_status_response(self) -> ImportStatusResponse:
         return ImportStatusResponse(self.id, self.status.name, self.filetype, self.error_message)
 
+    @staticmethod
     def build_json_dict(snapshot_id: str):
         json_dict = {}
         if (snapshot_id != None):

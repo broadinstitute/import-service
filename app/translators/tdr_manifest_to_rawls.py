@@ -53,8 +53,8 @@ class TDRManifestToRawls(Translator):
                 yield pt.translate()
     
     def save_snapshot_id(self, import_id: str, snapshot_id: str):
+        """Saves the snapshot id to the DB so we can use it later to sync permissions."""
         with db.session_ctx() as sess:
-            # flip the status to Translating, and then get the row
             update_successful = Import.save_snapshot_id_exclusively(import_id, snapshot_id, sess)
 
         if not update_successful:
