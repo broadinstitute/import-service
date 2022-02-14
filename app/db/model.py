@@ -10,7 +10,7 @@ from sqlalchemy.schema import Table
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import validates
 from sqlalchemy.sql.expression import update
-from sqlalchemy.sql.sqltypes import Boolean, JSON
+from sqlalchemy.sql.sqltypes import Boolean
 from sqlalchemy_repr import RepresentableBase
 from app.db import DBSession
 
@@ -47,8 +47,8 @@ if TYPE_CHECKING:
     class Enum(TypeEngine[T]):
         def __init__(self, enum: Type[T]) -> None: ...
     
-    #class JSON(TypeEngine[T]):
-    #    def __init__(self, json: Type[T]) -> None: ...
+    class JSON(TypeEngine[T]):
+        def __init__(self, json: Type[T]) -> None: ...
 else:
     from sqlalchemy import Enum
     from sqlalchemy.sql.sqltypes import JSON
