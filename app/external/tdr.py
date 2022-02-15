@@ -6,7 +6,7 @@ from app.util.exceptions import AuthorizationException, ISvcException
 
 READER_POLICY_NAME = 'reader'
 
-def add_snapshot_policy_member(snapshot_id: str, policy_name: str, member_email: str, bearer_token: str) -> bool:
+def add_snapshot_policy_member(snapshot_id: str, policy_name: str, member_email: str, bearer_token: str) -> None:
     """Add a member to a snapshot policy"""
     resp = requests.post(
         f"{os.environ.get('TDR_URL')}/api/repository/v1/snapshots/{snapshot_id}/policies/{policy_name}/members",
