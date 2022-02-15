@@ -46,11 +46,10 @@ env_variables:
  RAWLS_URL: "https://rawls.dsde-{{$env}}.broadinstitute.org"
  SAM_URL: "https://sam.dsde-{{$env}}.broadinstitute.org"
  TDR_URL: {{if eq $env "prod"}}"https://data.terra.bio"
-{{else}}{{if eq $env "staging"}}"https://data.staging.envs-terra.bio"
-{{else}}{{if eq $env "alpha"}}"https://data.alpha.envs-terra.bio"
-{{else}}{{if eq $env "perf"}}"https://jade-perf.datarepo-perf.broadinstitute.org"
-{{else}}"https://jade.datarepo-dev.broadinstitute.org"
-{{end}} {{end}} {{end}} {{end}}
+          {{else if eq $env "staging"}}"https://data.staging.envs-terra.bio"
+          {{else if eq $env "alpha"}}"https://data.alpha.envs-terra.bio"
+          {{else if eq $env "perf"}}"https://jade-perf.datarepo-perf.broadinstitute.org"
+          {{else}}"https://jade.datarepo-dev.broadinstitute.org"{{end}} 
 
  IMPORT_SVC_SA_EMAIL: "import-service@terra-importservice-{{$env}}.iam.gserviceaccount.com"
  BATCH_UPSERT_BUCKET: "import-service-batchupsert-{{$env}}"
