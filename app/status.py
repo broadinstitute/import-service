@@ -86,10 +86,16 @@ def external_update_status(msg: Dict[str, str]) -> model.ImportStatusResponse:
                 imp.write_error(msg.get("error_message", "External service set this import to Error"))
             else:
                 current_status: ImportStatus = ImportStatus.from_string(msg["current_status"])
-                update_successful = model.Import.update_status_exclusively(import_id, imp.status, new_status, sess)
-                if (update_successful):
-                    # we may need to sync permissions to tdr if this is a tdr snapshot
-                    sync.sync_permissions_if_necessary(import_id, new_status)
+
+                # we may need to sync permissions to tdr if this is a tdr snapshot
+                failed_sync = False
+                try:
+                    sync.sync_permissions_if_necessary(import_id, new_status) 
+                except Exception as err:
+                    failed_sync = True
+                    imp.write_error(f"Failed to sync permissions for import {import_id}: {err}")
+                if not failed_sync:
+                    model.Import.update_status_exclusively(import_id, imp.status, new_status, sess)
 
     if not update_successful:
         logging.warning(f"Failed to update status for import {import_id}: wanted {current_status}->{new_status}, actually {imp.status}.")

@@ -123,7 +123,7 @@ class Import(ImportServiceTable, EqMixin, Base):
     filetype = Column(String(10), nullable=False)
     error_message = Column(String(2048), nullable=True)
     is_upsert = Column(Boolean, nullable=False, default=True)
-    json_attributes = Column(JSON, nullable=False)
+    json_attributes = Column(JSON, nullable=True)
 
     SNAPSHOT_FIELD_NAME = 'snapshot_id'
 
