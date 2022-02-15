@@ -47,7 +47,7 @@ env_variables:
  SAM_URL: "https://sam.dsde-{{$env}}.broadinstitute.org"
  TDR_URL: {{if eq $env "prod"}} "https://data.terra.bio"
           {{else}} {{if eq $env "staging" | eq $env "alpha"}} "https://data.{{$env}}.envs-terra.bio"
-          {{else}} {{if eq $env "perf}} "https://jade-perf.datarepo-perf.broadinstitute.org"
+          {{else}} {{if eq $env "perf"}} "https://jade-perf.datarepo-perf.broadinstitute.org"
           {{else}} "https://jade.datarepo-dev.broadinstitute.org"
           {{end}} {{end}} {{end}}
 /swagger-ui.html
