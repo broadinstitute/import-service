@@ -46,12 +46,8 @@ if TYPE_CHECKING:
 
     class Enum(TypeEngine[T]):
         def __init__(self, enum: Type[T]) -> None: ...
-    
-    class JSON(TypeEngine[T]):
-        def __init__(self, json: Type[T]) -> None: ...
 else:
     from sqlalchemy import Enum
-    from sqlalchemy.sql.sqltypes import JSON
 
 
 @enum.unique
@@ -123,7 +119,7 @@ class Import(ImportServiceTable, EqMixin, Base):
     filetype = Column(String(10), nullable=False)
     error_message = Column(String(2048), nullable=True)
     is_upsert = Column(Boolean, nullable=False, default=True)
-    json_attributes = Column(JSON, nullable=True)
+    snapshot_id = Column(String(100), nullable=True)
 
     SNAPSHOT_FIELD_NAME = 'snapshot_id'
 
@@ -149,7 +145,7 @@ class Import(ImportServiceTable, EqMixin, Base):
         self.filetype = filetype
         self.error_message = None
         self.is_upsert = is_upsert
-        self.json_attributes = {}
+        self.snapshot_id = None
 
     @classmethod
     def get(cls, import_id: str, sess: DBSession) -> Import:
@@ -178,12 +174,9 @@ class Import(ImportServiceTable, EqMixin, Base):
 
         update = Import.__table__.update() \
             .where(Import.id == import_job_id) \
-            .values(json_attributes=cls.build_json_dict(snapshot_id))
+            .values(snapshot_id=snapshot_id)
         num_affected_rows = sess.execute(update).rowcount
         return num_affected_rows > 0
-    
-    def get_snapshot_id(self) -> str:
-        return self.json_attributes[Import.SNAPSHOT_FIELD_NAME]
 
     def write_error(self, msg: str) -> None:
         self.error_message = msg
@@ -191,10 +184,3 @@ class Import(ImportServiceTable, EqMixin, Base):
 
     def to_status_response(self) -> ImportStatusResponse:
         return ImportStatusResponse(self.id, self.status.name, self.filetype, self.error_message)
-
-    @staticmethod
-    def build_json_dict(snapshot_id: str):
-        json_dict = {}
-        if (snapshot_id != None):
-            json_dict[Import.SNAPSHOT_FIELD_NAME] = snapshot_id
-        return json_dict

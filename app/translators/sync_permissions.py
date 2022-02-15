@@ -17,13 +17,15 @@ def sync_permissions_if_necessary(import_job_id: str, import_status: ImportStatu
         import_details = Import.get(import_job_id, sess)
 
     # if the import job doesn't come with a snapshot id, don't perform a sync
-    if import_details.get_snapshot_id() == None:
+    snapshot_id = import_details.snapshot_id
+    if snapshot_id is None:
         # this should mean we aren't doing a tdr-export
         return # no sync required since no snapshot present
     
-    sync_permissions(import_details)
+    assert snapshot_id is not None
+    sync_permissions(import_details, snapshot_id)
 
-def sync_permissions(import_details: Import):
+def sync_permissions(import_details: Import, snapshot_id: str):
     """get a user's pet token, and use it to sync workspace readers to tdr to give them snapshot read access"""
     # get the proper credentials to call as the user's pet service account
     pet_token = sam.admin_get_pet_token(import_details.workspace_google_project, import_details.submitter)
@@ -31,7 +33,7 @@ def sync_permissions(import_details: Import):
     # call policy group emails and add them as readers to the snapshot
     policy_group_emails: List[str] = get_policy_group_emails(import_details.workspace_uuid, pet_token)
     for policy_group_email in policy_group_emails: 
-        tdr.add_snapshot_policy_member(import_details.get_snapshot_id(), tdr.READER_POLICY_NAME, policy_group_email, pet_token)
+        tdr.add_snapshot_policy_member(snapshot_id, tdr.READER_POLICY_NAME, policy_group_email, pet_token)
 
 def get_policy_group_emails(workspace_id: str, bearer_token: str) -> List[str]:
     """call sam to get all policies, and filter out policy group emails for groups that have read access"""

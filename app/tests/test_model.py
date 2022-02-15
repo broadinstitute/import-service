@@ -97,4 +97,4 @@ def test_save_snapshot_id_exclusively(fake_import: model.Import):
         assert updated
 
         updated_import = model.Import.get(fake_import.id, sess2)
-        assert updated_import.get_snapshot_id() == "fake_snapshot_id"
+        assert updated_import.snapshot_id == "fake_snapshot_id"

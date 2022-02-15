@@ -189,7 +189,7 @@ def test_golden_path_tdr_manifest(fake_import_tdr_manifest, fake_publish_rawls, 
     with db.session_ctx() as sess:
         imp: model.Import = model.Import.get(fake_import_tdr_manifest.id, sess)
         assert imp.status == model.ImportStatus.ReadyForUpsert
-        assert imp.get_snapshot_id() == "9516afec-583f-11ec-bf63-0242ac130002"
+        assert imp.snapshot_id == "9516afec-583f-11ec-bf63-0242ac130002"
 
     # rawls should have been told to do something
     fake_publish_rawls.assert_called_once()
