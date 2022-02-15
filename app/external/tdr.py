@@ -2,6 +2,8 @@ import logging
 import requests
 import os
 
+from app.util.exceptions import AuthorizationException, ISvcException
+
 READER_POLICY_NAME = 'reader'
 
 def add_snapshot_policy_member(snapshot_id: str, policy_name: str, member_email: str, bearer_token: str) -> bool:
@@ -13,10 +15,10 @@ def add_snapshot_policy_member(snapshot_id: str, policy_name: str, member_email:
     )
 
     if resp.ok:
-        return True
+        return
     elif resp.status_code == 403:
         logging.error(f"User doesn't have permissions to share snapshot {snapshot_id} policy {policy_name} with {member_email}")
-        return False
+        raise AuthorizationException(resp.text)
     else:
         logging.error(f"Error syncing snapshot permissions for snapshot {snapshot_id} policy {policy_name}", resp)
-        return False
+        raise ISvcException(resp.text, resp.status_code)
