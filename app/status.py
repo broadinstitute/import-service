@@ -90,7 +90,7 @@ def external_update_status(msg: Dict[str, str]) -> model.ImportStatusResponse:
                 # we may need to sync permissions to tdr if this is a tdr snapshot
                 failed_sync = False
                 try:
-                    sync.sync_permissions_if_necessary(import_id, new_status) 
+                    sync.sync_permissions_if_necessary(imp, new_status) 
                 except Exception as err:
                     failed_sync = True
                     imp.write_error(f"Failed to sync permissions for import {import_id}: {err}")

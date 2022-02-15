@@ -7,14 +7,10 @@ from app.external.sam import list_policies_for_resource, WORKSPACE_RESOURCE
 
 READER_ROLES = ["reader", "writer", "owner", "project-owner"]
 
-def sync_permissions_if_necessary(import_job_id: str, import_status: ImportStatus):
+def sync_permissions_if_necessary(import_details: Import, import_status: ImportStatus):
     """check if the status update is for a tdr snapshot sync that just completed, if yes, sync permissions"""
-    if import_status != ImportStatus.Done:
+    if import_details.status != ImportStatus.Done:
         return # No sync required because import isn't done.
-
-    # get import_job data from db
-    with db.session_ctx() as sess:
-        import_details = Import.get(import_job_id, sess)
 
     # if the import job doesn't come with a snapshot id, don't perform a sync
     snapshot_id = import_details.snapshot_id
