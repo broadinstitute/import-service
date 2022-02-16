@@ -52,6 +52,7 @@ class TDRManifestToRawls(Translator):
                 pt = ParquetTranslator(t, f, import_details, source_snapshot_id, pet_key)
                 yield pt.translate()
 
+    @staticmethod
     def save_snapshot_id(import_id: str, snapshot_id: str):
         """Saves the snapshot id to the DB so we can use it later to sync permissions."""
         with db.session_ctx() as sess:

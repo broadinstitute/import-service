@@ -132,7 +132,7 @@ def list_policies_for_resource(resource_type: str, resource_id: str, bearer_toke
         logging.error(f"User doesn't have permissions to list policies for resource {resource_type}, {resource_id}")
         raise AuthorizationException(resp.text)
     else:
-        logging.error(f"Error calling list_policies_for_resource {resource_type}, {resource_id}: resp.text")
+        logging.error(f"Error calling list_policies_for_resource {resource_type}, {resource_id}: {resp.text}")
         raise ISvcException(resp.text, resp.status_code)
 
 
