@@ -29,7 +29,7 @@ def sync_permissions(import_details: Import, snapshot_id: str):
     # get the proper credentials to call as the user's pet service account
     pet_token = sam.admin_get_pet_token(import_details.workspace_google_project, import_details.submitter)
     # TODO next line for dev/debug only, remove-
-    logging.info("pet token {pet_token}")
+    logging.info(f"pet token {pet_token}")
 
     # call policy group emails and add them as readers to the snapshot
     policy_group_emails: List[str] = get_policy_group_emails(import_details.workspace_uuid, pet_token)
