@@ -102,7 +102,7 @@ def test_tdr_upsert_completed_status(fake_import, client):
             "memberEmails": ["test@broad.io"],
             "actions": ["read"]
     }}]
-    
+
     # monkey patch sam and tdr
     with testutils.patch_request("app.external.sam", "get", 200, json=list_of_policies):
         with testutils.patch_request("app.external.tdr", "post", 200):

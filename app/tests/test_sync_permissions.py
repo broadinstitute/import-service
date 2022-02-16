@@ -37,7 +37,7 @@ def test_no_sync_if_snapshot_import_not_completed(fake_import_tdr_manifest: mode
         mock_sync.assert_not_called()
 
 def test_all_readers_are_synced(fake_import_tdr_manifest: model.Import):
-    with mock.patch("app.external.sam.admin_get_pet_token") as mock_token:
+    with mock.patch("app.external.sam.admin_get_pet_auth_header") as mock_token:
         mock_token.return_value = "fake_token"
         with mock.patch("app.external.sam.list_policies_for_resource") as mock_policies:
             mock_policies.return_value = [

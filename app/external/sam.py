@@ -149,6 +149,10 @@ def admin_get_pet_token(google_project: str, user_email: str) -> str:
     """Use our SA to get a token for this user's pet."""
     return _creds_from_key(admin_get_pet_key(google_project, user_email)).token
 
+def admin_get_pet_auth_header(google_project: str, user_email: str) -> str:
+    """Use our SA to get a token for this user's pet, formatted as an auth header."""
+    return f"Bearer {admin_get_pet_token(google_project, user_email)}"
+
 # Other Terra services have ended up adding a cache here, but given that App Engine VMs spin up and down at will,
 # we may not get enough repeated requests on the same machine for an in-memory cache to be worthwhile.
 def admin_get_pet_key(google_project: str, user_email: str) -> Dict[str, Any]:

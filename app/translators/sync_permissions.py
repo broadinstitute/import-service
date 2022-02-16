@@ -7,7 +7,7 @@ from app.external import sam, tdr
 READER_ROLES = ["reader", "writer", "owner", "project-owner"]
 
 def sync_permissions_if_necessary(import_details: Import, import_status: ImportStatus):
-    """check if the status update is for a tdr snapshot sync that just completed, if yes, sync permissions."""
+    """Check if the status update is for a tdr snapshot sync that just completed, if yes, sync permissions."""
     if import_status != ImportStatus.Done:
         return # No sync required because import isn't done.
 
@@ -25,9 +25,9 @@ def sync_permissions_if_necessary(import_details: Import, import_status: ImportS
     sync_permissions(import_details, snapshot_id)
 
 def sync_permissions(import_details: Import, snapshot_id: str):
-    """get a user's pet token, and use it to sync workspace readers to tdr to give them snapshot read access."""
+    """Get a user's pet token, and use it to sync workspace readers to tdr to give them snapshot read access."""
     # get the proper credentials to call as the user's pet service account
-    pet_token = sam.admin_get_pet_token(import_details.workspace_google_project, import_details.submitter)
+    pet_token = sam.admin_get_pet_auth_header(import_details.workspace_google_project, import_details.submitter)
     # TODO next line for dev/debug only, remove-
     logging.info(f"pet token {pet_token}")
 
@@ -37,7 +37,7 @@ def sync_permissions(import_details: Import, snapshot_id: str):
         tdr.add_snapshot_policy_member(snapshot_id, tdr.READER_POLICY_NAME, policy_group_email, pet_token)
 
 def get_policy_group_emails(workspace_id: str, bearer_token: str) -> List[str]:
-    """call sam to get all policies, and filter out policy group emails for groups that have read access."""
+    """Call sam to get all policies, and filter out policy group emails for groups that have read access."""
     policies = sam.list_policies_for_resource(sam.WORKSPACE_RESOURCE, workspace_id, bearer_token)
 
     reader_policies = filter(lambda policy: len(set(policy.policy.roles).intersection(set(READER_ROLES))) > 0, policies)
