@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 import os
 
 import jsonschema
@@ -77,7 +76,7 @@ def get_user_action_on_resource(resource_type: str, resource_id: str, action: st
         raise ISvcException(resp.text, resp.status_code)
 
 def list_policies_for_resource(resource_type: str, resource_id: str, bearer_token: str) -> List[PolicyResponse]:
-    """Returns a list of the policies for a resource"""
+    """Returns a list of the policies for a resource."""
     schema = {
         "$schema": "http://json-schema.org/draft-04/schema#",
         "type": "array",
@@ -133,7 +132,7 @@ def list_policies_for_resource(resource_type: str, resource_id: str, bearer_toke
         logging.error(f"User doesn't have permissions to list policies for resource {resource_type}, {resource_id}")
         raise AuthorizationException(resp.text)
     else:
-        logging.error(f"Error calling list_policies_for_resource {resource_type}, {resource_id}", resp)
+        logging.error(f"Error calling list_policies_for_resource {resource_type}, {resource_id}: resp.text")
         raise ISvcException(resp.text, resp.status_code)
 
 

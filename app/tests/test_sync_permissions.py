@@ -51,4 +51,4 @@ def test_all_readers_are_synced(fake_import_tdr_manifest: model.Import):
                 mock_token.assert_called_once_with(fake_import_tdr_manifest.workspace_google_project, fake_import_tdr_manifest.submitter)
                 mock_policies.assert_called_once_with("workspace", fake_import_tdr_manifest.workspace_uuid, "fake_token")
                 mock_tdr_sync.assert_called_with("12_34", "reader", "b@broad.io", "fake_token")
-                assert mock_tdr_sync.call_count is 2
+                assert mock_tdr_sync.call_count == 2

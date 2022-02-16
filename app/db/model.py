@@ -9,7 +9,6 @@ from sqlalchemy import Column, DateTime, String
 from sqlalchemy.schema import Table
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import validates
-from sqlalchemy.sql.expression import update
 from sqlalchemy.sql.sqltypes import Boolean
 from sqlalchemy_repr import RepresentableBase
 from app.db import DBSession
@@ -156,7 +155,6 @@ class Import(ImportServiceTable, EqMixin, Base):
     def update_status_exclusively(cls, id: str, current_status: ImportStatus, new_status: ImportStatus, sess: DBSession) -> bool:
         """Given an object in status current_status, flip it to new_status and return True
         only if someone didn't steal the object meanwhile."""
-
         logging.info(f"Attempting to update import {id} status from {current_status} to {new_status} ...")
 
         update = Import.__table__.update() \
@@ -165,11 +163,10 @@ class Import(ImportServiceTable, EqMixin, Base):
             .values(status=new_status)
         num_affected_rows = sess.execute(update).rowcount
         return num_affected_rows > 0
-    
+
     @classmethod
     def save_snapshot_id_exclusively(cls, import_job_id: str, snapshot_id: str, sess: DBSession) -> bool:
         """Given a snapshot id, save it to the import record, recording it in the json_attributes field."""
-
         logging.info(f"Attempting to save snapshot id {snapshot_id} for import {import_job_id} ...")
 
         update = Import.__table__.update() \

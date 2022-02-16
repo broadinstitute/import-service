@@ -11,7 +11,7 @@ import pandas as pd
 import pyarrow
 import pyarrow.parquet as pq
 from app.db import db
-from app.db.model import Import, ImportStatus
+from app.db.model import Import
 from app.external import gcs, sam
 from app.external.rawls_entity_model import (AddListMember, AddUpdateAttribute,
                                              AttributeOperation,
@@ -38,7 +38,7 @@ class TDRManifestToRawls(Translator):
         source_snapshot_id = parsed_manifest.get_snapshot_id()
 
         ## Save the snapshot id, so we can sync permissions to it when we are notified of a successful import
-        self.save_snapshot_id(import_details.id, source_snapshot_id)
+        TDRManifestToRawls.save_snapshot_id(import_details.id, source_snapshot_id)
 
         tables = parsed_manifest.get_tables()
         return itertools.chain(*self.translate_tables(import_details, source_snapshot_id, tables))
@@ -51,8 +51,8 @@ class TDRManifestToRawls(Translator):
             for f in t.parquet_files:
                 pt = ParquetTranslator(t, f, import_details, source_snapshot_id, pet_key)
                 yield pt.translate()
-    
-    def save_snapshot_id(self, import_id: str, snapshot_id: str):
+
+    def save_snapshot_id(import_id: str, snapshot_id: str):
         """Saves the snapshot id to the DB so we can use it later to sync permissions."""
         with db.session_ctx() as sess:
             update_successful = Import.save_snapshot_id_exclusively(import_id, snapshot_id, sess)

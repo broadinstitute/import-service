@@ -3,7 +3,7 @@ import unittest.mock as mock
 
 from app import translate
 from app.db import db
-from app.db.model import *
+from app.db.model import Import, ImportStatus
 from app.server.requestutils import PUBSUB_STATUS_NOTOK
 from app.tests import testutils
 
@@ -89,14 +89,14 @@ def test_tdr_upsert_completed_status(fake_import, client):
     """External service moves import from existing status to wherever."""
     with db.session_ctx() as sess:
         sess.add(fake_import)
-    
+
     with db.session_ctx() as sess2:
         Import.save_snapshot_id_exclusively(fake_import.id, "fake_snapshot_id", sess2)
 
     # sam return a list of policies
     list_of_policies = [{
-        "email": "testtest@broad.io", 
-        "policyName": "readerThing", 
+        "email": "testtest@broad.io",
+        "policyName": "readerThing",
         "policy": {
             "roles": ["owner"],
             "memberEmails": ["test@broad.io"],

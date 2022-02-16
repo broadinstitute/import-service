@@ -69,7 +69,7 @@ def test_list_policies_for_resource():
         with pytest.raises(exceptions.ISvcException) as excinfo:
             sam.list_policies_for_resource("resourceType", "some_id", "ya29.bearer_token")
             assert excinfo.value.http_status == 403
-    
+
     # sam returns wrong json
     with testutils.patch_request("app.external.sam", "get", 200, json=[1, 2, 3]):  # numbers not objects
         with pytest.raises(jsonschema.ValidationError):
@@ -77,16 +77,16 @@ def test_list_policies_for_resource():
 
     # sam return a list of policies
     list_of_policies = [{
-        "email": "testtest@broad.io", 
-        "policyName": "readerThing", 
+        "email": "testtest@broad.io",
+        "policyName": "readerThing",
         "policy": {
             "roles": ["owner"],
             "memberEmails": ["test@broad.io"],
             "actions": ["read"]
         }}]
-    
+
     list_response = [sam.PolicyResponse(
-        policyName="readerThing", 
+        policyName="readerThing",
         policy=sam.Policy(memberEmails=["test@broad.io"], actions=["read"], roles=["owner"]),
         email="testtest@broad.io"
     )]
