@@ -20,6 +20,8 @@ def sync_permissions_if_necessary(import_details: Import, import_status: ImportS
         return # no sync required since no snapshot present
 
     assert snapshot_id is not None
+
+    logging.info(f"Syncing permissions for import {import_details.id} for snapshot {snapshot_id}")
     sync_permissions(import_details, snapshot_id)
 
 def sync_permissions(import_details: Import, snapshot_id: str):
