@@ -125,6 +125,7 @@ def list_policies_for_resource(resource_type: str, resource_id: str, bearer_toke
     )
 
     if resp.ok:
+        logging.info(f"sam list_policies_for_resource succeeded for resource {resource_type} {resource_id}")
         policies = resp.json()
         jsonschema.validate(policies, schema=schema)
         return list(map(PolicyResponse.parse_obj, policies))

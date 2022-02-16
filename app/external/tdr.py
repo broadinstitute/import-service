@@ -15,6 +15,7 @@ def add_snapshot_policy_member(snapshot_id: str, policy_name: str, member_email:
     )
 
     if resp.ok:
+        logging.info(f"tdr add_snapshot_policy_reader succeeded for policy {policy_name} snapshot {snapshot_id}, new member {member_email}")
         return
     elif resp.status_code == 403:
         logging.error(f"User doesn't have permissions to share snapshot {snapshot_id} policy {policy_name} with {member_email}")

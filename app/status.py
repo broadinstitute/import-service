@@ -93,7 +93,7 @@ def external_update_status(msg: Dict[str, str]) -> model.ImportStatusResponse:
                     sync.sync_permissions_if_necessary(imp, new_status) 
                 except Exception as err:
                     failed_sync = True
-                    imp.write_error(f"Failed to sync permissions for import {import_id}: {err}")
+                    imp.write_error(f"All data imported successfully, but failed to synchronize permissions for import {import_id}: {err}")
                 if not failed_sync:
                     model.Import.update_status_exclusively(import_id, imp.status, new_status, sess)
 
