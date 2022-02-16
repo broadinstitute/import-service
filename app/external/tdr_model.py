@@ -1,6 +1,6 @@
 ## Pydantic model for TDR Manifest file, generated using https://github.com/koxudaxi/datamodel-code-generator
 ## TODO: remove in favor of tdr-client swagger definition https://broadworkbench.atlassian.net/browse/AJ-221
-from typing import Any, List
+from typing import Any, List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -14,7 +14,7 @@ class StorageItem(BaseModel):
 class Dataset(BaseModel):
     id: str
     name: str
-    description: str
+    description: Optional[str]
     defaultProfileId: str
     createdDate: str
     storage: List[StorageItem]
@@ -27,7 +27,7 @@ class SourceItem(BaseModel):
 
 class Column(BaseModel):
     name: str
-    datatype: str
+    datatype: Optional[str]
     array_of: bool
 
 

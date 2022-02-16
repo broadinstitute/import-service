@@ -118,6 +118,9 @@ class Import(ImportServiceTable, EqMixin, Base):
     filetype = Column(String(10), nullable=False)
     error_message = Column(String(2048), nullable=True)
     is_upsert = Column(Boolean, nullable=False, default=True)
+    snapshot_id = Column(String(100), nullable=True)
+
+    SNAPSHOT_FIELD_NAME = 'snapshot_id'
 
     @validates('error_message')
     def truncate(self, key, value):
@@ -141,6 +144,7 @@ class Import(ImportServiceTable, EqMixin, Base):
         self.filetype = filetype
         self.error_message = None
         self.is_upsert = is_upsert
+        self.snapshot_id = None
 
     @classmethod
     def get(cls, import_id: str, sess: DBSession) -> Import:
@@ -151,13 +155,23 @@ class Import(ImportServiceTable, EqMixin, Base):
     def update_status_exclusively(cls, id: str, current_status: ImportStatus, new_status: ImportStatus, sess: DBSession) -> bool:
         """Given an object in status current_status, flip it to new_status and return True
         only if someone didn't steal the object meanwhile."""
-
         logging.info(f"Attempting to update import {id} status from {current_status} to {new_status} ...")
 
         update = Import.__table__.update() \
             .where(Import.id == id) \
             .where(Import.status == current_status) \
             .values(status=new_status)
+        num_affected_rows = sess.execute(update).rowcount
+        return num_affected_rows > 0
+
+    @classmethod
+    def save_snapshot_id_exclusively(cls, import_job_id: str, snapshot_id: str, sess: DBSession) -> bool:
+        """Given a snapshot id, save it to the import record, recording it in the json_attributes field."""
+        logging.info(f"Attempting to save snapshot id {snapshot_id} for import {import_job_id} ...")
+
+        update = Import.__table__.update() \
+            .where(Import.id == import_job_id) \
+            .values(snapshot_id=snapshot_id)
         num_affected_rows = sess.execute(update).rowcount
         return num_affected_rows > 0
 

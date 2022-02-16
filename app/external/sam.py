@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Optional
 
 from google.auth.transport import requests as grequests
 from google.oauth2 import service_account
+from pydantic import BaseModel
 
 from app.util.exceptions import AuthorizationException, ISvcException
 from app.auth.userinfo import UserInfo
@@ -16,6 +17,18 @@ DEFAULT_PET_SCOPES = [
     "https://www.googleapis.com/auth/userinfo.email",
     "https://www.googleapis.com/auth/userinfo.profile"
 ]
+WORKSPACE_RESOURCE = "workspace"
+
+
+class Policy(BaseModel):
+    memberEmails: List[str]
+    actions: List[str]
+    roles: List[str]
+
+class PolicyResponse(BaseModel):
+    policyName: str
+    policy: Policy
+    email: str
 
 
 def validate_user(bearer_token: str) -> UserInfo:
@@ -62,6 +75,66 @@ def get_user_action_on_resource(resource_type: str, resource_id: str, action: st
         logging.debug(f"Got {resp.status_code} from Sam while checking {action} on resource {resource_type}/{resource_id}: {resp.text}")
         raise ISvcException(resp.text, resp.status_code)
 
+def list_policies_for_resource(resource_type: str, resource_id: str, bearer_token: str) -> List[PolicyResponse]:
+    """Returns a list of the policies for a resource."""
+    schema = {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "type": "array",
+        "items": [
+            {
+                "type": "object",
+                "properties": {
+                    "policyName": { "type": "string" },
+                    "policy": {
+                        "type": "object",
+                        "properties": {
+                            "memberEmails": {
+                                "type": "array",
+                                "items": [{ "type": "string" }]
+                            },
+                            "actions": {
+                                "type": "array",
+                                "items": [{ "type": "string" }]
+                            },
+                            "roles": {
+                                "type": "array",
+                                "items": [{ "type": "string" }]
+                            }
+                        },
+                        "required": [
+                            "memberEmails",
+                            "actions",
+                            "roles"
+                        ]
+                    },
+                    "email": { "type": "string" }
+                },
+                "required": [
+                    "policyName",
+                    "policy",
+                    "email"
+                ]
+            }
+        ]
+    }
+
+    resp = requests.get(
+        f"{os.environ.get('SAM_URL')}/api/resources/v2/{resource_type}/{resource_id}/policies",
+        headers={"Authorization": bearer_token}
+    )
+
+    if resp.ok:
+        logging.info(f"sam list_policies_for_resource succeeded for resource {resource_type} {resource_id}")
+        policies = resp.json()
+        jsonschema.validate(policies, schema=schema)
+        return list(map(PolicyResponse.parse_obj, policies))
+    elif resp.status_code == 403:
+        logging.error(f"User doesn't have permissions to list policies for resource {resource_type}, {resource_id}")
+        raise AuthorizationException(resp.text)
+    else:
+        logging.error(f"Error calling list_policies_for_resource {resource_type}, {resource_id}: {resp.text}")
+        raise ISvcException(resp.text, resp.status_code)
+
 
 def _creds_from_key(key_info: dict, scopes: Optional[List[str]] = None) -> service_account.Credentials:
     """Given a service account key dict from Sam, turn it into a set of Credentials, refreshed with the specified scopes."""
@@ -75,6 +148,10 @@ def _creds_from_key(key_info: dict, scopes: Optional[List[str]] = None) -> servi
 def admin_get_pet_token(google_project: str, user_email: str) -> str:
     """Use our SA to get a token for this user's pet."""
     return _creds_from_key(admin_get_pet_key(google_project, user_email)).token
+
+def admin_get_pet_auth_header(google_project: str, user_email: str) -> str:
+    """Use our SA to get a token for this user's pet, formatted as an auth header."""
+    return f"Bearer {admin_get_pet_token(google_project, user_email)}"
 
 # Other Terra services have ended up adding a cache here, but given that App Engine VMs spin up and down at will,
 # we may not get enough repeated requests on the same machine for an in-memory cache to be worthwhile.

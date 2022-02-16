@@ -1,5 +1,4 @@
 import flask
-import json
 import logging
 from sqlalchemy.orm.exc import NoResultFound
 from typing import Dict, List
@@ -8,6 +7,7 @@ from app.auth import user_auth
 from app.db import db, model
 from app.db.model import ImportStatus
 from app.external import sam
+from app.translators import sync_permissions as sync
 from app.util import exceptions
 
 
@@ -86,7 +86,16 @@ def external_update_status(msg: Dict[str, str]) -> model.ImportStatusResponse:
                 imp.write_error(msg.get("error_message", "External service set this import to Error"))
             else:
                 current_status: ImportStatus = ImportStatus.from_string(msg["current_status"])
-                update_successful = model.Import.update_status_exclusively(import_id, imp.status, new_status, sess)
+
+                # we may need to sync permissions to tdr if this is a tdr snapshot
+                failed_sync = False
+                try:
+                    sync.sync_permissions_if_necessary(imp, new_status)
+                except Exception as err:
+                    failed_sync = True
+                    imp.write_error(f"All data imported successfully, but failed to synchronize permissions for import {import_id}: {err}")
+                if not failed_sync:
+                    model.Import.update_status_exclusively(import_id, imp.status, new_status, sess)
 
     if not update_successful:
         logging.warning(f"Failed to update status for import {import_id}: wanted {current_status}->{new_status}, actually {imp.status}.")
