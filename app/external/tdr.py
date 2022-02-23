@@ -21,5 +21,5 @@ def add_snapshot_policy_member(snapshot_id: str, policy_name: str, member_email:
         logging.error(f"User doesn't have permissions to share snapshot {snapshot_id} policy {policy_name} with {member_email}")
         raise AuthorizationException(resp.text)
     else:
-        logging.error(f"Error syncing snapshot permissions for snapshot {snapshot_id} policy {policy_name}", resp)
+        logging.error(f"Error syncing snapshot permissions for snapshot {snapshot_id} policy {policy_name}: {resp.text}")
         raise ISvcException(resp.text, resp.status_code)
