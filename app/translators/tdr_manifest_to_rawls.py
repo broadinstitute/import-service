@@ -127,7 +127,7 @@ class ParquetTranslator:
         """Convert a single cell of a pandas dataframe - assumed from a Parquet file - to an AddUpdateAttribute."""
         # add all attributes to the "tdr:" namespace to avoid  conflicts,
         # e.g. with {entity_type}_id which is a is a reserved name in Rawls.
-        usable_name = f'{namespace}:{name}'
+        usable_name = f'{namespace}:{name}' if ParquetTranslator.prefix_required(name, namespace, self.table.name, self.table.primary_key) else name
 
         # Check if value is a reference, check if it's an array for finding ops
         is_reference = name in self.table.reference_attrs
@@ -165,3 +165,11 @@ class ParquetTranslator:
                 # natively serializable into JSON, such as Timestamps. Inspect the types we know about,
                 # and str() the rest of them.
                 return str(value)
+    
+    # only add TDR namespace if needed. See this doc: 
+    # https://docs.google.com/document/d/1_dEbPtgF7eeYUNRFK6CDUqeGWtiE9ISeTlfjSEtl-FA
+    @staticmethod
+    def prefix_required(name: str, namespace: str, table_name: str, primary_key: str) -> bool: 
+        return namespace != 'tdr' \
+            or name == 'name' \
+            or (name.endswith('_id') and name[:-3] == table_name and name != primary_key)
