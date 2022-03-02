@@ -31,6 +31,7 @@ def sync_permissions(import_details: Import, snapshot_id: str):
 
     # call policy group emails and add them as readers to the snapshot
     policy_group_emails: List[str] = get_policy_group_emails(import_details.workspace_uuid, pet_token)
+    logging.info(f"Found {len(policy_group_emails)} policy groups to sync for import {import_details.id} for snapshot {snapshot_id}")
     for policy_group_email in policy_group_emails:
         tdr.add_snapshot_policy_member(snapshot_id, tdr.READER_POLICY_NAME, policy_group_email, pet_token)
 
