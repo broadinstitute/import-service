@@ -286,7 +286,7 @@ def test_if_namespace_prefix_will_be_added():
 
     # prefix is always required for 'name'
     assert ParquetTranslator.prefix_required('name', tdr_namespace, 'any', 'anykey')
-    
+
     # prefix is required if it's not the primary key but is tableName_id
     assert ParquetTranslator.prefix_required('sample_id', tdr_namespace, 'sample', 'notsample_id')
 

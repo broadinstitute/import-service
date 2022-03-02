@@ -165,11 +165,11 @@ class ParquetTranslator:
                 # natively serializable into JSON, such as Timestamps. Inspect the types we know about,
                 # and str() the rest of them.
                 return str(value)
-    
-    # only add TDR namespace if needed. See this doc: 
+
+    # only add TDR namespace if needed. See this doc:
     # https://docs.google.com/document/d/1_dEbPtgF7eeYUNRFK6CDUqeGWtiE9ISeTlfjSEtl-FA
     @staticmethod
-    def prefix_required(name: str, namespace: str, table_name: str, primary_key: str) -> bool: 
+    def prefix_required(name: str, namespace: str, table_name: str, primary_key: str) -> bool:
         return namespace != 'tdr' \
             or name == 'name' \
             or (name.endswith('_id') and name[:-3] == table_name and name != primary_key)
