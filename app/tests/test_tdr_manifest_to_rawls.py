@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
+from sqlalchemy import null
 from app.db.model import Import
 from app.external.rawls_entity_model import AddListMember, AddUpdateAttribute, AttributeOperation, \
     CreateAttributeEntityReferenceList, CreateAttributeValueList, Entity, EntityReference, RemoveAttribute
@@ -165,11 +166,12 @@ def test_translate_parquet_attr():
     assert translator.translate_parquet_attr('somethingelse', 123) == [AddUpdateAttribute('somethingelse', 123)]
     assert translator.translate_parquet_attr('datarepo_row_id', 123) == [AddUpdateAttribute('datarepo_row_id', 123)]
 
-    # name should always be namespaced
+    # name and entityType should always be namespaced
     assert translator.translate_parquet_attr('name', 123) == [AddUpdateAttribute('tdr:name', 123)]
+    assert translator.translate_parquet_attr('EnTiTyType', 123) == [AddUpdateAttribute('tdr:EnTiTyType', 123)]
 
     # import should always be namespaced
-    assert translator.translate_parquet_attr('fake_timestamp', 123, 'import') == [AddUpdateAttribute('import:fake_timestamp', 123)]
+    assert translator.translate_parquet_attr('import:fake_timestamp', 123) == [AddUpdateAttribute('import:fake_timestamp', 123)]
 
     assert translator.translate_parquet_attr('foo', True) == [AddUpdateAttribute('foo', True)]
     assert translator.translate_parquet_attr('foo', 'astring') == [AddUpdateAttribute('foo', 'astring')]
@@ -279,20 +281,25 @@ def test_actual_parquet_file_with_NaN():
         assert_attr_value(e.operations, 'Population_Description', 'British in England and Scotland') # String, contains 'British in England and Scotland' in BQ
 
 def test_if_namespace_prefix_will_be_added():
-    tdr_namespace = 'tdr'
+    # no additional prefix required if a prefix is already present to make this valid
+    assert not ParquetTranslator.prefix_required('import:name', 'any', 'anykey')
 
-    # prefix is always required for the import prefix (or other non-tdr prefixes)
-    assert ParquetTranslator.prefix_required('fake_timestamp', 'import', 'any', 'anykey')
-
-    # prefix is always required for 'name'
-    assert ParquetTranslator.prefix_required('name', tdr_namespace, 'any', 'anykey')
+    # prefix is always required for 'name' and 'entityType'
+    assert ParquetTranslator.prefix_required('name',  'any', 'anykey')
+    assert ParquetTranslator.prefix_required('entityType',  'any', 'anykey')
+    assert ParquetTranslator.prefix_required('nAmE',  'any', 'anykey')
 
     # prefix is required if it's not the primary key but is tableName_id
-    assert ParquetTranslator.prefix_required('sample_id', tdr_namespace, 'sample', 'notsample_id')
+    assert ParquetTranslator.prefix_required('sample_id',  'sample', 'notsample_id')
+    assert ParquetTranslator.prefix_required('sample_ID',  'sample', 'notsample_id')
+    assert ParquetTranslator.prefix_required('sample_id',  'sample', None)
 
     # otherwise no prefix!
-    assert not ParquetTranslator.prefix_required('sample_id', tdr_namespace, 'sample', 'sample_id')
-    assert not ParquetTranslator.prefix_required('aliquot_id', tdr_namespace, 'sample', 'sample_id')
-    assert not ParquetTranslator.prefix_required('bam', tdr_namespace, 'sample', 'sample_id')
-    assert not ParquetTranslator.prefix_required('aliquot_id', tdr_namespace, 'sample', 'aliquot_id')
-    assert not ParquetTranslator.prefix_required('sample_id_id', tdr_namespace, 'sample', 'notsample_id')
+    assert not ParquetTranslator.prefix_required('sample_id',  'sample', 'sample_id')
+    assert not ParquetTranslator.prefix_required('aliquot_id',  'sample', 'sample_id')
+    assert not ParquetTranslator.prefix_required('bam',  'sample', 'sample_id')
+    assert not ParquetTranslator.prefix_required('aliquot_id',  'sample', 'aliquot_id')
+    assert not ParquetTranslator.prefix_required('sample_id_id',  'sample', 'notsample_id')
+    assert not ParquetTranslator.prefix_required('sample_ID',  'sample', 'sample_id')
+    assert not ParquetTranslator.prefix_required('sample_ID_id',  'sample', 'notsample_id')
+    assert not ParquetTranslator.prefix_required('aliquot_id',  'sample', None)
