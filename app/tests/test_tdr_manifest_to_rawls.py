@@ -7,7 +7,6 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
-from sqlalchemy import null
 from app.db.model import Import
 from app.external.rawls_entity_model import AddListMember, AddUpdateAttribute, AttributeOperation, \
     CreateAttributeEntityReferenceList, CreateAttributeValueList, Entity, EntityReference, RemoveAttribute
@@ -293,7 +292,6 @@ def test_namespace_added_where_required():
 
     # import should always be namespaced
     assert translator.add_namespace_if_required('import:fake_timestamp') == 'import:fake_timestamp'
-
 
 def test_if_namespace_prefix_will_be_added():
     # no additional prefix required if a prefix is already present to make this valid
