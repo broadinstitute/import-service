@@ -116,18 +116,17 @@ class ParquetTranslator:
     def translate_parquet_row(self, row: pd.Series, column_names: List[str]) -> List[AttributeOperation]:
         """Convert a single row of a pandas dataframe - assumed from a Parquet file - to an Entity."""
         # annotate row with the timestamp of the import
-        tsattr = self.translate_parquet_attr('timestamp', self.import_details.submit_time.isoformat(), 'import')
+        tsattr = self.translate_parquet_attr('import:timestamp', self.import_details.submit_time.isoformat())
         # annotate row with the snapshotid from TDR
-        sourceidattr = self.translate_parquet_attr('snapshot_id', self.source_snapshot_id, 'import')
+        sourceidattr = self.translate_parquet_attr('import:snapshot_id', self.source_snapshot_id)
 
         all_attr_ops = [self.translate_parquet_attr(colname, row[colname]) for colname in column_names]
         return list(itertools.chain(*all_attr_ops, sourceidattr, tsattr))
 
-    def translate_parquet_attr(self, name: str, value, namespace: str = "tdr") -> List[AttributeOperation]:
+    def translate_parquet_attr(self, name: str, value) -> List[AttributeOperation]:
         """Convert a single cell of a pandas dataframe - assumed from a Parquet file - to an AddUpdateAttribute."""
-        # add all attributes to the "tdr:" namespace to avoid  conflicts,
-        # e.g. with {entity_type}_id which is a is a reserved name in Rawls.
-        usable_name = f'{namespace}:{name}'
+        # add attributes to the "tdr:" namespace if needed to avoid  conflicts, like 'name', which is reserved in Rawls
+        usable_name = self.add_namespace_if_required(name)
 
         # Check if value is a reference, check if it's an array for finding ops
         is_reference = name in self.table.reference_attrs
@@ -165,3 +164,19 @@ class ParquetTranslator:
                 # natively serializable into JSON, such as Timestamps. Inspect the types we know about,
                 # and str() the rest of them.
                 return str(value)
+
+    # only add TDR namespace if needed. See this doc:
+    # https://docs.google.com/document/d/1_dEbPtgF7eeYUNRFK6CDUqeGWtiE9ISeTlfjSEtl-FA
+    def add_namespace_if_required(self, name: str) -> str:
+        return f'tdr:{name}' if ParquetTranslator.prefix_required(name, self.table.name, self.table.primary_key) \
+            else name
+
+    @staticmethod
+    def prefix_required(name: str, table_name: str, primary_key: str) -> bool:
+        case_insensitive_name = name.lower()
+        case_insensitive_primary_key = primary_key.lower() if primary_key is not None else None
+        return case_insensitive_name == 'name' \
+            or case_insensitive_name == 'entityType'.lower() \
+            or (case_insensitive_name.endswith('_id') \
+                and case_insensitive_name[:-3] == table_name.lower() \
+                and case_insensitive_name != case_insensitive_primary_key)
