@@ -280,6 +280,21 @@ def test_actual_parquet_file_with_NaN():
         assert_attr_value(e.operations, 'In_Low_Coverage_Pilot', None)  # Boolean, contains null in BQ
         assert_attr_value(e.operations, 'Population_Description', 'British in England and Scotland') # String, contains 'British in England and Scotland' in BQ
 
+def test_namespace_added_where_required():
+    translator = get_fake_parquet_translator()
+    # translator has entityType 'unittest', so 'unittest_id' should be namespaced
+    assert translator.add_namespace_if_required('unittest_id') == 'tdr:unittest_id'
+    assert translator.add_namespace_if_required('somethingelse') == 'somethingelse'
+    assert translator.add_namespace_if_required('datarepo_row_id') == 'datarepo_row_id'
+
+    # name and entityType should always be namespaced
+    assert translator.add_namespace_if_required('name') == 'tdr:name'
+    assert translator.add_namespace_if_required('EnTiTyType') == 'tdr:EnTiTyType'
+
+    # import should always be namespaced
+    assert translator.add_namespace_if_required('import:fake_timestamp') == 'import:fake_timestamp'
+
+
 def test_if_namespace_prefix_will_be_added():
     # no additional prefix required if a prefix is already present to make this valid
     assert not ParquetTranslator.prefix_required('import:name', 'any', 'anykey')
