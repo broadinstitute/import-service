@@ -37,7 +37,7 @@ def handle(request: flask.Request, ws_ns: str, ws_name: str) -> model.ImportStat
         except exceptions.AuthorizationException as ae:
             # rewrite the auth error to something nicer
             raise exceptions.AuthorizationException("You must be a workspace Owner or a Writer with Can-Share to " +
-            f"perform this import. Original error message: ${ae.message}")
+            f"perform this import. Original error message: {ae.message}")
     # END additional check specific to tdrexport
 
     # and validate the input's path

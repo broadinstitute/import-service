@@ -1,5 +1,6 @@
 import flask
 import logging
+import traceback
 from sqlalchemy.orm.exc import NoResultFound
 from typing import Dict, List
 
@@ -93,6 +94,7 @@ def external_update_status(msg: Dict[str, str]) -> model.ImportStatusResponse:
                     sync.sync_permissions_if_necessary(imp, new_status)
                 except Exception as err:
                     failed_sync = True
+                    logging.error(f"Error during permission syncing for import {import_id}: {traceback.format_exc()}")
                     imp.write_error(f"All data imported successfully, but failed to synchronize permissions for import {import_id}: {err}")
                 if not failed_sync:
                     model.Import.update_status_exclusively(import_id, imp.status, new_status, sess)
