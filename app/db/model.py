@@ -107,8 +107,8 @@ class Import(ImportServiceTable, EqMixin, Base):
     __tablename__ = 'imports'
 
     id = Column(String(36), primary_key=True)
-    workspace_name = Column(String(100), nullable=False)
-    workspace_namespace = Column(String(100), nullable=False)
+    workspace_name = Column(String(254), nullable=False)
+    workspace_namespace = Column(String(254), nullable=False)
     workspace_uuid = Column(String(36), nullable=False)
     workspace_google_project = Column(String(30), nullable=False)
     submitter = Column(String(100), nullable=False)
