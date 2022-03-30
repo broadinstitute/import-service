@@ -125,6 +125,10 @@ class ParquetTranslator:
 
     def translate_parquet_attr(self, name: str, value) -> List[AttributeOperation]:
         """Convert a single cell of a pandas dataframe - assumed from a Parquet file - to an AddUpdateAttribute."""
+
+        # Don't add an attribute if this is the primary key
+        if name == self.table.primary_key: return []
+
         # add attributes to the "tdr:" namespace if needed to avoid  conflicts, like 'name', which is reserved in Rawls
         usable_name = self.add_namespace_if_required(name)
 
