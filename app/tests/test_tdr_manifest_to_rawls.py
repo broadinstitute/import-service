@@ -286,10 +286,8 @@ def test_actual_parquet_file_with_primary_key_as_tablename():
         entities = list(translator.translate_parquet_file_to_entities(file_like))
         assert len(entities) == 1
         e: Entity = entities[0]
-        print(e)
-        print(e.operations)
-        print(e.name)
         assert len(e.operations) == 5
+        
         # spot-check a few of the attributes
         assert e.name == 'testSample'
         with pytest.raises(StopIteration):
