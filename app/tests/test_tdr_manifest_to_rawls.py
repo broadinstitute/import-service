@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
+import pytest
 from app.db.model import Import
 from app.external.rawls_entity_model import AddListMember, AddUpdateAttribute, AttributeOperation, \
     CreateAttributeEntityReferenceList, CreateAttributeValueList, Entity, EntityReference, RemoveAttribute
@@ -48,8 +49,8 @@ def test_translate_data_frame():
     assert entities[2].entityType == 'unittest'
     assert entities[2].operations == [AddUpdateAttribute('datarepo_row_id', 'c'), AddUpdateAttribute('one', 3), AddUpdateAttribute('two', 'baz'), _import_sourceid(random_snapshot_id), _import_timestamp(now)]
 
-def get_fake_parquet_translator(import_submit_time: datetime = datetime.now()) -> ParquetTranslator:
-    fake_table = TDRTable('unittest', 'datarepo_row_id', [], {'test_ref_column': 'other_entity_type'})
+def get_fake_parquet_translator(import_submit_time: datetime = datetime.now(), table_name: str='unittest', primary_key: str='datarepo_row_id') -> ParquetTranslator:
+    fake_table = TDRTable(table_name, primary_key, [], {'test_ref_column': 'other_entity_type'})
     fake_filelocation = "doesntmatter"
     fake_import_details = Import('workspace_name:', 'workspace_ns', 'workspace_uuid', 'workspace_google_project', 'submitter', 'import_url', 'filetype', True)
     fake_import_details.submit_time = import_submit_time # ensure we know the submit_time
@@ -279,6 +280,34 @@ def test_actual_parquet_file_with_NaN():
         assert_attr_value(e.operations, 'In_Low_Coverage_Pilot', None)  # Boolean, contains null in BQ
         assert_attr_value(e.operations, 'Population_Description', 'British in England and Scotland') # String, contains 'British in England and Scotland' in BQ
 
+def test_actual_parquet_file_with_primary_key_as_tablename():
+    translator = get_fake_parquet_translator(table_name='sample', primary_key='sample_id')
+
+    def find_add_update_attr(ops: Sequence[AttributeOperation], attrname: str) -> AddUpdateAttribute:
+        return next(i for i in ops if isinstance(i, AddUpdateAttribute) and i.attributeName == attrname)
+
+    def assert_attr_value(ops: Sequence[AttributeOperation], attrname: str, expected):
+        attr = find_add_update_attr(e.operations, attrname)
+        assert attr.addUpdateAttribute == expected
+
+    # 1000 Genomes public data. This Parquet file contains one row. That row
+    # contains nulls in float and boolean columns
+    with open('app/tests/resources/short_sample_table.parquet', 'rb') as file_like:
+        entities = list(translator.translate_parquet_file_to_entities(file_like))
+        assert len(entities) == 1
+        e: Entity = entities[0]
+        print(e)
+        print(e.operations)
+        print(e.name)
+        assert len(e.operations) == 6
+        # spot-check a few of the attributes
+        assert e.name == 'testSample'
+        with pytest.raises(StopIteration):
+            find_add_update_attr(e.operations, 'sample_id')
+        assert_attr_value(e.operations, 'tdr:sample_id', 'testSample')
+        assert_attr_value(e.operations, 'other', 'hi')
+        assert_attr_value(e.operations, 'last_attribute', 'bye')
+
 def test_namespace_added_where_required():
     translator = get_fake_parquet_translator()
     # translator has entityType 'unittest', so 'unittest_id' should be namespaced
@@ -295,24 +324,19 @@ def test_namespace_added_where_required():
 
 def test_if_namespace_prefix_will_be_added():
     # no additional prefix required if a prefix is already present to make this valid
-    assert not ParquetTranslator.prefix_required('import:name', 'any', 'anykey')
+    assert not ParquetTranslator.prefix_required('import:name', 'any')
 
     # prefix is always required for 'name' and 'entityType'
-    assert ParquetTranslator.prefix_required('name',  'any', 'anykey')
-    assert ParquetTranslator.prefix_required('entityType',  'any', 'anykey')
-    assert ParquetTranslator.prefix_required('nAmE',  'any', 'anykey')
+    assert ParquetTranslator.prefix_required('name',  'any')
+    assert ParquetTranslator.prefix_required('entityType',  'any')
+    assert ParquetTranslator.prefix_required('nAmE',  'any')
 
     # prefix is required if it's not the primary key but is tableName_id
-    assert ParquetTranslator.prefix_required('sample_id',  'sample', 'notsample_id')
-    assert ParquetTranslator.prefix_required('sample_ID',  'sample', 'notsample_id')
-    assert ParquetTranslator.prefix_required('sample_id',  'sample', None)
+    assert ParquetTranslator.prefix_required('sample_id',  'sample')
+    assert ParquetTranslator.prefix_required('sample_ID',  'sample')
 
     # otherwise no prefix!
-    assert not ParquetTranslator.prefix_required('sample_id',  'sample', 'sample_id')
-    assert not ParquetTranslator.prefix_required('aliquot_id',  'sample', 'sample_id')
-    assert not ParquetTranslator.prefix_required('bam',  'sample', 'sample_id')
-    assert not ParquetTranslator.prefix_required('aliquot_id',  'sample', 'aliquot_id')
-    assert not ParquetTranslator.prefix_required('sample_id_id',  'sample', 'notsample_id')
-    assert not ParquetTranslator.prefix_required('sample_ID',  'sample', 'sample_id')
-    assert not ParquetTranslator.prefix_required('sample_ID_id',  'sample', 'notsample_id')
-    assert not ParquetTranslator.prefix_required('aliquot_id',  'sample', None)
+    assert not ParquetTranslator.prefix_required('aliquot_id',  'sample')
+    assert not ParquetTranslator.prefix_required('bam',  'sample')
+    assert not ParquetTranslator.prefix_required('sample_id_id',  'sample')
+    assert not ParquetTranslator.prefix_required('sample_ID_id',  'sample')
