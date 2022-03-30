@@ -47,6 +47,10 @@ class MethodNotAllowedException(ISvcException):
     def __init__(self, method: str):
         super().__init__(f"Method Not Allowed: {method}", 405)
 
+class GcsFileTooLargeException(ISvcException):
+    def __init__(self, message: str = "GcsFile too large"):
+        super().__init__(message, 413)
+
 
 class InvalidPathException(ISvcException):
     def __init__(self, import_url: Optional[str], user_info: UserInfo, hint: str):
