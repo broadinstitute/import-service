@@ -21,7 +21,7 @@ def open_file(project: str, bucket: str, path: str, submitter: str, auth_key: Di
         path: file name within the bucket
         submitter: Sam user
         auth_key: one of those Google auth key dicts
-        file_limit_bytes: if the file's bytes exceed this value, throw an exception and cease processing
+        file_limit_bytes: if the file's bytes exceed this value (default is 2Gb), throw an exception and cease processing
         gcsfs: Google bucket api--for passing a mock Gcsfs for testing
 
     Returns:
