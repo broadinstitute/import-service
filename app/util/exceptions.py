@@ -19,7 +19,7 @@ class ISvcException(Exception):
         self.retry_pubsub = retry_pubsub
         self.audit_logs = audit_logs if audit_logs else []
         self.imports = imports if imports else []
-
+        super().__init__(message)
 
 class BadJsonException(ISvcException):
     def __init__(self, message, audit_log: bool = True):
