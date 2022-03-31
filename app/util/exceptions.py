@@ -50,6 +50,7 @@ class MethodNotAllowedException(ISvcException):
 class GcsFileTooLargeException(ISvcException):
 
     """When gcs bucket file is too large for us to download/process.
+
     """
     def __init__(self, message: str = "GcsFile too large"):
         """Codacy wants this."""
