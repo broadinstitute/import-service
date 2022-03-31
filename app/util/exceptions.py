@@ -48,10 +48,11 @@ class MethodNotAllowedException(ISvcException):
         super().__init__(f"Method Not Allowed: {method}", 405)
 
 class GcsFileTooLargeException(ISvcException):
-
-    """When gcs bucket file is too large for us to download/process"""
+    """
+    When gcs bucket file is too large for us to download/process.
+    """
     def __init__(self, message: str = "GcsFile too large"):
-        """codacy wants this"""
+        """codacy wants this."""
         super().__init__(message, 413)
 
 
