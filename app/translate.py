@@ -19,7 +19,6 @@ from app.db.model import Import, ImportStatus, ImportStatusResponse
 from app.external import gcs, pubsub
 from app.translators import PFBToRawls, TDRManifestToRawls, Translator
 from app.util import exceptions, http
-from app.util.exceptions import GcsFileTooLargeException
 from app.util.json import StreamArray
 
 # these filetypes get stream-translated
