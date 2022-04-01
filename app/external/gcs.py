@@ -6,7 +6,7 @@ from typing import IO, Any, Dict, Iterator
 from app.external import sam
 from gcsfs.core import GCSFileSystem
 
-from app.util.exceptions import GcsFileTooLargeException
+from app.util.exceptions import FileTooBigToDownlod
 
 
 # convenience function to read a GCS file as a user's pet SA
@@ -24,7 +24,7 @@ def open_file(project: str, bucket: str, path: str, submitter: str, auth_key: Di
     try:
         fs = GCSFileSystem(project=project, token=auth_key) if (gcsfs is None) else gcsfs
         if fs.du(f"{bucket}{path}") > file_limit_bytes:
-            raise GcsFileTooLargeException
+            raise FileTooBigToDownlod
         with fs.open(f"{bucket}{path}") as response:
             yield response
     except Exception as e:
