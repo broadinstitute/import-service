@@ -47,14 +47,17 @@ class MethodNotAllowedException(ISvcException):
     def __init__(self, method: str):
         super().__init__(f"Method Not Allowed: {method}", 405)
 
+
 class FileTooBigToDownlod(ISvcException):
     def __init__(self, message: str = "File too large to download"):
         super().__init__(message, 413)
+
 
 class InvalidPathException(ISvcException):
     def __init__(self, import_url: Optional[str], user_info: UserInfo, hint: str):
         audit_logs = [AuditLog(f"User {user_info.subject_id} {user_info.user_email} attempted to import from path {import_url}", logging.ERROR)]
         super().__init__(f"Path Not Allowed - {hint}: {import_url}", 400, audit_logs=audit_logs)
+
 
 class InvalidFiletypeException(ISvcException):
     def __init__(self, import_filetype: Optional[str], user_info: UserInfo, hint: str):
