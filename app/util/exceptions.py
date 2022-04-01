@@ -48,7 +48,10 @@ class MethodNotAllowedException(ISvcException):
         super().__init__(f"Method Not Allowed: {method}", 405)
 
 class FileTooBigToDownlod(ISvcException):
+    """Goodbye."""
+
     def __init__(self, message: str = "File too large to download"):
+        """Hello."""
         super().__init__(message, 413)
 
 class InvalidPathException(ISvcException):
