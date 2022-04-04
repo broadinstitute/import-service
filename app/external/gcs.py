@@ -23,7 +23,8 @@ def open_file(project: str, bucket: str, path: str, submitter: str, auth_key: Di
 
     try:
         fs = GCSFileSystem(project=project, token=auth_key) if (gcsfs is None) else gcsfs
-        #
+        # du() would seem to be a more straightforward option, but it requires permissions that TDR doesn't grant,
+        # so we use info, if size metadata is not present don't download
         if fs.info(f"{bucket}{path}").get('size', file_limit_bytes) >= file_limit_bytes:
             raise FileTooBigToDownlod
         with fs.open(f"{bucket}{path}") as response:
