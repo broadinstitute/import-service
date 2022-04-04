@@ -49,7 +49,7 @@ class MethodNotAllowedException(ISvcException):
 
 
 class FileTooBigToDownlod(ISvcException):
-    def __init__(self, message: str = "File too large to download"):
+    def __init__(self, message: str = "File too large to download or did not report its size"):
         """Thrown when we detect a file is dangerously large."""
         super().__init__(message, 413)
 

@@ -23,7 +23,8 @@ def open_file(project: str, bucket: str, path: str, submitter: str, auth_key: Di
 
     try:
         fs = GCSFileSystem(project=project, token=auth_key) if (gcsfs is None) else gcsfs
-        if fs.du(f"{bucket}{path}") > file_limit_bytes:
+        #
+        if fs.info(f"{bucket}{path}").get('size', file_limit_bytes) >= file_limit_bytes:
             raise FileTooBigToDownlod
         with fs.open(f"{bucket}{path}") as response:
             yield response
