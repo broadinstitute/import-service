@@ -3,6 +3,7 @@ import traceback
 from contextlib import contextmanager
 from typing import IO, Any, Dict, Iterator
 
+from app.constants import TWO_GB_IN_BYTES
 from app.external import sam
 from gcsfs.core import GCSFileSystem
 
@@ -13,7 +14,7 @@ from app.util.exceptions import FileTooBigToDownlod
 # this method is broken out from translate.py to make it easy to mock in unit tests
 @contextmanager
 def open_file(project: str, bucket: str, path: str, submitter: str, auth_key: Dict[str, Any] = None,
-              file_limit_bytes: int = 2147483648, gcsfs: GCSFileSystem = None) -> Iterator[IO]:
+              file_limit_bytes: int = TWO_GB_IN_BYTES, gcsfs: GCSFileSystem = None) -> Iterator[IO]:
 
     if auth_key:
         logging.debug(f'using supplied auth key to read {path}')
