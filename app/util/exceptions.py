@@ -19,7 +19,7 @@ class ISvcException(Exception):
         self.retry_pubsub = retry_pubsub
         self.audit_logs = audit_logs if audit_logs else []
         self.imports = imports if imports else []
-
+        super().__init__(message)
 
 class BadJsonException(ISvcException):
     def __init__(self, message, audit_log: bool = True):
@@ -48,10 +48,17 @@ class MethodNotAllowedException(ISvcException):
         super().__init__(f"Method Not Allowed: {method}", 405)
 
 
+class FileTooBigToDownlod(ISvcException):
+    def __init__(self, message: str = "File too large to download or did not report its size"):
+        """Thrown when we detect a file is dangerously large."""
+        super().__init__(message, 413)
+
+
 class InvalidPathException(ISvcException):
     def __init__(self, import_url: Optional[str], user_info: UserInfo, hint: str):
         audit_logs = [AuditLog(f"User {user_info.subject_id} {user_info.user_email} attempted to import from path {import_url}", logging.ERROR)]
         super().__init__(f"Path Not Allowed - {hint}: {import_url}", 400, audit_logs=audit_logs)
+
 
 class InvalidFiletypeException(ISvcException):
     def __init__(self, import_filetype: Optional[str], user_info: UserInfo, hint: str):
@@ -63,7 +70,7 @@ class FileTranslationException(ISvcException):
         eid = uuid.uuid4()
         tb = exc.__traceback__
 
-        user_msg = f"Error translating file (eid: {str(eid)}). This file is likely corrupt or contains illegal syntax. " + \
+        user_msg = f"Error translating file (eid: {str(eid)}). This file could be too large or contains illegal syntax. " + \
                    f"Please check your file for validity before trying again. Underlying error message: " + \
                    f"{str(exc)} for file {imprt.import_url}"
 
