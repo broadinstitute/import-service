@@ -56,6 +56,7 @@ class ImportStatus(enum.Enum):
     ReadyForUpsert = 50  # batchUpsert file has been put in bucket and rawls has been notified
     Upserting = 100  # rawls is actively working on importing the batchUpsert file
     Done = 500  # success
+    TimedOut = 99998  # https://broadworkbench.atlassian.net/browse/AJ-354
     Error = 99999  # something bad happened, check the error_message column for details
 
     # NOTE: enums are special python classes where all members are enum instances.
@@ -67,7 +68,7 @@ class ImportStatus(enum.Enum):
 
     @classmethod
     def terminal_statuses(cls):
-        return {cls.Error, cls.Done}
+        return {cls.Error, cls.Done, cls.TimedOut}
 
     @classmethod
     def running_statuses(cls):

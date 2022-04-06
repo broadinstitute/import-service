@@ -4,8 +4,8 @@ import json
 import humps
 from typing import Dict, Callable, Any
 
-from app import new_import, translate, status, health
-from app.db import model
+from app import new_import, translate, status, health, cleanup
+from app.db import model, db
 import app.auth.service_auth
 from app.server.requestutils import httpify_excs, pubsubify_excs
 
@@ -75,6 +75,14 @@ class Health(Resource):
     def get(self):
         """Return whether we and all dependent subsystems are healthy."""
         return health.handle_health_check(), 200
+
+@ns.route('/cleanup-jobs')
+class CleanUp(Resource):
+    @httpify_excs
+    @api.doc(security=None)
+    def get(self):
+        cleanup.clean_up_stale_imports()
+        return "ok"
 
 
 # This particular URL, though weird, can be secured using GCP magic.
