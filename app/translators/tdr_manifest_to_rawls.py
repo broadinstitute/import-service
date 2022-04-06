@@ -126,8 +126,9 @@ class ParquetTranslator:
     def translate_parquet_attr(self, name: str, value) -> List[AttributeOperation]:
         """Convert a single cell of a pandas dataframe - assumed from a Parquet file - to an AddUpdateAttribute."""
 
-        # Don't add an attribute if this is the primary key
-        if name == self.table.primary_key: return []
+        # Don't add an attribute if this is the primary key and the name matches the table name
+        if ParquetTranslator.attribute_name_is_primary_key(name, self.table.primary_key, self.table.name): return []
+        if name == self.table.primary_key and name == self.table.name: return []
 
         # add attributes to the "tdr:" namespace if needed to avoid  conflicts, like 'name', which is reserved in Rawls
         usable_name = self.add_namespace_if_required(name)
@@ -182,3 +183,12 @@ class ParquetTranslator:
             or case_insensitive_name == 'entityType'.lower() \
             or (case_insensitive_name.endswith('_id') \
                 and case_insensitive_name[:-3] == table_name.lower())
+
+    @staticmethod
+    def attribute_name_is_primary_key(name: str, primary_key: str, table_name: str) -> bool:
+        case_insensitive_name = name.lower()
+        case_insensitive_primary_key = primary_key.lower() if primary_key is not None else None
+        return case_insensitive_name == case_insensitive_primary_key \
+            and case_insensitive_name.endswith('_id') \
+            and case_insensitive_name[:-3] == table_name.lower()
+
