@@ -5,7 +5,7 @@ import humps
 from typing import Dict, Callable, Any
 
 from app import new_import, translate, status, health, cleanup
-from app.db import model, db
+from app.db import model
 import app.auth.service_auth
 from app.server.requestutils import httpify_excs, pubsubify_excs
 
