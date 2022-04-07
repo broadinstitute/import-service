@@ -6,6 +6,7 @@ from app.db.model import Import, ImportStatus
 
 def clean_up_stale_imports():
     with db.session_ctx() as sess:
+        # retrieve those jobs still in a 'transient/processing' state after more than 36 hours
         stuck_jobs = sess.execute("""select id, status from imports where status NOT IN ('Error', 'Done', 'TimedOut')
          and HOUR(TIMEDIFF(NOW(), submit_time)) > 36""")
         for job in stuck_jobs:
