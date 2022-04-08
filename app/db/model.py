@@ -3,7 +3,7 @@ from __future__ import annotations
 import enum
 import logging
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional, Dict
 
 from flask_restx import fields
@@ -28,6 +28,7 @@ class ImportServiceTable:
 
 class EqMixin():
     """If you make a SQLAlchemy row class inherit from this, then == will compare column values, not memory location"""
+
     def __eq__(self, other):
         if type(other) is type(self):
             return all(self.__dict__[col] == other.__dict__[col] for col in self.__mapper__.attrs.keys())
@@ -39,9 +40,12 @@ class EqMixin():
 # https://github.com/dropbox/sqlalchemy-stubs/issues/114
 # This is the (gross) workaround. Keep an eye on the issue and get rid of it once it's fixed.
 from typing import TYPE_CHECKING, Type, TypeVar
+
 if TYPE_CHECKING:
     from sqlalchemy.sql.type_api import TypeEngine
+
     T = TypeVar('T')
+
 
     class Enum(TypeEngine[T]):
         def __init__(self, enum: Type[T]) -> None: ...
@@ -101,7 +105,7 @@ class ImportStatusResponse:
             "jobId": fields.String,
             "status": fields.String,
             "filetype": fields.String,
-            "message": fields.String }
+            "message": fields.String}
 
 
 class Import(ImportServiceTable, EqMixin, Base):
@@ -131,7 +135,8 @@ class Import(ImportServiceTable, EqMixin, Base):
             return value[:max_len]
         return value
 
-    def __init__(self, workspace_name: str, workspace_ns: str, workspace_uuid: str, workspace_google_project: str, submitter: str, import_url: str, filetype: str, is_upsert: bool = True):
+    def __init__(self, workspace_name: str, workspace_ns: str, workspace_uuid: str, workspace_google_project: str,
+                 submitter: str, import_url: str, filetype: str, is_upsert: bool = True):
         """Init method for Import model."""
         self.id = str(uuid.uuid4())
         self.workspace_name = workspace_name
@@ -153,14 +158,18 @@ class Import(ImportServiceTable, EqMixin, Base):
         return sess.query(Import).filter(Import.id == import_id).one()
 
     @classmethod
-    def get_stalled_imports(cls, sess: DBSession) -> list[dict]:
+    def get_stalled_imports(cls, sess: DBSession, job_age_hours: int) -> list[Import]:
         """retrieve those jobs still in a 'transient/processing' state after more than 36 hours"""
-        stuck_jobs = sess.execute("""select id, status from imports where status NOT IN ('Error', 'Done', 'TimedOut')
-                 and HOUR(TIMEDIFF(NOW(), submit_time)) > 36""")
-        return [{'id': job['id'], 'status': job['status']} for job in stuck_jobs]
+        return sess.query(Import).filter(Import.status.notin_([ImportStatus.Error, ImportStatus.TimedOut,
+                                                               ImportStatus.Done]),
+                                         # don't put the db in a different tz and start setting the submit_time using
+                                         # db functions, in which case this might no longer measure 36 hours since
+                                         # submission
+                                         Import.submit_time < datetime.now() - timedelta(hours=job_age_hours)).all()
 
     @classmethod
-    def update_status_exclusively(cls, id: str, current_status: ImportStatus, new_status: ImportStatus, sess: DBSession) -> bool:
+    def update_status_exclusively(cls, id: str, current_status: ImportStatus, new_status: ImportStatus,
+                                  sess: DBSession) -> bool:
         """Given an object in status current_status, flip it to new_status and return True
         only if someone didn't steal the object meanwhile."""
         logging.info(f"Attempting to update import {id} status from {current_status} to {new_status} ...")

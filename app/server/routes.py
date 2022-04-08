@@ -82,7 +82,7 @@ class CleanUp(Resource):
     @httpify_excs
     @api.doc(security=None)
     def get(self):
-        cleanup.clean_up_stale_imports()
+        cleanup.clean_up_stale_imports(job_age_hours=36)
         return "ok", 200
 
 
