@@ -125,6 +125,10 @@ class ParquetTranslator:
 
     def translate_parquet_attr(self, name: str, value) -> List[AttributeOperation]:
         """Convert a single cell of a pandas dataframe - assumed from a Parquet file - to an AddUpdateAttribute."""
+
+        # Don't add an attribute if it's the primary key and it has the same name as {tableName}_id
+        if ParquetTranslator.attribute_should_be_skipped(name, self.table.primary_key, self.table.name): return []
+
         # add attributes to the "tdr:" namespace if needed to avoid  conflicts, like 'name', which is reserved in Rawls
         usable_name = self.add_namespace_if_required(name)
 
@@ -168,15 +172,22 @@ class ParquetTranslator:
     # only add TDR namespace if needed. See this doc:
     # https://docs.google.com/document/d/1_dEbPtgF7eeYUNRFK6CDUqeGWtiE9ISeTlfjSEtl-FA
     def add_namespace_if_required(self, name: str) -> str:
-        return f'tdr:{name}' if ParquetTranslator.prefix_required(name, self.table.name, self.table.primary_key) \
+        return f'tdr:{name}' if ParquetTranslator.prefix_required(name, self.table.name) \
             else name
 
     @staticmethod
-    def prefix_required(name: str, table_name: str, primary_key: str) -> bool:
+    def prefix_required(name: str, table_name: str) -> bool:
         case_insensitive_name = name.lower()
-        case_insensitive_primary_key = primary_key.lower() if primary_key is not None else None
         return case_insensitive_name == 'name' \
             or case_insensitive_name == 'entityType'.lower() \
             or (case_insensitive_name.endswith('_id') \
-                and case_insensitive_name[:-3] == table_name.lower() \
-                and case_insensitive_name != case_insensitive_primary_key)
+                and case_insensitive_name[:-3] == table_name.lower())
+
+    @staticmethod
+    def attribute_should_be_skipped(name: str, primary_key: str, table_name: str) -> bool:
+        case_insensitive_name = name.lower()
+        case_insensitive_primary_key = primary_key.lower() if primary_key is not None else None
+        return case_insensitive_name == case_insensitive_primary_key \
+            and case_insensitive_name.endswith('_id') \
+            and case_insensitive_name[:-3] == table_name.lower()
+
