@@ -1,12 +1,13 @@
-import flask
-from flask_restx import Api, Resource, fields
 import json
-import humps
 from typing import Dict, Callable, Any
 
+import flask
+import humps
+from flask_restx import Api, Resource, fields
+
+import app.auth.service_auth
 from app import new_import, translate, status, health, cleanup
 from app.db import model
-import app.auth.service_auth
 from app.server.requestutils import httpify_excs, pubsubify_excs
 
 routes = flask.Blueprint('import-service', __name__)
@@ -82,7 +83,7 @@ class CleanUp(Resource):
     @api.doc(security=None)
     def get(self):
         cleanup.clean_up_stale_imports()
-        return "ok"
+        return "ok", 200
 
 
 # This particular URL, though weird, can be secured using GCP magic.

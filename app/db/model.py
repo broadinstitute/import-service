@@ -4,17 +4,17 @@ import enum
 import logging
 import uuid
 from datetime import datetime
-
-from sqlalchemy import Column, DateTime, String
-from sqlalchemy.schema import Table
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import validates
-from sqlalchemy.sql.sqltypes import Boolean
-from sqlalchemy_repr import RepresentableBase
-from app.db import DBSession
+from typing import Optional, Dict
 
 from flask_restx import fields
-from typing import Optional, Dict
+from sqlalchemy import Column, DateTime, String
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import validates
+from sqlalchemy.schema import Table
+from sqlalchemy.sql.sqltypes import Boolean
+from sqlalchemy_repr import RepresentableBase
+
+from app.db import DBSession
 
 Base = declarative_base(cls=RepresentableBase)  # sqlalchemy magic base class.
 
@@ -51,13 +51,13 @@ else:
 
 @enum.unique
 class ImportStatus(enum.Enum):
-    Pending = 10  # import request received by the user but we haven't done anything with it yet
-    Translating = 20  # in the process of translating to rawls batchUpsert
-    ReadyForUpsert = 50  # batchUpsert file has been put in bucket and rawls has been notified
-    Upserting = 100  # rawls is actively working on importing the batchUpsert file
-    Done = 500  # success
-    TimedOut = 99998  # https://broadworkbench.atlassian.net/browse/AJ-354
-    Error = 99999  # something bad happened, check the error_message column for details
+    Pending = enum.auto()  # import request received by the user but we haven't done anything with it yet
+    Translating = enum.auto()  # in the process of translating to rawls batchUpsert
+    ReadyForUpsert = enum.auto()  # batchUpsert file has been put in bucket and rawls has been notified
+    Upserting = enum.auto()  # rawls is actively working on importing the batchUpsert file
+    Done = enum.auto()  # success
+    TimedOut = enum.auto()  # https://broadworkbench.atlassian.net/browse/AJ-354
+    Error = enum.auto()  # something bad happened, check the error_message column for details
 
     # NOTE: enums are special python classes where all members are enum instances.
     # so doing ALL_STATUSES = [foo, bar, baz] will give you a new enum member call ALL_STATUSES,
@@ -151,6 +151,13 @@ class Import(ImportServiceTable, EqMixin, Base):
     def get(cls, import_id: str, sess: DBSession) -> Import:
         """Used for getting a real, active Import object after closing a session."""
         return sess.query(Import).filter(Import.id == import_id).one()
+
+    @classmethod
+    def get_stalled_imports(cls, sess: DBSession) -> list[dict]:
+        """retrieve those jobs still in a 'transient/processing' state after more than 36 hours"""
+        stuck_jobs = sess.execute("""select id, status from imports where status NOT IN ('Error', 'Done', 'TimedOut')
+                 and HOUR(TIMEDIFF(NOW(), submit_time)) > 36""")
+        return [{'id': job['id'], 'status': job['status']} for job in stuck_jobs]
 
     @classmethod
     def update_status_exclusively(cls, id: str, current_status: ImportStatus, new_status: ImportStatus, sess: DBSession) -> bool:
