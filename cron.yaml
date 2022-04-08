@@ -1,0 +1,4 @@
+cron:
+- description: "mark stalled jobs as TimedOut"
+  url: /cleanup-jobs
+  schedule: every 4 hours
