@@ -159,7 +159,7 @@ class Import(ImportServiceTable, EqMixin, Base):
 
     @classmethod
     def get_stalled_imports(cls, sess: DBSession, job_age_hours: int) -> list[Import]:
-        """retrieve those jobs still in a 'transient/processing' state after more than 36 hours."""
+        """Retrieve those jobs still in a 'transient/processing' state after more than 36 hours."""
         return sess.query(Import).filter(Import.status.notin_([ImportStatus.Error, ImportStatus.TimedOut,
                                                                ImportStatus.Done]),
                                          # don't put the db in a different tz and start setting the submit_time using
