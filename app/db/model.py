@@ -55,6 +55,9 @@ else:
 
 @enum.unique
 class ImportStatus(enum.Enum):
+    # "By default, the auto() class generates a sequence of integer numbers starting from 1."
+    # Be sure to add a new status after the statuses that would proceed it and before those that will
+    # follow it. We only use the enum values to guard against receiving pub/sub messages out of order.
     Pending = enum.auto()  # import request received by the user but we haven't done anything with it yet
     Translating = enum.auto()  # in the process of translating to rawls batchUpsert
     ReadyForUpsert = enum.auto()  # batchUpsert file has been put in bucket and rawls has been notified
@@ -160,8 +163,7 @@ class Import(ImportServiceTable, EqMixin, Base):
     @classmethod
     def get_stalled_imports(cls, sess: DBSession, job_age_hours: int) -> list[Import]:
         """Retrieve those jobs still in a 'transient/processing' state after more than 36 hours."""
-        return sess.query(Import).filter(Import.status.notin_([ImportStatus.Error, ImportStatus.TimedOut,
-                                                               ImportStatus.Done]),
+        return sess.query(Import).filter(Import.status.notin_(ImportStatus.terminal_statuses()),
                                          # don't put the db in a different tz and start setting the submit_time using
                                          # db functions, in which case this might no longer measure job_age_hours
                                          # hours since submission
