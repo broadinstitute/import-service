@@ -3,18 +3,18 @@ from __future__ import annotations
 import enum
 import logging
 import uuid
-from datetime import datetime
-
-from sqlalchemy import Column, DateTime, String
-from sqlalchemy.schema import Table
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import validates
-from sqlalchemy.sql.sqltypes import Boolean
-from sqlalchemy_repr import RepresentableBase
-from app.db import DBSession
+from datetime import datetime, timedelta
+from typing import Optional, Dict
 
 from flask_restx import fields
-from typing import Optional, Dict
+from sqlalchemy import Column, DateTime, String
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import validates
+from sqlalchemy.schema import Table
+from sqlalchemy.sql.sqltypes import Boolean
+from sqlalchemy_repr import RepresentableBase
+
+from app.db import DBSession
 
 Base = declarative_base(cls=RepresentableBase)  # sqlalchemy magic base class.
 
@@ -28,6 +28,7 @@ class ImportServiceTable:
 
 class EqMixin():
     """If you make a SQLAlchemy row class inherit from this, then == will compare column values, not memory location"""
+
     def __eq__(self, other):
         if type(other) is type(self):
             return all(self.__dict__[col] == other.__dict__[col] for col in self.__mapper__.attrs.keys())
@@ -39,9 +40,12 @@ class EqMixin():
 # https://github.com/dropbox/sqlalchemy-stubs/issues/114
 # This is the (gross) workaround. Keep an eye on the issue and get rid of it once it's fixed.
 from typing import TYPE_CHECKING, Type, TypeVar
+
 if TYPE_CHECKING:
     from sqlalchemy.sql.type_api import TypeEngine
+
     T = TypeVar('T')
+
 
     class Enum(TypeEngine[T]):
         def __init__(self, enum: Type[T]) -> None: ...
@@ -51,12 +55,16 @@ else:
 
 @enum.unique
 class ImportStatus(enum.Enum):
-    Pending = 10  # import request received by the user but we haven't done anything with it yet
-    Translating = 20  # in the process of translating to rawls batchUpsert
-    ReadyForUpsert = 50  # batchUpsert file has been put in bucket and rawls has been notified
-    Upserting = 100  # rawls is actively working on importing the batchUpsert file
-    Done = 500  # success
-    Error = 99999  # something bad happened, check the error_message column for details
+    # "By default, the auto() class generates a sequence of integer numbers starting from 1."
+    # Be sure to add a new status after the statuses that would proceed it and before those that will
+    # follow it. We only use the enum values to guard against receiving pub/sub messages out of order.
+    Pending = enum.auto()  # import request received by the user but we haven't done anything with it yet
+    Translating = enum.auto()  # in the process of translating to rawls batchUpsert
+    ReadyForUpsert = enum.auto()  # batchUpsert file has been put in bucket and rawls has been notified
+    Upserting = enum.auto()  # rawls is actively working on importing the batchUpsert file
+    Done = enum.auto()  # success
+    TimedOut = enum.auto()  # https://broadworkbench.atlassian.net/browse/AJ-354
+    Error = enum.auto()  # something bad happened, check the error_message column for details
 
     # NOTE: enums are special python classes where all members are enum instances.
     # so doing ALL_STATUSES = [foo, bar, baz] will give you a new enum member call ALL_STATUSES,
@@ -67,7 +75,7 @@ class ImportStatus(enum.Enum):
 
     @classmethod
     def terminal_statuses(cls):
-        return {cls.Error, cls.Done}
+        return {cls.Error, cls.Done, cls.TimedOut}
 
     @classmethod
     def running_statuses(cls):
@@ -100,7 +108,7 @@ class ImportStatusResponse:
             "jobId": fields.String,
             "status": fields.String,
             "filetype": fields.String,
-            "message": fields.String }
+            "message": fields.String}
 
 
 class Import(ImportServiceTable, EqMixin, Base):
@@ -130,7 +138,8 @@ class Import(ImportServiceTable, EqMixin, Base):
             return value[:max_len]
         return value
 
-    def __init__(self, workspace_name: str, workspace_ns: str, workspace_uuid: str, workspace_google_project: str, submitter: str, import_url: str, filetype: str, is_upsert: bool = True):
+    def __init__(self, workspace_name: str, workspace_ns: str, workspace_uuid: str, workspace_google_project: str,
+                 submitter: str, import_url: str, filetype: str, is_upsert: bool = True):
         """Init method for Import model."""
         self.id = str(uuid.uuid4())
         self.workspace_name = workspace_name
@@ -152,13 +161,23 @@ class Import(ImportServiceTable, EqMixin, Base):
         return sess.query(Import).filter(Import.id == import_id).one()
 
     @classmethod
-    def update_status_exclusively(cls, id: str, current_status: ImportStatus, new_status: ImportStatus, sess: DBSession) -> bool:
+    def get_stalled_imports(cls, sess: DBSession, job_age_hours: int) -> list[Import]:
+        """Retrieve those jobs still in a 'transient/processing' state after more than 36 hours."""
+        return sess.query(Import).filter(Import.status.notin_(ImportStatus.terminal_statuses()),
+                                         # don't put the db in a different tz and start setting the submit_time using
+                                         # db functions, in which case this might no longer measure job_age_hours
+                                         # hours since submission
+                                         Import.submit_time < datetime.now() - timedelta(hours=job_age_hours)).all()
+
+    @classmethod
+    def update_status_exclusively(cls, import_id: str, current_status: ImportStatus, new_status: ImportStatus,
+                                  sess: DBSession) -> bool:
         """Given an object in status current_status, flip it to new_status and return True
         only if someone didn't steal the object meanwhile."""
-        logging.info(f"Attempting to update import {id} status from {current_status} to {new_status} ...")
+        logging.info(f"Attempting to update import {import_id} status from {current_status} to {new_status} ...")
 
         update = Import.__table__.update() \
-            .where(Import.id == id) \
+            .where(Import.id == import_id) \
             .where(Import.status == current_status) \
             .values(status=new_status)
         num_affected_rows = sess.execute(update).rowcount

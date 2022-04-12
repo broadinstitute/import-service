@@ -73,4 +73,4 @@ docker run -v $PWD:/app \
   -w /app \
   --entrypoint "/bin/bash" \
    $CLOUD_SDK_DOCKER_IMG \
-  -c "ls app && gcloud auth activate-service-account --key-file=deployer.json --project=$GOOGLE_PROJECT && gcloud app deploy app.yaml --project=$GOOGLE_PROJECT"
+  -c "ls app && gcloud auth activate-service-account --key-file=deployer.json --project=$GOOGLE_PROJECT && gcloud app deploy app.yaml cron.yaml --project=$GOOGLE_PROJECT"

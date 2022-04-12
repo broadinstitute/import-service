@@ -1,12 +1,13 @@
-import flask
-from flask_restx import Api, Resource, fields
 import json
-import humps
 from typing import Dict, Callable, Any
 
-from app import new_import, translate, status, health
-from app.db import model
+import flask
+import humps
+from flask_restx import Api, Resource, fields
+
 import app.auth.service_auth
+from app import new_import, translate, status, health, cleanup
+from app.db import model
 from app.server.requestutils import httpify_excs, pubsubify_excs
 
 routes = flask.Blueprint('import-service', __name__)
@@ -75,6 +76,14 @@ class Health(Resource):
     def get(self):
         """Return whether we and all dependent subsystems are healthy."""
         return health.handle_health_check(), 200
+
+@ns.route('/cleanup-jobs')
+class CleanUp(Resource):
+    @httpify_excs
+    @api.doc(security=None)
+    def get(self):
+        cleanup.clean_up_stale_imports(job_age_hours=36)
+        return "ok", 200
 
 
 # This particular URL, though weird, can be secured using GCP magic.
