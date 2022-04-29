@@ -7,7 +7,7 @@ from app.constants import TWO_GB_IN_BYTES
 from app.external import sam
 from gcsfs.core import GCSFileSystem
 
-from app.util.exceptions import FileTooBigToDownlod
+from app.util.exceptions import FileTooBigToDownload
 
 
 # convenience function to read a GCS file as a user's pet SA
@@ -27,7 +27,7 @@ def open_file(project: str, bucket: str, path: str, submitter: str, auth_key: Di
         # du() would seem to be a more straightforward option, but it requires permissions that TDR doesn't grant,
         # so we use info, if size metadata is not present don't download
         if fs.info(f"{bucket}{path}").get('size', file_limit_bytes) >= file_limit_bytes:
-            raise FileTooBigToDownlod
+            raise FileTooBigToDownload
         with fs.open(f"{bucket}{path}") as response:
             yield response
     except Exception as e:
