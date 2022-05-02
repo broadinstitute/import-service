@@ -10,7 +10,7 @@ from app.util import exceptions
 @patch('gcsfs.core.GCSFileSystem')
 def test_we_throw_exception_if_file_too_big(mock_gcs):
     mock_gcs.info.return_value = {'size': 101}
-    with pytest.raises(exceptions.FileTooBigToDownlod):
+    with pytest.raises(exceptions.FileTooBigToDownload):
         with gcs.open_file('foo', 'bar', 'path', 'user', file_limit_bytes=100, auth_key={'key': 'val'}, gcsfs=mock_gcs):
             fail("Should have thrown exception just before this")
 
