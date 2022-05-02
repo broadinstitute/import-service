@@ -93,6 +93,11 @@ def fake_pfb() -> Iterator[IO]:
         yield out
 
 @pytest.fixture(scope="function")
+def fake_pfb_with_array() -> Iterator[IO]:
+    with open("app/tests/resources/data_with_array.pfb", 'rb') as out:
+        yield out
+
+@pytest.fixture(scope="function")
 def fake_tdr_manifest() -> Iterator[IO]:
     with open("app/tests/response_1638551384572.json", 'rb') as out:
         yield out
