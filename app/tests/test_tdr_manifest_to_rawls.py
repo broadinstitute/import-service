@@ -280,7 +280,7 @@ def test_actual_parquet_file_with_primary_key_as_tablename():
         return next(i for i in ops if isinstance(i, AddUpdateAttribute) and i.attributeName == attrname)
 
     def assert_attr_value(ops: Sequence[AttributeOperation], attrname: str, expected):
-        attr = find_add_update_attr(e.operations, attrname)
+        attr = find_add_update_attr(ops, attrname)
         assert attr.addUpdateAttribute == expected
 
     # 1000 Genomes public data. This Parquet file contains one row. That row
