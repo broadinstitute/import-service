@@ -53,12 +53,12 @@ class PFBToRawls(Translator):
             else:
                 return [AddUpdateAttribute(key, value)]
 
-        attributes = itertools.chain(*[make_op(key, value)
-                      for key, value in record['object'].items() if value is not None])
+        attributes = [make_op(key, value)
+                      for key, value in record['object'].items() if value is not None]
         relations = [make_op(relation['dst_name'], EntityReference(entityType=relation['dst_name'], entityName=relation['dst_id']))
                      for relation in record['relations']]
 
-        return Entity(name, entity_type, [*attributes, *relations])
+        return Entity(name, entity_type, list(itertools.chain(*attributes, *relations)))
 
     @classmethod
     def b64_decode(cls, encoded_value):
