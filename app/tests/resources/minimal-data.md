@@ -1,6 +1,6 @@
-what's in the minimal_data.pfb file?
+what's in the minimal-data.pfb file?
 
-`pfb show -i app/tests/resources/minimal_data.pfb | jq .`
+`pfb show -i app/tests/resources/minimal-data.pfb | jq .`
 
 returns:
 

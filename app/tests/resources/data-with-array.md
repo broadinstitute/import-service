@@ -1,6 +1,6 @@
-what's in the data_with_array.pfb file?
+what's in the data-with-array.pfb file?
 
-`pfb show -i app/tests/resources/data_with_array.pfb | jq .`
+`pfb show -i app/tests/resources/data-with-array.pfb | jq .`
 
 returns:
 

@@ -10,12 +10,12 @@ from app.translators.pfb_to_rawls import PFBToRawls
 
 @pytest.fixture(scope="function")
 def minimal_data_pfb() -> Iterator[IO]:
-    with open("app/tests/resources/minimal_data.pfb", 'rb') as out:
+    with open("app/tests/resources/minimal-data.pfb", 'rb') as out:
         yield out
 
 @pytest.fixture(scope="function")
 def fake_pfb_with_array() -> Iterator[IO]:
-    with open("app/tests/resources/data_with_array.pfb", 'rb') as out:
+    with open("app/tests/resources/data-with-array.pfb", 'rb') as out:
         yield out
 
 # file-like to ([Entity])
@@ -72,11 +72,11 @@ def test_translate_pfb_file_with_array_to_entities(fake_import, fake_pfb_with_ar
     # that they all work on the 'file_state' property,
     # and that the AddListMembers have the correct values
     start_index = ent.operations.index(RemoveAttribute(array_prop))
-    slice = ent.operations[start_index:start_index+5]
+    actual = ent.operations[start_index:start_index+5]
     expected = [RemoveAttribute(array_prop),
         CreateAttributeValueList(array_prop),
         AddListMember(array_prop, '00000000-0000-0000-0000-000000000000'),
         AddListMember(array_prop, '11111111-1111-1111-1111-111111111111'),
         AddListMember(array_prop, '22222222-2222-2222-2222-222222222222')]
-    assert slice == expected
+    assert actual == expected
 
