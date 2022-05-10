@@ -12,7 +12,7 @@ sqlalchemy==1.4.28
 sqlalchemy-stubs==0.4
 sqlalchemy-repr==0.0.2
 pymysql==1.0.2
-google-cloud-logging==2.7.0
+google-cloud-logging==3.0.0
 google-auth==2.3.3
 google-api-python-client==2.33.0
 google-cloud-pubsub==2.9.0
