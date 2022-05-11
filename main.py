@@ -1,29 +1,9 @@
-import logging, os, sys
+import os
 from app import create_app
 import google.cloud.logging
 
 client = google.cloud.logging.Client()
 client.setup_logging()
-
-
-
-# # Google's suggested integration with Stackdriver logging produces duplicate logs in Stackdriver.
-# # This does it right. See https://stackoverflow.com/a/58655297/2941784
-# if "GAE_APPLICATION" in os.environ:
-#     from google.cloud.logging.handlers import AppEngineHandler
-#     import google.cloud.logging as glogging
-#     client = glogging.Client()
-#     formatter = logging.Formatter("%(module)s.%(funcName)s: %(message)s")
-#     handler = AppEngineHandler(client, stream=sys.stderr)
-#     handler.setFormatter(formatter)
-#     handler.setLevel(logging.INFO)
-#     root = logging.getLogger()
-#     root.addHandler(handler)
-#     root.setLevel(logging.INFO)
-# else:
-#     # For local runs, use normal Python logging (so we don't send all our test logs to Stackdriver!)
-#     logging.basicConfig(format="%(module)s.%(funcName)s: %(message)s", level=logging.INFO)
-
 
 app = create_app()
 
