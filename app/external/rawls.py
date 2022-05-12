@@ -22,7 +22,9 @@ def get_workspace_uuid_and_project(workspace_namespace: str, workspace_name: str
         return RawlsWorkspaceResponse(workspace_id=jso["workspace"]["workspaceId"], google_project=jso["workspace"]["googleProject"])
     else:
         # just pass the error upwards
-        logging.info(f"Got {resp.status_code} from Rawls for {workspace_namespace}/{workspace_name}: {resp.text}")
+        workspace_dict = { 'workspace': { 'namespace': workspace_namespace, 'name': workspace_name} }
+        logging.info(f"Got {resp.status_code} from Rawls for {workspace_namespace}/{workspace_name}: {resp.text}",
+                     extra={"json_fields": workspace_dict})
         raise ISvcException(resp.text, resp.status_code)
 
 def check_workspace_iam_action(workspace_namespace: str, workspace_name: str, action: str, bearer_token: str) -> bool:
