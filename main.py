@@ -1,9 +1,13 @@
-import os
+import logging, os
 from app import create_app
 import google.cloud.logging
 
-client = google.cloud.logging.Client()
-client.setup_logging()
+if "GAE_APPLICATION" in os.environ:
+    client = google.cloud.logging.Client()
+    client.setup_logging()
+else:
+    # For local runs, use normal Python logging (so we don't send all our test logs to Stackdriver!)
+    logging.basicConfig(format="%(module)s.%(funcName)s: %(message)s", level=logging.INFO)
 
 app = create_app()
 
