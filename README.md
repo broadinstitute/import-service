@@ -7,6 +7,8 @@ A walkthrough of the code in this repo is available at [WALKTHROUGH.md](WALKTHRO
 
 ### First time setup
 
+Python version 3.9 is required for import-service to run properly.
+
 Create and activate the Python virtualenvironment:
 
 ```
