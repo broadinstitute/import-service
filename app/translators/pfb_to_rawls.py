@@ -1,9 +1,12 @@
 import base64
-from typing import IO, Iterator, Set, Tuple
+import itertools
+from typing import IO, Iterator, List, Set, Tuple
 
 from app.db.model import Import
-from app.external.rawls_entity_model import (AddUpdateAttribute, Entity,
-                                             EntityReference)
+from app.external.rawls_entity_model import (AddListMember, AddUpdateAttribute,
+                                             AttributeOperation,
+                                             CreateAttributeValueList, Entity,
+                                             EntityReference, RemoveAttribute)
 from app.translators.translator import Translator
 from pfb.reader import PFBReader
 
@@ -32,7 +35,7 @@ class PFBToRawls(Translator):
         entity_type = record['name']
         name = record['id']
 
-        def make_op(key, value):
+        def make_op(key, value) -> List[AttributeOperation]:
             if self.options['b64-decode-enums'] and (entity_type, key) in enums:
                 value = self.b64_decode(value).decode("utf-8")
             if self.options['prefix-object-ids'] and key == 'object_id':
@@ -43,14 +46,19 @@ class PFBToRawls(Translator):
                 key = file_type + ':' + entity_type + '_name'
             else:
                 key = file_type + ':' + key
-            return AddUpdateAttribute(key, value)
+
+            if isinstance(value, list):
+                ops = [AddListMember(key, v) for v in value]
+                return [RemoveAttribute(key), CreateAttributeValueList(key), *ops]
+            else:
+                return [AddUpdateAttribute(key, value)]
 
         attributes = [make_op(key, value)
                       for key, value in record['object'].items() if value is not None]
         relations = [make_op(relation['dst_name'], EntityReference(entityType=relation['dst_name'], entityName=relation['dst_id']))
                      for relation in record['relations']]
 
-        return Entity(name, entity_type, [*attributes, *relations])
+        return Entity(name, entity_type, list(itertools.chain(*attributes, *relations)))
 
     @classmethod
     def b64_decode(cls, encoded_value):
