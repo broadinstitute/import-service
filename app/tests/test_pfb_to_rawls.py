@@ -80,3 +80,24 @@ def test_translate_pfb_file_with_array_to_entities(fake_import, fake_pfb_with_ar
         AddListMember(array_prop, '22222222-2222-2222-2222-222222222222')]
     assert actual == expected
 
+def test_none_values_in_array():
+    translator = PFBToRawls()
+    rec = {
+        'name': 'foo',
+        'id': 'bar',
+        'object': {
+            'arr': [1, None, 2, None, 3, ],
+        },
+        'relations': {}
+    }
+    entity = translator.translate_record(rec, {}, 'pfb')
+
+    expectedops = [
+        RemoveAttribute('pfb:arr'),
+        CreateAttributeValueList('pfb:arr'),
+        AddListMember('pfb:arr', 1),
+        AddListMember('pfb:arr', 2),
+        AddListMember('pfb:arr', 3)
+    ]
+
+    assert entity.operations == expectedops
