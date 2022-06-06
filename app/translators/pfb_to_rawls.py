@@ -48,7 +48,7 @@ class PFBToRawls(Translator):
                 key = file_type + ':' + key
 
             if isinstance(value, list):
-                ops = [AddListMember(key, v) for v in value]
+                ops = [AddListMember(key, v) for v in value if value is not None]
                 return [RemoveAttribute(key), CreateAttributeValueList(key), *ops]
             else:
                 return [AddUpdateAttribute(key, value)]
