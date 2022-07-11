@@ -39,16 +39,9 @@ def test_no_sync_if_snapshot_import_not_completed(fake_import_tdr_manifest: mode
 def test_all_readers_are_synced(fake_import_tdr_manifest: model.Import):
     with mock.patch("app.external.sam.admin_get_pet_auth_header") as mock_token:
         mock_token.return_value = "fake_token"
-        with mock.patch("app.external.sam.list_policies_for_resource") as mock_policies:
-            mock_policies.return_value = [
-                build_fake_policy("a@broad.io", is_reader=True),
-                build_fake_policy("b@broad.io", is_reader=True),
-                build_fake_policy("d@gmail.com", is_reader=False)
-            ]
-            with mock.patch("app.external.tdr.add_snapshot_policy_member") as mock_tdr_sync:
-                sync_permissions(fake_import_tdr_manifest, "12_34")
+        with mock.patch("app.external.sam.add_child_policy_member") as mock_update_policy:
+            sync_permissions(fake_import_tdr_manifest, "12_34")
 
-                mock_token.assert_called_once_with(fake_import_tdr_manifest.workspace_google_project, fake_import_tdr_manifest.submitter)
-                mock_policies.assert_called_once_with("workspace", fake_import_tdr_manifest.workspace_uuid, "fake_token")
-                mock_tdr_sync.assert_called_with("12_34", "reader", "b@broad.io", "fake_token")
-                assert mock_tdr_sync.call_count == 2
+            mock_token.assert_called_once_with(fake_import_tdr_manifest.workspace_google_project, fake_import_tdr_manifest.submitter)
+            mock_update_policy.assert_called_with("datasnapshot", "12_34", "reader", "workspace", "ws_id", "reader", "fake_token")
+            assert mock_update_policy.call_count == 4

@@ -2,7 +2,7 @@ import logging
 from typing import List
 
 from app.db.model import Import, ImportStatus
-from app.external import sam, tdr
+from app.external import sam
 
 READER_ROLES = ["reader", "writer", "owner", "project-owner"]
 
@@ -30,15 +30,7 @@ def sync_permissions(import_details: Import, snapshot_id: str):
     pet_token = sam.admin_get_pet_auth_header(import_details.workspace_google_project, import_details.submitter)
 
     # call policy group emails and add them as readers to the snapshot
-    policy_group_emails: List[str] = get_policy_group_emails(import_details.workspace_uuid, pet_token)
-    logging.info(f"Found {len(policy_group_emails)} policy groups to sync for import {import_details.id} for snapshot {snapshot_id}")
-    for policy_group_email in policy_group_emails:
-        tdr.add_snapshot_policy_member(snapshot_id, tdr.READER_POLICY_NAME, policy_group_email, pet_token)
-
-def get_policy_group_emails(workspace_id: str, bearer_token: str) -> List[str]:
-    """Call sam to get all policies, and filter out policy group emails for groups that have read access."""
-    policies = sam.list_policies_for_resource(sam.WORKSPACE_RESOURCE, workspace_id, bearer_token)
-
-    reader_policies = filter(lambda policy: len(set(policy.policy.roles).intersection(set(READER_ROLES))) > 0, policies)
-    return list(map(lambda policy: policy.email, reader_policies))
+    for reader_role in READER_ROLES:
+        sam.add_child_policy_member("datasnapshot", snapshot_id, sam.READER_POLICY_NAME, 
+        "workspace", import_details.workspace_uuid, reader_role, pet_token)
     
