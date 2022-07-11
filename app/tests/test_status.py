@@ -95,9 +95,10 @@ def test_tdr_upsert_completed_status(fake_import, client):
 
 
     # monkey patch sam
-    with mock.patch("app.external.sam.add_child_policy_member", "post", 200):
-        with mock.patch("app.external.sam.admin_get_pet_token") as mock_token:
-            mock_token.return_value = "fake_token"
+    with mock.patch("app.external.sam.admin_get_pet_auth_header") as mock_token:
+        mock_token.return_value = "fake_token"
+        with mock.patch("app.external.sam.add_child_policy_member") as mock_add_policy:
+            mock_add_policy.return_value = None
             resp = client.post("/_ah/push-handlers/receive_messages",
                             json=testutils.pubsub_json_body({"action": "status", "import_id": fake_import.id,
                                                                 "current_status": "Upserting",
