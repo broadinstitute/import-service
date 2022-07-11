@@ -21,16 +21,6 @@ WORKSPACE_RESOURCE = "workspace"
 
 READER_POLICY_NAME = "reader"
 
-class Policy(BaseModel):
-    memberEmails: List[str]
-    actions: List[str]
-    roles: List[str]
-
-class PolicyResponse(BaseModel):
-    policyName: str
-    policy: Policy
-    email: str
-
 
 def validate_user(bearer_token: str) -> UserInfo:
     schema = {
