@@ -1,5 +1,4 @@
 import logging
-from typing import List
 
 from app.db.model import Import, ImportStatus
 from app.external import sam
@@ -31,6 +30,6 @@ def sync_permissions(import_details: Import, snapshot_id: str):
 
     # call policy group emails and add them as readers to the snapshot
     for reader_role in READER_ROLES:
-        sam.add_child_policy_member("datasnapshot", snapshot_id, sam.READER_POLICY_NAME, 
+        sam.add_child_policy_member("datasnapshot", snapshot_id, sam.READER_POLICY_NAME,
         "workspace", import_details.workspace_uuid, reader_role, pet_token)
     

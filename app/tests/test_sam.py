@@ -73,7 +73,7 @@ def test_add_child_policy_member():
 
     # tdr returns true
     with testutils.patch_request("app.external.sam", "post", 200):
-        sam.add_child_policy_member("datasnapshot", "snapshot_id", "reader", "workspace", 
+        sam.add_child_policy_member("datasnapshot", "snapshot_id", "reader", "workspace",
             "workspace_id", "writer", "ya29.bearer_token")
 
 

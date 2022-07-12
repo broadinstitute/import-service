@@ -7,7 +7,6 @@ from typing import Any, Dict, List, Optional
 
 from google.auth.transport import requests as grequests
 from google.oauth2 import service_account
-from pydantic import BaseModel
 
 from app.util.exceptions import AuthorizationException, ISvcException
 from app.auth.userinfo import UserInfo
@@ -97,11 +96,11 @@ def admin_get_pet_key(google_project: str, user_email: str) -> Dict[str, Any]:
     else:
         logging.debug(f"Got {resp.status_code} from Sam while trying to get pet key for {google_project}/{user_email}: {resp.text}")
         raise ISvcException(resp.text, resp.status_code)
-    
+
 def add_child_policy_member(
-    parent_resource_type: str, parent_resource_id: str, parent_policy_name: str, 
+    parent_resource_type: str, parent_resource_id: str, parent_policy_name: str,
     member_resource_type: str, member_resource_id: str, member_policy_name: str, bearer_token: str) -> None:
-    """Add a member to a policy"""
+    """Add a member to a policy."""
     resp = requests.post(
         f"{os.environ.get('SAM_URL')}/api/resources/v2/{parent_resource_type}/{parent_resource_id}/policies/{parent_policy_name}/ \
                     memberPolicies/{member_resource_type}/{member_resource_id}/{member_policy_name}",
