@@ -65,14 +65,14 @@ def test_get_user_action_on_resource():
 
 def test_add_child_policy_member():
     # tdr returns an false
-    with testutils.patch_request("app.external.sam", "post", 403):
+    with testutils.patch_request("app.external.sam", "put", 403):
         with pytest.raises(exceptions.AuthorizationException) as excinfo:
             sam.add_child_policy_member("datasnapshot", "snapshot_id", "reader", "workspace",
                 "workspace_id", "writer", "ya29.bearer_token")
             assert excinfo.value.http_status == 403
 
     # tdr returns true
-    with testutils.patch_request("app.external.sam", "post", 200):
+    with testutils.patch_request("app.external.sam", "put", 200):
         sam.add_child_policy_member("datasnapshot", "snapshot_id", "reader", "workspace",
             "workspace_id", "writer", "ya29.bearer_token")
 
