@@ -28,18 +28,6 @@ def handle(request: flask.Request, ws_ns: str, ws_name: str) -> model.ImportStat
     import_filetype = request_json["filetype"]
     import_is_upsert = request_json.get("isUpsert", "true") # default to true if missing, to support legacy imports
 
-    # START additional check specific to tdrexport: can the user read the policies for this workspace?
-    # read_policies is used to perform permission syncing between the workspace and the TDR snapshot.
-    # This functionality is under discussion; we may end up removing it.
-    if import_filetype == "tdrexport":
-        try:
-            user_auth.workspace_uuid_and_project_with_auth(ws_ns, ws_name, access_token, "read_policies")
-        except exceptions.AuthorizationException as ae:
-            # rewrite the auth error to something nicer
-            raise exceptions.AuthorizationException("You must be a workspace Owner or a Writer with Can-Share to " +
-            f"perform this import. Original error message: {ae.message}")
-    # END additional check specific to tdrexport
-
     # and validate the input's path
     translate.validate_import_url(import_url, import_filetype, user_info)
 

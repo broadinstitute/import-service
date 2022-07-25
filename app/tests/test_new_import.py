@@ -95,17 +95,6 @@ def mock_auth_for_read_policies(workspace_ns: str, workspace_name: str, bearer_t
     else:
         raise Exception(f"unexpected sam action: ${sam_action}")
 
-@pytest.mark.usefixtures(
-    "sam_valid_user",
-    testutils.fxpatch(
-        "app.auth.user_auth.workspace_uuid_and_project_with_auth",
-        side_effect = mock_auth_for_read_policies))
-def test_user_cant_read_policies_of_workspace(client):
-    # the read_policies check only happens for tdrexport. Ensure the json we use for test is tdrexport:
-    snapshotjson = {"path": f"https://{translate.VALID_NETLOCS[0]}/some/path", "filetype": "tdrexport"}
-    resp = client.post('/namespace/name/imports', json=snapshotjson, headers=good_headers)
-    assert resp.status_code == 456 # normally will return 403, using 456 here for disambiguation
-
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
 def test_is_upsert_defaults_true_when_missing_from_json(client):
     json_payload = {"path": f"https://{translate.VALID_NETLOCS[0]}/some/path", "filetype": "pfb"}
