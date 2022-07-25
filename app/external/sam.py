@@ -101,11 +101,11 @@ def add_child_policy_member(
     parent_resource_type: str, parent_resource_id: str, parent_policy_name: str,
     member_resource_type: str, member_resource_id: str, member_policy_name: str, bearer_token: str) -> None:
     """Add a member to a policy."""
-    logging.info(f"SAM request: /api/resources/v2/{parent_resource_type}/{parent_resource_id}/policies/{parent_policy_name}/ \
-                    memberPolicies/{member_resource_type}/{member_resource_id}/{member_policy_name}")
+    logging.info(f"SAM request: /api/resources/v2/{parent_resource_type}/{parent_resource_id}/policies/{parent_policy_name}/" + \
+                    "memberPolicies/{member_resource_type}/{member_resource_id}/{member_policy_name}")
     resp = requests.put(
-        f"{os.environ.get('SAM_URL')}/api/resources/v2/{parent_resource_type}/{parent_resource_id}/policies/{parent_policy_name}/ \
-                    memberPolicies/{member_resource_type}/{member_resource_id}/{member_policy_name}",
+        f"{os.environ.get('SAM_URL')}/api/resources/v2/{parent_resource_type}/{parent_resource_id}/policies/{parent_policy_name}/" + \
+                    "memberPolicies/{member_resource_type}/{member_resource_id}/{member_policy_name}",
         headers={"Authorization": bearer_token}
     )
 
