@@ -30,6 +30,8 @@ def sync_permissions(import_details: Import, snapshot_id: str):
 
     # call policy group emails and add them as readers to the snapshot
     for reader_role in READER_ROLES:
+        logging.info(f"Adding access to snapshot {snapshot_id} resource for role {reader_role} \
+            on workspace {import_details.workspace_uuid}")
         sam.add_child_policy_member("datasnapshot", snapshot_id, sam.READER_POLICY_NAME,
         "workspace", import_details.workspace_uuid, reader_role, pet_token)
     
