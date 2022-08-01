@@ -63,35 +63,18 @@ def test_get_user_action_on_resource():
         assert sam.get_user_action_on_resource("rtype", "resource_id", "action", "bearer")
 
 
-def test_list_policies_for_resource():
-    # sam returns an error
-    with testutils.patch_request("app.external.sam", "get", 403):
-        with pytest.raises(exceptions.ISvcException) as excinfo:
-            sam.list_policies_for_resource("resourceType", "some_id", "ya29.bearer_token")
+def test_add_child_policy_member():
+    # tdr returns an false
+    with testutils.patch_request("app.external.sam", "put", 403):
+        with pytest.raises(exceptions.AuthorizationException) as excinfo:
+            sam.add_child_policy_member("datasnapshot", "snapshot_id", "reader", "workspace",
+                "workspace_id", "writer", "ya29.bearer_token")
             assert excinfo.value.http_status == 403
 
-    # sam returns wrong json
-    with testutils.patch_request("app.external.sam", "get", 200, json=[1, 2, 3]):  # numbers not objects
-        with pytest.raises(jsonschema.ValidationError):
-            sam.list_policies_for_resource("resourceType", "some_id", "ya29.bearer_token")
-
-    # sam return a list of policies
-    list_of_policies = [{
-        "email": "testtest@broad.io",
-        "policyName": "readerThing",
-        "policy": {
-            "roles": ["owner"],
-            "memberEmails": ["test@broad.io"],
-            "actions": ["read"]
-        }}]
-
-    list_response = [sam.PolicyResponse(
-        policyName="readerThing",
-        policy=sam.Policy(memberEmails=["test@broad.io"], actions=["read"], roles=["owner"]),
-        email="testtest@broad.io"
-    )]
-    with testutils.patch_request("app.external.sam", "get", 200, json=list_of_policies):
-        assert sam.list_policies_for_resource("resourceType", "some_id", "ya29.bearer_token") == list_response
+    # tdr returns true
+    with testutils.patch_request("app.external.sam", "put", 200):
+        sam.add_child_policy_member("datasnapshot", "snapshot_id", "reader", "workspace",
+            "workspace_id", "writer", "ya29.bearer_token")
 
 
 @pytest.mark.usefixtures(

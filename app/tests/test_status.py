@@ -93,25 +93,16 @@ def test_tdr_upsert_completed_status(fake_import, client):
     with db.session_ctx() as sess2:
         Import.save_snapshot_id_exclusively(fake_import.id, "fake_snapshot_id", sess2)
 
-    # sam return a list of policies
-    list_of_policies = [{
-        "email": "testtest@broad.io",
-        "policyName": "readerThing",
-        "policy": {
-            "roles": ["owner"],
-            "memberEmails": ["test@broad.io"],
-            "actions": ["read"]
-    }}]
 
-    # monkey patch sam and tdr
-    with testutils.patch_request("app.external.sam", "get", 200, json=list_of_policies):
-        with testutils.patch_request("app.external.tdr", "post", 200):
-            with mock.patch("app.external.sam.admin_get_pet_token") as mock_token:
-                mock_token.return_value = "fake_token"
-                resp = client.post("/_ah/push-handlers/receive_messages",
-                                json=testutils.pubsub_json_body({"action": "status", "import_id": fake_import.id,
-                                                                    "current_status": "Upserting",
-                                                                    "new_status": "Done"}))
+    # monkey patch sam
+    with mock.patch("app.external.sam.admin_get_pet_auth_header") as mock_token:
+        mock_token.return_value = "fake_token"
+        with mock.patch("app.external.sam.add_child_policy_member") as mock_add_policy:
+            mock_add_policy.return_value = None
+            resp = client.post("/_ah/push-handlers/receive_messages",
+                            json=testutils.pubsub_json_body({"action": "status", "import_id": fake_import.id,
+                                                                "current_status": "Upserting",
+                                                                "new_status": "Done"}))
 
     with db.session_ctx() as sess3:
         imp: Import = Import.get(fake_import.id, sess3)
