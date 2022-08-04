@@ -27,8 +27,9 @@ FILETYPE_TRANSLATORS = {"pfb": PFBToRawls, "tdrexport": TDRManifestToRawls}
 # this filetype is accepted as-is
 FILETYPE_NOTRANSLATION = "rawlsjson"
 
-VALID_NETLOCS = ["s3.amazonaws.com", "storage.googleapis.com", "service.azul.data.humancellatlas.org", "dev.singlecell.gi.ucsc.edu"]
+VALID_NETLOCS = ["s3.amazonaws.com", "storage.googleapis.com", "service.azul.data.humancellatlas.org", "dev.singlecell.gi.ucsc.edu", "core.windows.net"]
 
+VALID_TDR_SCHEMES = ["gs", "https"]
 
 def handle(msg: Dict[str, str]) -> ImportStatusResponse:
     import_id = msg["import_id"]
@@ -58,7 +59,7 @@ def handle(msg: Dict[str, str]) -> ImportStatusResponse:
             logging.info(f"import {import_id} is of type {import_details.filetype}; attempting stream-translate ...")
 
             parsedurl = urlparse(import_details.import_url)
-            if import_details.filetype == "tdrexport" and parsedurl.scheme == "gs":
+            if import_details.filetype == "tdrexport" and parsedurl.scheme in VALID_TDR_SCHEMES:
                 filereader = gcs.open_file(import_details.workspace_google_project, parsedurl.netloc, parsedurl.path, import_details.submitter)
             else:
                 filereader = http.http_as_filelike(import_details.import_url)
@@ -155,7 +156,7 @@ def validate_import_url(import_url: Optional[str], import_filetype: Optional[str
         return True
     elif import_filetype in FILETYPE_TRANSLATORS.keys() and any(actual_netloc.endswith(s) for s in VALID_NETLOCS):
         return True
-    elif import_filetype == "tdrexport" and parsedurl.scheme == "gs":
+    elif import_filetype == "tdrexport" and parsedurl.scheme in VALID_TDR_SCHEMES and any(actual_netloc.endswith(s) for s in VALID_NETLOCS):
         return True
     else:
         logging.warning(f"Unrecognized netloc or bucket for import: [{parsedurl.netloc}] from [{import_url}]")
