@@ -60,7 +60,17 @@ def handle(msg: Dict[str, str]) -> ImportStatusResponse:
 
             parsedurl = urlparse(import_details.import_url)
             if import_details.filetype == "tdrexport" and parsedurl.scheme in VALID_TDR_SCHEMES:
-                filereader = gcs.open_file(import_details.workspace_google_project, parsedurl.netloc, parsedurl.path, import_details.submitter)
+                if parsedurl.scheme == "gs":
+                    filereader = gcs.open_file(import_details.workspace_google_project, parsedurl.netloc, parsedurl.path, import_details.submitter)
+                elif parsedurl.scheme == "https":
+                    filereader = http.http_as_filelike(import_details.import_url)
+                else:
+                    # This state should never be reached since the request is validated when it is first submitted
+                    logging.error(f"unsupported scheme {parsedurl.scheme} provided")
+                    raise exceptions.InvalidPathException(import_details.import_url,
+                                                          UserInfo("---", import_details.submitter, True),
+                                                          "File cannot be imported from this URL.")
+
             else:
                 filereader = http.http_as_filelike(import_details.import_url)
 
