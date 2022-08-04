@@ -10,6 +10,8 @@ import numpy as np
 import pandas as pd
 import pyarrow
 import pyarrow.parquet as pq
+
+from app.auth.userinfo import UserInfo
 from app.db import db
 from app.db.model import Import
 from app.external import gcs, sam
@@ -20,7 +22,9 @@ from app.external.rawls_entity_model import (AddListMember, AddUpdateAttribute,
                                              EntityReference, RemoveAttribute)
 from app.external.tdr_manifest import TDRManifestParser, TDRTable
 from app.translators.translator import Translator
+from app.util import http, exceptions
 
+VALID_AZURE_DOMAIN = "core.windows.net"
 
 class TDRManifestToRawls(Translator):
     def __init__(self, options=None):
@@ -76,11 +80,24 @@ class ParquetTranslator:
     def translate(self) -> Iterator[Entity]:
         """Converts a parquet file, represented as a url, to an iterator of Entity objects."""
         logging.info(f'{self.import_details.id} attempting parquet translation of {self.file_nickname} from {self.filelocation} ...')
-        url = urlparse(self.filelocation)
-        bucket = url.netloc
-        path = url.path
-        with gcs.open_file(self.import_details.workspace_google_project, bucket, path, self.import_details.submitter, self.auth_key) as pqfile:
-            return self.translate_parquet_file_to_entities(pqfile)
+        parsedurl = urlparse(self.filelocation)
+        user_info = UserInfo("---", self.import_details.submitter, True)
+        if (parsedurl.scheme == 'gs'):
+            bucket = parsedurl.netloc
+            path = parsedurl.path
+            with gcs.open_file(self.import_details.workspace_google_project, bucket, path, self.import_details.submitter, self.auth_key) as pqfile:
+                return self.translate_parquet_file_to_entities(pqfile)
+                # raise exceptions.InvalidPathException(path, user_info, f"BOOM {path}")
+        elif (parsedurl.scheme == 'https'):
+            hostname = parsedurl.netloc
+            if not hostname.endswith(VALID_AZURE_DOMAIN):
+                logging.error(f"unsupported domain in url {self.filelocation} provided")
+                raise exceptions.InvalidPathException(self.filelocation, user_info, "Unsupported domain")
+            with http.http_as_filelike(self.filelocation) as pqfile:
+                return self.translate_parquet_file_to_entities(pqfile)
+        else:
+            logging.error(f"unsupported scheme {parsedurl.scheme} provided")
+            raise exceptions.InvalidPathException(self.filelocation, user_info, "Unsupported scheme")
 
     # investigate parquet streaming, instead of reading the whole file into memory
     # BUT, it looks like the export files use random-access binary format, not streaming format,
