@@ -166,7 +166,9 @@ def validate_import_url(import_url: Optional[str], import_filetype: Optional[str
         return True
     elif import_filetype in FILETYPE_TRANSLATORS.keys() and any(actual_netloc.endswith(s) for s in VALID_NETLOCS):
         return True
-    elif import_filetype == "tdrexport" and parsedurl.scheme in VALID_TDR_SCHEMES and any(actual_netloc.endswith(s) for s in VALID_NETLOCS):
+    elif import_filetype == "tdrexport" and parsedurl.scheme == "gs":
+        return True
+    elif import_filetype == "tdrexport" and parsedurl.scheme == "https" and any(actual_netloc.endswith(s) for s in VALID_NETLOCS):
         return True
     else:
         logging.warning(f"Unrecognized netloc or bucket for import: [{parsedurl.netloc}] from [{import_url}]")
