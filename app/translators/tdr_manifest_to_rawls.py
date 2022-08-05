@@ -6,6 +6,7 @@ import os
 from typing import IO, Any, Dict, Iterator, List
 from urllib.parse import urlparse
 import io
+import uuid
 
 import numpy as np
 import pandas as pd
@@ -94,6 +95,7 @@ class ParquetTranslator:
                 logging.error(f"unsupported domain in url {self.filelocation} provided")
                 raise exceptions.InvalidPathException(self.filelocation, user_info, "Unsupported domain")
             with http.http_as_filelike(self.filelocation) as pqfile:
+                # Assumption is that if a file is using https, it's an Azure snapshot
                 return self.translate_parquet_file_to_entities(pqfile, True)
         else:
             logging.error(f"unsupported scheme {parsedurl.scheme} provided")
@@ -107,10 +109,10 @@ class ParquetTranslator:
     #     assert reader.schema == 'foo'
     #     entity_batches = (self.translate_data_frame(b.to_pandas(), b.column_names) for b in reader)
     #     return itertools.chain(*entity_batches)
-    def translate_parquet_file_to_entities(self, file_like: IO, is_http: bool = False) -> Iterator[Entity]:
+    def translate_parquet_file_to_entities(self, file_like: IO, is_azure: bool = False) -> Iterator[Entity]:
         """Converts single parquet file-like object to an iterator of Entity objects."""
         pq_table: pyarrow.Table
-        if (is_http):
+        if (is_azure):
             # We need to read and wrap the bytes of the parquet file in a BytesIO object which implements methods required by the parquet reader
             pq_table = pq.read_table(io.BytesIO(file_like.read()))
         else:
@@ -121,13 +123,14 @@ class ParquetTranslator:
         # memory-reducing options
         df: pd.DataFrame = pq_table.to_pandas(split_blocks=True, self_destruct=True)
         del pq_table
-        return self.translate_data_frame(df, column_names)
+        return self.translate_data_frame(df, column_names, is_azure)
 
-    def translate_data_frame(self, df: pd.DataFrame, column_names: List[str]) -> Iterator[Entity]:
+    def translate_data_frame(self, df: pd.DataFrame, column_names: List[str], is_azure: bool) -> Iterator[Entity]:
         """Convert a pandas dataframe - assumed from a Parquet file - to an iterator of Entity objects."""
         logging.info(f'{self.import_details.id} expecting {len(df.index)} rows in {self.file_nickname} ...')
+        array_fields = [c.name for c in list(filter(lambda c: c.array_of, self.table.columns))]
         for _, row in df.iterrows():
-            ops = self.translate_parquet_row(row, column_names)
+            ops = self.translate_parquet_row(row, column_names, is_azure, array_fields)
             # we should never encounter a case where the primary key is missing, but let's be safe:
             entity_name = row.get(self.table.primary_key)
             if entity_name is None:
@@ -136,14 +139,29 @@ class ParquetTranslator:
             else:
                 yield Entity(str(entity_name), self.table.name, list(ops))
 
-    def translate_parquet_row(self, row: pd.Series, column_names: List[str]) -> List[AttributeOperation]:
+    def translate_parquet_row(self, row: pd.Series, column_names: List[str], is_azure: bool, array_fields: List[str]) -> List[AttributeOperation]:
         """Convert a single row of a pandas dataframe - assumed from a Parquet file - to an Entity."""
         # annotate row with the timestamp of the import
         tsattr = self.translate_parquet_attr('import:timestamp', self.import_details.submit_time.isoformat())
         # annotate row with the snapshotid from TDR
         sourceidattr = self.translate_parquet_attr('import:snapshot_id', self.source_snapshot_id)
 
-        all_attr_ops = [self.translate_parquet_attr(colname, row[colname]) for colname in column_names]
+        all_attr_ops = []
+        for colname in column_names:
+            value = row[colname]
+            if is_azure is True:
+                # In Azure parquet files, the datarepo_row_id field is stored as bytes so we should convert to string
+                if colname == 'datarepo_row_id':
+                    value = str(uuid.UUID(bytes=value))
+                # In Azure parquet files, array fields are stored a stringified Json arrays that we should convert to arrays
+                if colname in array_fields and value is not None and value != "":
+                    try:
+                        value = json.loads(value)
+                    except json.JSONDecodeError:
+                        logging.warning(f"Couldn't parse value {value}")
+
+
+            all_attr_ops.append(self.translate_parquet_attr(colname, value))
         return list(itertools.chain(*all_attr_ops, sourceidattr, tsattr))
 
     def translate_parquet_attr(self, name: str, value) -> List[AttributeOperation]:
@@ -158,7 +176,7 @@ class ParquetTranslator:
         # Check if value is a reference, check if it's an array for finding ops
         is_reference = name in self.table.reference_attrs
         reference_target_type = self.table.reference_attrs.get(name, None)
-        is_array = isinstance(value, np.ndarray)
+        is_array = isinstance(value, np.ndarray) or isinstance(value, list)
 
         if not is_array:
             # most common case, results in AddUpdateAttribute

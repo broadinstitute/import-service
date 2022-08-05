@@ -9,7 +9,7 @@ from pydantic import main
 
 from app.external import JSON
 from app.external.rawls_entity_model import EntityReference
-from app.external.tdr_model import Relationship, Table, TDRManifest
+from app.external.tdr_model import Relationship, Table, TDRManifest, Column
 
 
 @dataclass
@@ -18,6 +18,7 @@ class TDRTable:
     primary_key: str
     parquet_files: List[str]
     reference_attrs: Dict[str, str] # column name -> entity type (for referenced table)
+    columns: List[Column]
 
 
 class TDRManifestParser:
@@ -67,7 +68,8 @@ class TDRManifestParser:
                 name=table.name,
                 primary_key=table_to_primary_key[table.name],
                 parquet_files=exports[table.name],
-                reference_attrs=self.get_reference_attrs(table_to_relationships[table.name], table_to_primary_key)
+                reference_attrs=self.get_reference_attrs(table_to_relationships[table.name], table_to_primary_key),
+                columns = table.columns
             ), 
             ordered_tables
         ))
