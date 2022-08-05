@@ -5,6 +5,7 @@ import logging
 import os
 from typing import IO, Any, Dict, Iterator, List
 from urllib.parse import urlparse
+import io
 
 import numpy as np
 import pandas as pd
@@ -86,15 +87,14 @@ class ParquetTranslator:
             bucket = parsedurl.netloc
             path = parsedurl.path
             with gcs.open_file(self.import_details.workspace_google_project, bucket, path, self.import_details.submitter, self.auth_key) as pqfile:
-                return self.translate_parquet_file_to_entities(pqfile)
-                # raise exceptions.InvalidPathException(path, user_info, f"BOOM {path}")
+                return self.translate_parquet_file_to_entities(pqfile, False)
         elif (parsedurl.scheme == 'https'):
             hostname = parsedurl.netloc
             if not hostname.endswith(VALID_AZURE_DOMAIN):
                 logging.error(f"unsupported domain in url {self.filelocation} provided")
                 raise exceptions.InvalidPathException(self.filelocation, user_info, "Unsupported domain")
             with http.http_as_filelike(self.filelocation) as pqfile:
-                return self.translate_parquet_file_to_entities(pqfile)
+                return self.translate_parquet_file_to_entities(pqfile, True)
         else:
             logging.error(f"unsupported scheme {parsedurl.scheme} provided")
             raise exceptions.InvalidPathException(self.filelocation, user_info, "Unsupported scheme")
@@ -107,9 +107,15 @@ class ParquetTranslator:
     #     assert reader.schema == 'foo'
     #     entity_batches = (self.translate_data_frame(b.to_pandas(), b.column_names) for b in reader)
     #     return itertools.chain(*entity_batches)
-    def translate_parquet_file_to_entities(self, file_like: IO) -> Iterator[Entity]:
+    def translate_parquet_file_to_entities(self, file_like: IO, is_http: bool = False) -> Iterator[Entity]:
         """Converts single parquet file-like object to an iterator of Entity objects."""
-        pq_table: pyarrow.Table = pq.read_table(file_like)
+        pq_table: pyarrow.Table
+        if (is_http):
+            # We need to read and wrap the bytes of the parquet file in a BytesIO object which implements methods required by the parquet reader
+            pq_table = pq.read_table(io.BytesIO(file_like.read()))
+        else:
+            pq_table = pq.read_table(file_like)
+
         column_names = copy.deepcopy(pq_table.column_names)
         # see https://arrow.apache.org/docs/python/pandas.html#reducing-memory-use-in-table-to-pandas for discussion of
         # memory-reducing options
