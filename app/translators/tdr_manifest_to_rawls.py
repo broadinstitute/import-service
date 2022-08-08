@@ -153,7 +153,7 @@ class ParquetTranslator:
                 # In Azure parquet files, the datarepo_row_id field is stored as bytes so we should convert to string
                 if colname == 'datarepo_row_id':
                     value = str(uuid.UUID(bytes=value))
-                # In Azure parquet files, array fields are stored a stringified Json arrays that we should convert to arrays
+                # In Azure parquet files, array fields are stored as stringified Json arrays that we should convert to arrays
                 if colname in array_fields and value is not None and value != "":
                     try:
                         value = json.loads(value)
