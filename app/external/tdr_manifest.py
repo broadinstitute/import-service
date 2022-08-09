@@ -130,9 +130,9 @@ class TDRManifestParser:
         ## Build a relationship graph of all the relationships
         relationship_graph = defaultdict(lambda : set())
         for table in tdr_tables:
-            for relationship in table.reference_attrs.values():
+            for reference_attr in table.reference_attrs.values():
                 from_table = table.name
-                to_table = relationship
+                to_table = reference_attr
                 relationship_graph[from_table].add(to_table)
 
         ## Return a topological ordering of the relationship graph
