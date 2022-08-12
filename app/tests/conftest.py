@@ -67,8 +67,12 @@ def fake_import() -> Iterator[model.Import]:
     yield model.Import("aa", "aa", "uuid", "project", "aa@aa.aa", "gs://aa/aa", "pfb")
 
 @pytest.fixture(scope="function")
-def fake_import_tdr_manifest() -> Iterator[model.Import]:
+def fake_import_tdr_manifest_gcp() -> Iterator[model.Import]:
     yield model.Import("bb", "bb", "uuid2", "project2", "bb@bb.bb", "gs://bb/bb", "tdrexport")
+
+@pytest.fixture(scope="function")
+def fake_import_tdr_manifest_azure() -> Iterator[model.Import]:
+    yield model.Import("bb", "bb", "uuid2", "project2", "bb@bb.bb", "https://snp.blob.core.windows.net/metadata/manifests/manifest.json", "tdrexport")
 
 @pytest.fixture(scope="function")
 def incoming_valid_pubsub(monkeypatch) -> Iterator[None]:
