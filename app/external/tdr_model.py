@@ -61,7 +61,7 @@ class Snapshot(BaseModel):
     tables: List[Table]
     relationships: List[Relationship]
     profileId: str
-    dataProject: str
+    dataProject: Optional[str]
     accessInformation: Any
 
 

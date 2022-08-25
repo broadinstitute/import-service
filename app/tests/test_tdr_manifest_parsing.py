@@ -7,7 +7,7 @@ resource_path = './app/tests/resources/'
 
 def test_manifest_parsing():
     # read the file into a raw dict
-    jso = json.load(open(resource_path + 'test_tdr_response.json'))
+    jso = json.load(open(resource_path + 'test_tdr_response_gcp.json'))
 
     # parse into tables
     parsed = TDRManifestParser(jso, "test-job-id")
