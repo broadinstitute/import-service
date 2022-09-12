@@ -1,10 +1,9 @@
 import flask.testing
-import jsonschema
 import pytest
 from app.external.rawls import RawlsWorkspaceResponse
 
 from app.tests import testutils
-from app import new_import, translate
+from app import translate
 from app.util import exceptions
 from app.db import db
 from app.db.model import *
