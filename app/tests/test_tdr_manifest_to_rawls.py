@@ -29,13 +29,13 @@ def test_translate_data_frame():
     now = datetime.now()
     random_snapshot_id = str(uuid.uuid4())
 
-    fake_table = TDRTable('unittest', 'datarepo_row_id', [], {})
+    fake_table = TDRTable('unittest', 'datarepo_row_id', [], {}, [])
     fake_filelocation = "doesntmatter"
     fake_import_details = Import('workspace_name:', 'workspace_ns', 'workspace_uuid', 'workspace_google_project', 'submitter', 'import_url', 'filetype', True)
     fake_import_details.submit_time = now # ensure we know the submit_time
     translator = ParquetTranslator(fake_table, fake_filelocation, fake_import_details, random_snapshot_id)
 
-    entities_gen = translator.translate_data_frame(df, column_names)
+    entities_gen = translator.translate_data_frame(df, column_names, False)
     assert isinstance(entities_gen, Generator)
     entities = list(entities_gen)
     assert len(entities) == 3
@@ -50,7 +50,7 @@ def test_translate_data_frame():
     assert entities[2].operations == [AddUpdateAttribute('datarepo_row_id', 'c'), AddUpdateAttribute('one', 3), AddUpdateAttribute('two', 'baz'), _import_sourceid(random_snapshot_id), _import_timestamp(now)]
 
 def get_fake_parquet_translator(import_submit_time: datetime = datetime.now(), table_name: str='unittest', primary_key: str='datarepo_row_id') -> ParquetTranslator:
-    fake_table = TDRTable(table_name, primary_key, [], {'test_ref_column': 'other_entity_type'})
+    fake_table = TDRTable(table_name, primary_key, [], {'test_ref_column': 'other_entity_type'}, [])
     fake_filelocation = "doesntmatter"
     fake_import_details = Import('workspace_name:', 'workspace_ns', 'workspace_uuid', 'workspace_google_project', 'submitter', 'import_url', 'filetype', True)
     fake_import_details.submit_time = import_submit_time # ensure we know the submit_time
@@ -178,8 +178,10 @@ def test_translate_parquet_attr():
     curtime = datetime.now()
     assert translator.translate_parquet_attr('foo', curtime) == [AddUpdateAttribute('foo', str(curtime))]
 
-    arr = ['a', 'b', 'c']
-    assert translator.translate_parquet_attr('foo', arr) == [AddUpdateAttribute('foo', str(arr))]
+    # adding an array to the entity removes the previous entity and replaces with the new values
+    arr = ['a', 'b']
+    assert translator.translate_parquet_attr('foo', arr) ==\
+           [RemoveAttribute('foo'), CreateAttributeValueList('foo'), AddListMember('foo', str('a')), AddListMember('foo', str('b'))]
 
 def test_translate_parquet_attr_arrays():
     translator = get_fake_parquet_translator()

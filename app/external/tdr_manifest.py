@@ -9,7 +9,7 @@ from pydantic import main
 
 from app.external import JSON
 from app.external.rawls_entity_model import EntityReference
-from app.external.tdr_model import Relationship, Table, TDRManifest
+from app.external.tdr_model import Relationship, Table, TDRManifest, Column
 
 
 @dataclass
@@ -18,6 +18,7 @@ class TDRTable:
     primary_key: str
     parquet_files: List[str]
     reference_attrs: Dict[str, str] # column name -> entity type (for referenced table)
+    columns: List[Column]
 
 
 class TDRManifestParser:
@@ -49,13 +50,10 @@ class TDRManifestParser:
         # don't bother dealing with this table if it has no exported parquet files
         tables_for_export: List[Table] = list(filter(lambda t: t.name in exports, snapshot.tables))
 
-        # get the topological ordering of the tables, so we add tables to rawls in the correct order to resolve references
-        ordering = TDRManifestParser.get_ordering(manifest.snapshot.relationships)
-        ordering_key_fn = lambda table: ordering.index(table.name) if table.name in ordering else -1
-        ordered_tables = sorted(tables_for_export, key=ordering_key_fn)
+
 
         table_to_primary_key: Dict[str, str] = \
-            {t.name: TDRManifestParser.get_primary_key(t) for t in ordered_tables}
+            {t.name: TDRManifestParser.get_primary_key(t) for t in tables_for_export}
         
         table_to_relationships: Dict[str, List[Relationship]] = \
             TDRManifestParser.get_table_to_relationships(manifest.snapshot.relationships)
@@ -67,12 +65,18 @@ class TDRManifestParser:
                 name=table.name,
                 primary_key=table_to_primary_key[table.name],
                 parquet_files=exports[table.name],
-                reference_attrs=self.get_reference_attrs(table_to_relationships[table.name], table_to_primary_key)
+                reference_attrs=self.get_reference_attrs(table_to_relationships[table.name], table_to_primary_key),
+                columns = table.columns
             ), 
-            ordered_tables
+            tables_for_export
         ))
 
-        return tdr_tables
+        # get the topological ordering of the tables, so we add tables to rawls in the correct order to resolve references
+        ordering = TDRManifestParser.get_ordering(tdr_tables)
+        ordering_key_fn = lambda table: ordering.index(table.name) if table.name in ordering else -1
+        ordered_tables = sorted(tdr_tables, key=ordering_key_fn)
+
+        return ordered_tables
 
     @staticmethod
     def get_table_to_relationships(relationships: List[Relationship]) -> Dict[str, List[Relationship]]:
@@ -112,7 +116,7 @@ class TDRManifestParser:
         return reference_attrs
 
     @staticmethod
-    def get_ordering(relationships: List[Relationship]) -> List[str]:
+    def get_ordering(tdr_tables: List[TDRTable]) -> List[str]:
         """Creates ordering for parsing tables. 
         
         Given a list of relationships between tables, tables that are depended on must be parsed before the tables
@@ -127,10 +131,11 @@ class TDRManifestParser:
         """
         ## Build a relationship graph of all the relationships
         relationship_graph = defaultdict(lambda : set())
-        for relationship in relationships:
-            from_table = relationship.from_.table
-            to_table = relationship.to.table
-            relationship_graph[from_table].add(to_table)
+        for table in tdr_tables:
+            for reference_attr in table.reference_attrs.values():
+                from_table = table.name
+                to_table = reference_attr
+                relationship_graph[from_table].add(to_table)
 
         ## Return a topological ordering of the relationship graph
         ## TODO handle exception

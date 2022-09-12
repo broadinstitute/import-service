@@ -89,17 +89,43 @@ def good_http_tdr_manifest(monkeypatch, fake_tdr_manifest):
 # N.B. this copy/pastes the fake_parquet() and fake_tdr_manifest() implementations from conftest.py. I can't get the
 # multiple layers of fixtures to work correctly together so a copy/paste seemed an ok solution.
 @contextmanager
-def open_tdr_manifest_or_parquet_file(project: str, bucket: str, path: str, submitter: str, pet_key: Dict[str, Any] = None) -> Iterator[IO]:
+def open_tdr_manifest_or_parquet_file_gcp(project: str, bucket: str, path: str, submitter: str, pet_key: Dict[str, Any] = None) -> Iterator[IO]:
     if path.endswith('parquet'):
         with open("app/tests/empty.parquet", 'rb') as out:
             yield out
     else:
-        with open("app/tests/resources/test_tdr_response.json", 'rb') as out:
+        with open("app/tests/resources/test_tdr_response_gcp.json", 'rb') as out:
+            yield out
+
+@contextmanager
+def open_tdr_manifest_or_parquet_file_azure(url: str) -> Iterator[IO]:
+    if url.find(".parquet") > -1:
+        with open("app/tests/empty.parquet", 'rb') as out:
+            yield out
+    else:
+        with open("app/tests/resources/test_tdr_response_azure.json", 'rb') as out:
+            yield out
+
+@contextmanager
+def open_tdr_manifest_or_parquet_file_azure_bad(url: str) -> Iterator[IO]:
+    if url.find(".parquet") > -1:
+        with open("app/tests/empty.parquet", 'rb') as out:
+            yield out
+    else:
+        with open("app/tests/resources/test_tdr_response_azure_invalid_parquet.json", 'rb') as out:
             yield out
 
 @pytest.fixture(scope="function")
-def good_tdr_manifest_or_parquet_file(monkeypatch):
-    monkeypatch.setattr(translate.gcs, "open_file", open_tdr_manifest_or_parquet_file)
+def good_tdr_manifest_or_parquet_file_gcp(monkeypatch):
+    monkeypatch.setattr(translate.gcs, "open_file", open_tdr_manifest_or_parquet_file_gcp)
+
+@pytest.fixture(scope="function")
+def good_tdr_manifest_or_parquet_file_azure(monkeypatch):
+    monkeypatch.setattr(translate.http, "http_as_filelike", open_tdr_manifest_or_parquet_file_azure)
+
+@pytest.fixture(scope="function")
+def bad_tdr_manifest_or_parquet_file_azure(monkeypatch):
+    monkeypatch.setattr(translate.http, "http_as_filelike", open_tdr_manifest_or_parquet_file_azure_bad)
 
 @pytest.fixture(scope="function")
 def forbidden_http_pfb(monkeypatch):
@@ -173,26 +199,61 @@ def test_golden_path_pfb(fake_import, fake_publish_rawls, client):
     fake_publish_rawls.assert_called_once()
 
 
-@pytest.mark.usefixtures("good_tdr_manifest_or_parquet_file", "good_gcs_dest", "incoming_valid_pubsub", "sam_valid_pet_key")
-def test_golden_path_tdr_manifest(fake_import_tdr_manifest, fake_publish_rawls, client):
+@pytest.mark.usefixtures("good_tdr_manifest_or_parquet_file_gcp", "good_gcs_dest", "incoming_valid_pubsub", "sam_valid_pet_key")
+def test_golden_path_tdr_manifest_gcp(fake_import_tdr_manifest_gcp, fake_publish_rawls, client):
     """Everything is fine: the tdr manifest file is valid and retrievable, and we can write to the destination."""
     with db.session_ctx() as sess:
-        sess.add(fake_import_tdr_manifest)
+        sess.add(fake_import_tdr_manifest_gcp)
 
     resp = client.post("/_ah/push-handlers/receive_messages",
-                       json=testutils.pubsub_json_body({"action":"translate", "import_id":fake_import_tdr_manifest.id}))
+                       json=testutils.pubsub_json_body({"action":"translate", "import_id":fake_import_tdr_manifest_gcp.id}))
 
     # result should be OK
     assert resp.status_code == 200
 
     # import should be updated to next step
     with db.session_ctx() as sess:
-        imp: model.Import = model.Import.get(fake_import_tdr_manifest.id, sess)
+        imp: model.Import = model.Import.get(fake_import_tdr_manifest_gcp.id, sess)
         assert imp.status == model.ImportStatus.ReadyForUpsert
         assert imp.snapshot_id == "9516afec-583f-11ec-bf63-0242ac130002"
 
     # rawls should have been told to do something
     fake_publish_rawls.assert_called_once()
+
+
+@pytest.mark.usefixtures("good_tdr_manifest_or_parquet_file_azure", "good_gcs_dest", "incoming_valid_pubsub", "sam_valid_pet_key")
+def test_golden_path_tdr_manifest_azure(fake_import_tdr_manifest_azure, fake_publish_rawls, client):
+    """Everything is fine: the tdr manifest file is valid and retrievable, and we can write to the destination."""
+    with db.session_ctx() as sess:
+        sess.add(fake_import_tdr_manifest_azure)
+
+    resp = client.post("/_ah/push-handlers/receive_messages",
+                       json=testutils.pubsub_json_body({"action":"translate", "import_id":fake_import_tdr_manifest_azure.id}))
+
+    # result should be OK
+    assert resp.status_code == 200
+
+    # import should be updated to next step
+    with db.session_ctx() as sess:
+        imp: model.Import = model.Import.get(fake_import_tdr_manifest_azure.id, sess)
+        assert imp.status == model.ImportStatus.ReadyForUpsert
+        assert imp.snapshot_id == "9516afec-583f-11ec-bf63-0242ac130002"
+
+    # rawls should have been told to do something
+    fake_publish_rawls.assert_called_once()
+
+@pytest.mark.usefixtures("bad_tdr_manifest_or_parquet_file_azure", "good_gcs_dest", "incoming_valid_pubsub", "sam_valid_pet_key")
+def test_bad_actor_path_tdr_manifest_azure(fake_import_tdr_manifest_azure, fake_publish_rawls, client):
+    """Everything is fine: the tdr manifest file is valid and retrievable, and we can write to the destination."""
+    with db.session_ctx() as sess:
+        sess.add(fake_import_tdr_manifest_azure)
+
+    resp = client.post("/_ah/push-handlers/receive_messages",
+                       json=testutils.pubsub_json_body({"action":"translate", "import_id":fake_import_tdr_manifest_azure.id}))
+
+    # result should be not-OK
+    assert resp.status_code == requestutils.PUBSUB_STATUS_NOTOK
+
 
 @pytest.mark.parametrize("is_upsert", [True, False])
 @pytest.mark.usefixtures("good_http_pfb", "good_gcs_dest", "incoming_valid_pubsub")
