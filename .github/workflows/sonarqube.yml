@@ -27,6 +27,8 @@ jobs:
           pip install -r requirements.txt
 
       - name: SonarCloud Scan
-        uses: sonarsource/sonarcloud-github-action@master
+        uses: SonarSource/sonarcloud-github-action@v1.6
+        with:
+          projectBaseDir: app
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
