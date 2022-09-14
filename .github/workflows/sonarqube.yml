@@ -1,35 +1,25 @@
 name: SonarQube Analysis
 
 on:
+  # Trigger analysis when pushing in master or pull requests, and when creating
+  # a pull request.
   push:
     branches:
-      - '**'
-  workflow_dispatch:
-
-
+      - master
+  pull_request:
+      types: [opened, synchronize, reopened]
 jobs:
-  sonar:
+  sonarcloud:
     runs-on: ubuntu-latest
-
     steps:
-      # Checkout repo
-      - uses: actions/checkout@v2
-
-      # Dependencies
-      - name: Set up Python 3.9
-        uses: actions/setup-python@v1
-        with:
-          python-version: 3.9
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@v1.6
-        with:
-          projectBaseDir: app
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.BROADBOT_TOKEN }}
+    - uses: actions/checkout@v2
+      with:
+        # Disabling shallow clone is recommended for improving relevancy of reporting
+        fetch-depth: 0
+    - name: SonarCloud Scan
+      uses: sonarsource/sonarcloud-github-action@master
+      with:
+        projectBaseDir: app
+      env:
+        GITHUB_TOKEN: ${{ secrets.BROADBOT_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
