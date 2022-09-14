@@ -32,3 +32,4 @@ jobs:
           projectBaseDir: app
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.BROADBOT_TOKEN }}
