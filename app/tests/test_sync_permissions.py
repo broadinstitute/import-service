@@ -12,8 +12,8 @@ def test_sync_permissions_for_tdr_snapshot(fake_import_tdr_manifest_gcp: model.I
         sync_permissions_if_necessary(finished_import, model.ImportStatus.Done)
         mock_sync.assert_called_once()
 
-def test_no_sync_for_tdr_snapshot_if_not_required(fake_import_tdr_manifest: model.Import):
-    finished_import = deepcopy(fake_import_tdr_manifest)
+def test_no_sync_for_tdr_snapshot_if_not_required(fake_import_tdr_manifest_gcp: model.Import):
+    finished_import = deepcopy(fake_import_tdr_manifest_gcp)
     finished_import.snapshot_id = "12_34"
     finished_import.is_tdr_sync_required = False
     with mock.patch("app.translators.sync_permissions.sync_permissions") as mock_sync:
