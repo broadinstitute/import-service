@@ -39,7 +39,7 @@ def test_tdr_json_golden_path(client):
     dbres = sess.query(Import).filter(Import.id == id).all()
     assert len(dbres) == 1
     assert dbres[0].id == id
-    assert dbres[0].is_tdr_sync_required == True # could just assert True, adding check to be explicit
+    assert dbres[0].is_tdr_sync_required is True # could just assert True, adding check to be explicit
     assert resp.headers["Content-Type"] == "application/json"
 
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access")
