@@ -27,7 +27,8 @@ def handle(request: flask.Request, ws_ns: str, ws_name: str) -> model.ImportStat
     import_url = request_json["path"]
     import_filetype = request_json["filetype"]
     import_is_upsert = request_json.get("isUpsert", "true") # default to true if missing, to support legacy imports
-    is_tdr_sync_required = request_json.get("tdrSyncPermissions", False) # default to not sync permissions
+    options = request_json.get("options",{})
+    is_tdr_sync_required = options.get("tdrSyncPermissions", False) # default to not sync permissions
 
     # and validate the input's path
     translate.validate_import_url(import_url, import_filetype, user_info)
