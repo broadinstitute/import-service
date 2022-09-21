@@ -3,6 +3,7 @@ from flask_restx import fields
 from app.db import db, model
 from app.external import sam, rawls
 
+
 class HealthResponse:
     def __init__(self, db_health: bool, rawls_health: bool, sam_health: bool):
         self.ok = all([db_health, rawls_health, sam_health])
@@ -22,7 +23,6 @@ class HealthResponse:
                 "sam": fields.Boolean
             }))
         }
-
 
 
 def handle_health_check() -> HealthResponse:
