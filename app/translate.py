@@ -33,7 +33,6 @@ VALID_TDR_SCHEMES = ["gs", "https"]
 
 def handle(msg: Dict[str, str]) -> ImportStatusResponse:
     import_id = msg["import_id"]
-    print("Hello")
     with db.session_ctx() as sess:
         # flip the status to Translating, and then get the row
         update_successful = Import.update_status_exclusively(import_id, ImportStatus.Pending, ImportStatus.Translating, sess)
