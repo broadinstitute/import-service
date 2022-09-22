@@ -26,7 +26,8 @@ class HealthResponse:
 
 
 def handle_health_check() -> HealthResponse:
-    sam_health = sam.check_health()
+    if 1 == 1:
+        sam_health = sam.check_health()
     rawls_health = rawls.check_health()
     db_health = check_health()
 
