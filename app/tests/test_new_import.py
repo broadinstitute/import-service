@@ -17,7 +17,7 @@ good_headers = {"Authorization": "Bearer ya29.blahblah", "Accept": "application/
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
 def test_golden_path(client):
     resp = client.post('/mynamespace/myname/imports', json=good_json, headers=good_headers)
-    assert resp.status_code == 202
+    assert resp.status_code == 201
 
     # response contains the job ID, check it's actually in the database
     sess = db.get_session()
