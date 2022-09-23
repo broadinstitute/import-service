@@ -43,13 +43,16 @@ def test_translate_data_frame():
     assert len(entities) == 3
     assert entities[0].name == 'a'
     assert entities[0].entityType == 'unittest'
-    assert entities[0].operations == [AddUpdateAttribute('datarepo_row_id', 'a'), AddUpdateAttribute('one', 1), AddUpdateAttribute('two', 'foo'), _import_sourceid(random_snapshot_id), _import_timestamp(now)]
+    # assert entities[0].operations == [AddUpdateAttribute('datarepo_row_id', 'a'), AddUpdateAttribute('one', 1), AddUpdateAttribute('two', 'foo'), _import_sourceid(random_snapshot_id), _import_timestamp(now)]
+
+    assert entities[0].operations == [_import_timestamp(now), _import_sourceid(random_snapshot_id), AddUpdateAttribute('datarepo_row_id', 'a'), AddUpdateAttribute('one', 1), AddUpdateAttribute('two', 'foo')]
+
     assert entities[1].name == 'b'
     assert entities[1].entityType == 'unittest'
-    assert entities[1].operations == [AddUpdateAttribute('datarepo_row_id', 'b'), AddUpdateAttribute('one', 2), AddUpdateAttribute('two', 'bar'), _import_sourceid(random_snapshot_id), _import_timestamp(now)]
+    assert entities[1].operations == [_import_timestamp(now), _import_sourceid(random_snapshot_id), AddUpdateAttribute('datarepo_row_id', 'b'), AddUpdateAttribute('one', 2), AddUpdateAttribute('two', 'bar')]
     assert entities[2].name == 'c'
     assert entities[2].entityType == 'unittest'
-    assert entities[2].operations == [AddUpdateAttribute('datarepo_row_id', 'c'), AddUpdateAttribute('one', 3), AddUpdateAttribute('two', 'baz'), _import_sourceid(random_snapshot_id), _import_timestamp(now)]
+    assert entities[2].operations == [_import_timestamp(now), _import_sourceid(random_snapshot_id), AddUpdateAttribute('datarepo_row_id', 'c'), AddUpdateAttribute('one', 3), AddUpdateAttribute('two', 'baz')]
 
 def get_fake_parquet_translator(import_submit_time: datetime = datetime.now(), table_name: str='unittest', primary_key: str='datarepo_row_id') -> ParquetTranslator:
     fake_table = TDRTable(table_name, primary_key, [], {'test_ref_column': 'other_entity_type'}, [])
@@ -81,13 +84,13 @@ def test_translate_parquet_file_to_entities():
     assert len(entities) == 3
     assert entities[0].name == 'a'
     assert entities[0].entityType == 'unittest'
-    assert entities[0].operations == [AddUpdateAttribute('datarepo_row_id', 'a'), AddUpdateAttribute('one', 1), AddUpdateAttribute('two', 'foo'), _import_sourceid(), _import_timestamp(now)]
+    assert entities[0].operations == [_import_timestamp(now), _import_sourceid(), AddUpdateAttribute('datarepo_row_id', 'a'), AddUpdateAttribute('one', 1), AddUpdateAttribute('two', 'foo')]
     assert entities[1].name == 'b'
     assert entities[1].entityType == 'unittest'
-    assert entities[1].operations == [AddUpdateAttribute('datarepo_row_id', 'b'), AddUpdateAttribute('one', 2), AddUpdateAttribute('two', 'bar'), _import_sourceid(), _import_timestamp(now)]
+    assert entities[1].operations == [_import_timestamp(now), _import_sourceid(), AddUpdateAttribute('datarepo_row_id', 'b'), AddUpdateAttribute('one', 2), AddUpdateAttribute('two', 'bar')]
     assert entities[2].name == 'c'
     assert entities[2].entityType == 'unittest'
-    assert entities[2].operations == [AddUpdateAttribute('datarepo_row_id', 'c'), AddUpdateAttribute('one', 3), AddUpdateAttribute('two', 'baz'), _import_sourceid(), _import_timestamp(now)]
+    assert entities[2].operations == [_import_timestamp(now), _import_sourceid(), AddUpdateAttribute('datarepo_row_id', 'c'), AddUpdateAttribute('one', 3), AddUpdateAttribute('two', 'baz')]
 
 # file-like to ([Entity])
 def test_translate_parquet_file_with_missing_pk():
@@ -105,10 +108,10 @@ def test_translate_parquet_file_with_missing_pk():
     assert len(entities) == 2
     assert entities[0].name == 'first'
     assert entities[0].entityType == 'unittest'
-    assert entities[0].operations == [AddUpdateAttribute('datarepo_row_id', 'a'), AddUpdateAttribute('custompk', 'first'), AddUpdateAttribute('two', 'foo'), _import_sourceid(), _import_timestamp(now)]
+    assert entities[0].operations == [_import_timestamp(now), _import_sourceid(), AddUpdateAttribute('datarepo_row_id', 'a'), AddUpdateAttribute('custompk', 'first'), AddUpdateAttribute('two', 'foo')]
     assert entities[1].name == 'third'
     assert entities[1].entityType == 'unittest'
-    assert entities[1].operations == [AddUpdateAttribute('datarepo_row_id', 'c'), AddUpdateAttribute('custompk', 'third'), AddUpdateAttribute('two', 'baz'), _import_sourceid(), _import_timestamp(now)]
+    assert entities[1].operations == [_import_timestamp(now), _import_sourceid(), AddUpdateAttribute('datarepo_row_id', 'c'), AddUpdateAttribute('custompk', 'third'), AddUpdateAttribute('two', 'baz')]
 
 # file-like to ([Entity])
 def test_translate_parquet_file_with_array_attrs():
@@ -130,27 +133,27 @@ def test_translate_parquet_file_with_array_attrs():
     assert len(entities) == 3
     assert entities[0].name == 'first'
     assert entities[0].entityType == 'unittest'
-    assert entities[0].operations == [AddUpdateAttribute('datarepo_row_id', 'a'),
+    assert entities[0].operations == [_import_timestamp(now), _import_sourceid(),
+        AddUpdateAttribute('datarepo_row_id', 'a'),
         AddUpdateAttribute('custompk', 'first'),
         RemoveAttribute('arrayattr'), CreateAttributeValueList('arrayattr'),
-        AddListMember('arrayattr', 'Philip'), AddListMember('arrayattr', 'Glass'),
-        _import_sourceid(), _import_timestamp(now)
+        AddListMember('arrayattr', 'Philip'), AddListMember('arrayattr', 'Glass')
     ]
     assert entities[1].name == 'second'
     assert entities[1].entityType == 'unittest'
-    assert entities[1].operations == [AddUpdateAttribute('datarepo_row_id', 'b'),
+    assert entities[1].operations == [_import_timestamp(now), _import_sourceid(),
+        AddUpdateAttribute('datarepo_row_id', 'b'),
         AddUpdateAttribute('custompk', 'second'),
         RemoveAttribute('arrayattr'), CreateAttributeValueList('arrayattr'),
-        AddListMember('arrayattr', 'Wolfgang'), AddListMember('arrayattr', 'Amadeus'), AddListMember('arrayattr', 'Mozart'),
-        _import_sourceid(), _import_timestamp(now)
+        AddListMember('arrayattr', 'Wolfgang'), AddListMember('arrayattr', 'Amadeus'), AddListMember('arrayattr', 'Mozart')
     ]
     assert entities[2].name == 'third'
     assert entities[2].entityType == 'unittest'
-    assert entities[2].operations == [AddUpdateAttribute('datarepo_row_id', 'c'),
+    assert entities[2].operations == [_import_timestamp(now), _import_sourceid(),
+        AddUpdateAttribute('datarepo_row_id', 'c'),
         AddUpdateAttribute('custompk', 'third'),
         RemoveAttribute('arrayattr'), CreateAttributeValueList('arrayattr'),
-        AddListMember('arrayattr', 'Dmitri'), AddListMember('arrayattr', 'Shostakovich'),
-        _import_sourceid(), _import_timestamp(now)
+        AddListMember('arrayattr', 'Dmitri'), AddListMember('arrayattr', 'Shostakovich')
     ]
 
 # KVP to AttributeOperation
