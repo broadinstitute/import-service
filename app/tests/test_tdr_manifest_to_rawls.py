@@ -11,8 +11,10 @@ import pytest
 from app.db.model import Import
 from app.external.rawls_entity_model import AddListMember, AddUpdateAttribute, AttributeOperation, \
     CreateAttributeEntityReferenceList, CreateAttributeValueList, Entity, EntityReference, RemoveAttribute
-from app.external.tdr_manifest import TDRTable
-from app.translators.tdr_manifest_to_rawls import ParquetTranslator
+from app.external.tdr_manifest import TDRTable, TDRManifestParser
+from app.translators.tdr_manifest_to_rawls import ParquetTranslator, TDRManifestToRawls
+from app.translators import tdr_manifest_to_rawls
+import json
 
 def _import_timestamp(dt: datetime) -> AddUpdateAttribute:
     return AddUpdateAttribute('import:timestamp', dt.isoformat())
@@ -334,3 +336,29 @@ def test_if_namespace_prefix_will_be_added():
     assert not ParquetTranslator.prefix_required('bam',  'sample')
     assert not ParquetTranslator.prefix_required('sample_id_id',  'sample')
     assert not ParquetTranslator.prefix_required('sample_ID_id',  'sample')
+
+
+def get_fake_cyclic_parquet_translator(table: TDRTable) -> ParquetTranslator:
+    fake_import_details = Import('workspace_name:', 'workspace_ns', 'workspace_uuid', 'workspace_google_project', 'submitter', 'import_url', 'filetype', True)
+    return ParquetTranslator(table, "doesntmatter", fake_import_details, 'source_snapshot_uuid', None, True)
+def open_fake_gcs_file(import_details, bucket, path, submitter, auth_key):
+    # Trick python into thinking this is from gcs, then open a local file
+    return open(path.strip("/"), 'rb')
+
+@pytest.mark.usefixtures("sam_valid_pet_key")
+def test_translate_cyclic_table(monkeypatch):
+    tmtr = TDRManifestToRawls()
+    fake_import_details = Import('workspace_name:', 'workspace_ns', 'workspace_uuid', 'workspace_google_project', 'submitter', 'import_url', 'filetype', True)
+    jso = json.load(open('app/tests/resources/simple_cycle.json'))
+    monkeypatch.setattr(tdr_manifest_to_rawls.gcs, "open_file", open_fake_gcs_file)
+    parsed_manifest = TDRManifestParser(jso, fake_import_details.id)
+    tables = parsed_manifest.get_tables()
+    test = tmtr.translate_tables(fake_import_details, "snapshot_id", tables, parsed_manifest.is_cyclical())
+    import itertools
+    all_ops = [op for entity in list(itertools.chain(*test)) for op in entity.operations]
+    #The beginning of the list should be entirely non-references
+    first_ops = list(itertools.takewhile(lambda op:"_ref" not in op.attributeName, all_ops))
+    assert first_ops
+    #All the references should be at the end
+    ref_ops = all_ops[len(first_ops):]
+    assert ref_ops == list(filter(lambda op: "_ref" in op.attributeName, ref_ops))

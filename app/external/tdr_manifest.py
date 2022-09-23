@@ -1,14 +1,10 @@
 from collections import defaultdict
 from dataclasses import dataclass
-from graphlib import TopologicalSorter
-from itertools import groupby
+from graphlib import TopologicalSorter, CycleError
 import logging
 from typing import Dict, List, Optional, Tuple
 
-from pydantic import main
-
 from app.external import JSON
-from app.external.rawls_entity_model import EntityReference
 from app.external.tdr_model import Relationship, Table, TDRManifest, Column
 
 
@@ -27,8 +23,11 @@ class TDRManifestParser:
         self._snapshotid = manifest.snapshot.id
         self._snapshotname = manifest.snapshot.name
         self._import_id = import_id
+        self._is_cyclical = False
         self._tables = self._parse(manifest)
 
+    def is_cyclical(self) -> bool:
+        return self._is_cyclical
     def get_tables(self) -> List[TDRTable]:
         return self._tables
 
@@ -51,7 +50,6 @@ class TDRManifestParser:
         tables_for_export: List[Table] = list(filter(lambda t: t.name in exports, snapshot.tables))
 
 
-
         table_to_primary_key: Dict[str, str] = \
             {t.name: TDRManifestParser.get_primary_key(t) for t in tables_for_export}
         
@@ -72,11 +70,15 @@ class TDRManifestParser:
         ))
 
         # get the topological ordering of the tables, so we add tables to rawls in the correct order to resolve references
-        ordering = TDRManifestParser.get_ordering(tdr_tables)
-        ordering_key_fn = lambda table: ordering.index(table.name) if table.name in ordering else -1
-        ordered_tables = sorted(tdr_tables, key=ordering_key_fn)
+        try:
+            ordering = TDRManifestParser.get_ordering(tdr_tables)
+            ordering_key_fn = lambda table: ordering.index(table.name) if table.name in ordering else -1
+            ordered_tables = sorted(tdr_tables, key=ordering_key_fn)
 
-        return ordered_tables
+            return ordered_tables
+        except CycleError:
+            self._is_cyclical = True
+            return tdr_tables
 
     @staticmethod
     def get_table_to_relationships(relationships: List[Relationship]) -> Dict[str, List[Relationship]]:
