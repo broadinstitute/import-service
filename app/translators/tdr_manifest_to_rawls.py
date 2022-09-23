@@ -62,7 +62,7 @@ class TDRManifestToRawls(Translator):
             yield from itertools.chain(TDRManifestToRawls.translate_ref_tables(import_details, source_snapshot_id, tables, True, pet_key, False), TDRManifestToRawls.translate_ref_tables(import_details, source_snapshot_id, tables, True, pet_key, True))
     @classmethod
     def translate_ref_tables(cls, import_details: Import, source_snapshot_id: str, tables: List[TDRTable],
-                         is_cyclical: bool, pet_key: str, translate_ref: bool) -> Iterator[Iterator[Entity]]:
+                         is_cyclical: bool, pet_key: Dict[str, Any], translate_ref: bool) -> Iterator[Iterator[Entity]]:
         """Converts only the ref/non_ref attributes from a list of TDR tables to an iterator of Entity objects."""
         for t in tables:
             for f in t.parquet_files:

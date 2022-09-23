@@ -43,10 +43,7 @@ def test_translate_data_frame():
     assert len(entities) == 3
     assert entities[0].name == 'a'
     assert entities[0].entityType == 'unittest'
-    # assert entities[0].operations == [AddUpdateAttribute('datarepo_row_id', 'a'), AddUpdateAttribute('one', 1), AddUpdateAttribute('two', 'foo'), _import_sourceid(random_snapshot_id), _import_timestamp(now)]
-
     assert entities[0].operations == [_import_timestamp(now), _import_sourceid(random_snapshot_id), AddUpdateAttribute('datarepo_row_id', 'a'), AddUpdateAttribute('one', 1), AddUpdateAttribute('two', 'foo')]
-
     assert entities[1].name == 'b'
     assert entities[1].entityType == 'unittest'
     assert entities[1].operations == [_import_timestamp(now), _import_sourceid(random_snapshot_id), AddUpdateAttribute('datarepo_row_id', 'b'), AddUpdateAttribute('one', 2), AddUpdateAttribute('two', 'bar')]
@@ -344,6 +341,7 @@ def test_if_namespace_prefix_will_be_added():
 def get_fake_cyclic_parquet_translator(table: TDRTable) -> ParquetTranslator:
     fake_import_details = Import('workspace_name:', 'workspace_ns', 'workspace_uuid', 'workspace_google_project', 'submitter', 'import_url', 'filetype', True)
     return ParquetTranslator(table, "doesntmatter", fake_import_details, 'source_snapshot_uuid', None, True)
+
 def open_fake_gcs_file(import_details, bucket, path, submitter, auth_key):
     # Trick python into thinking this is from gcs, then open a local file
     return open(path.strip("/"), 'rb')
