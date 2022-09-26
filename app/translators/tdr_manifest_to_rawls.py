@@ -54,15 +54,12 @@ class TDRManifestToRawls(Translator):
         """Converts a list of TDR tables, each of which contain urls to parquet files, to an iterator of Entity objects."""
         pet_key = sam.admin_get_pet_key(import_details.workspace_google_project, import_details.submitter)
         if not is_cyclical:
-            for t in tables:
-                for f in t.parquet_files:
-                    pt = ParquetTranslator(t, f, import_details, source_snapshot_id, pet_key, is_cyclical)
-                    yield pt.translate()
+            yield from itertools.chain(TDRManifestToRawls.translate_table_parquet_files(import_details, source_snapshot_id, tables, False, pet_key, False))
         else:
-            yield from itertools.chain(TDRManifestToRawls.translate_ref_tables(import_details, source_snapshot_id, tables, True, pet_key, False), TDRManifestToRawls.translate_ref_tables(import_details, source_snapshot_id, tables, True, pet_key, True))
+            yield from itertools.chain(TDRManifestToRawls.translate_table_parquet_files(import_details, source_snapshot_id, tables, True, pet_key, False), TDRManifestToRawls.translate_table_parquet_files(import_details, source_snapshot_id, tables, True, pet_key, True))
     @classmethod
-    def translate_ref_tables(cls, import_details: Import, source_snapshot_id: str, tables: List[TDRTable],
-                         is_cyclical: bool, pet_key: Dict[str, Any], translate_ref: bool) -> Iterator[Iterator[Entity]]:
+    def translate_table_parquet_files(cls, import_details: Import, source_snapshot_id: str, tables: List[TDRTable],
+                                      is_cyclical: bool, pet_key: Dict[str, Any], translate_ref: bool) -> Iterator[Iterator[Entity]]:
         """Converts only the ref/non_ref attributes from a list of TDR tables to an iterator of Entity objects."""
         for t in tables:
             for f in t.parquet_files:
@@ -175,13 +172,8 @@ class ParquetTranslator:
                         logging.warning(f"Couldn't parse value {value}")
 
             # For cyclical tables, we are either processing only the reference attributes or only the non-reference attributes at a time
-            if self.is_cyclical:
-                if ref_only and colname in self.table.reference_attrs:
-                    all_attr_ops.append(self.translate_parquet_attr(colname, value))
-                elif ref_only or colname in self.table.reference_attrs:
-                    continue
-                else:
-                    all_attr_ops.append(self.translate_parquet_attr(colname, value))
+            if self.is_cyclical and (colname in self.table.reference_attrs) != ref_only:
+                continue
             else:
                 all_attr_ops.append(self.translate_parquet_attr(colname, value))
         return list(itertools.chain(*all_attr_ops))
