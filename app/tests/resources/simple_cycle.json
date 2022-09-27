@@ -1,0 +1,139 @@
+{
+  "snapshot": {
+    "id": "c8fc9907-9d30-429c-889c-c9f6f3c56586",
+    "name": "unit_test_cycle_snapshot",
+    "description": "Exemplar snapshot for unit testing data",
+    "createdDate": "2021-04-05T07:07:08.654321Z",
+    "source": [
+      {
+        "dataset": {
+          "id": "17904fb4-47dc-49bb-9115-c26ae5cc31cf",
+          "name": "unit_test_dataset",
+          "description": "Exemplar dataset for unit testing data",
+          "defaultProfileId": "ae1a19ae-4f95-4316-a46f-3a0b783ed04b",
+          "createdDate": "2021-01-02T03:04:05.654321Z",
+          "storage": [
+            {
+              "region": "us-central1",
+              "cloudResource": "bigquery",
+              "cloudPlatform": "gcp"
+            },
+            {
+              "region": "us-east4",
+              "cloudResource": "firestore",
+              "cloudPlatform": "gcp"
+            },
+            {
+              "region": "us-central1",
+              "cloudResource": "bucket",
+              "cloudPlatform": "gcp"
+            }
+          ]
+        },
+        "asset": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "samples",
+        "columns": [
+          {
+            "name": "datarepo_row_id",
+            "datatype": "string",
+            "array_of": false
+          },
+          {
+            "name": "sample_id",
+            "datatype": "string",
+            "array_of": false
+          },
+          {
+            "name": "participant_ref",
+            "datatype": "string",
+            "array_of": false
+          }
+        ],
+        "primaryKey": null,
+        "partitionMode": "none",
+        "datePartitionOptions": null,
+        "intPartitionOptions": null,
+        "rowCount": 3
+      },
+      {
+        "name": "participants",
+        "columns": [
+          {
+            "name": "datarepo_row_id",
+            "datatype": "string",
+            "array_of": false
+          },
+          {
+            "name": "participant_id",
+            "datatype": "string",
+            "array_of": false
+          },
+          {
+            "name": "sample_ref",
+            "datatype": "string",
+            "array_of": false
+          }
+        ],
+        "primaryKey": null,
+        "partitionMode": "none",
+        "datePartitionOptions": null,
+        "intPartitionOptions": null,
+        "rowCount": 3
+      }
+    ],
+    "relationships": [
+      {
+        "name": "test1",
+        "from": {
+          "table": "samples",
+          "column": "participant_ref"
+        },
+        "to": {
+          "table": "participants",
+          "column": "datarepo_row_id"
+        }
+      },
+      {
+        "name": "test2",
+        "from": {
+          "table": "participants",
+          "column": "sample_ref"
+        },
+        "to": {
+          "table": "samples",
+          "column": "datarepo_row_id"
+        }
+      }
+    ],
+    "profileId": "b7b29d39-ef77-4a14-9a9f-ecbf98e687b8",
+    "dataProject": "my-project",
+    "accessInformation": null
+  },
+  "format": {
+    "parquet": {
+      "location": {
+        "tables": [
+          {
+            "name": "samples",
+            "paths": [
+              "gs://loc/app/tests/resources/sample.parquet",
+              "gs://loc/app/tests/resources/sample2.parquet"
+            ]
+          },
+          {
+            "name": "participants",
+            "paths": [
+              "gs://loc/app/tests/resources/participant.parquet"
+            ]
+          }
+        ]
+      },
+      "manifest": "app/tests/resources/simple_cycle.json'"
+    },
+    "workspace": null
+  }
+}

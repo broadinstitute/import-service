@@ -66,15 +66,12 @@ def test_manifest_ordering_by_reference():
     assert(product_table.reference_attrs["test_column2"] == "cost")
 
 
-def test_cyclic_manifest_ordering_error():
-    with pytest.raises(Exception):
-        jso = json.load(open(resource_path + 'tdr_response_with_cycle.json'))
-
-        # parse into tables
-        parsed = TDRManifestParser(jso, "test-job-id")
-        parsed.get_tables()
-
-        # we shouldn't reach this point
+def test_cyclic_manifest_ordering():
+    jso = json.load(open(resource_path + 'tdr_response_with_cycle.json'))
+    # parse into tables
+    parsed = TDRManifestParser(jso, "test-job-id")
+    parsed.get_tables()
+    assert parsed.is_cyclical()
 
 
 def test_invalid_primary_keys_in_relationships():
