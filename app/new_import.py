@@ -1,4 +1,6 @@
 import flask
+import logging
+
 
 from app import translate
 from app.db import db, model
@@ -27,6 +29,11 @@ def handle(request: flask.Request, ws_ns: str, ws_name: str) -> model.ImportStat
     import_url = request_json["path"]
     import_filetype = request_json["filetype"]
     import_is_upsert = request_json.get("isUpsert", "true") # default to true if missing, to support legacy imports
+    options = request_json.get("options",{})
+    is_tdr_sync_required = options.get("tdrSyncPermissions", False) # default to not sync permissions
+
+    logging.info(f"New import received for {import_url}, {import_filetype}, is_upsert: {import_is_upsert}, \
+        options: {options}, tdrSyncFlag: {is_tdr_sync_required}")
 
     # and validate the input's path
     translate.validate_import_url(import_url, import_filetype, user_info)
@@ -41,8 +48,9 @@ def handle(request: flask.Request, ws_ns: str, ws_name: str) -> model.ImportStat
         workspace_google_project=google_project,
         submitter=user_info.user_email,
         import_url=import_url,
-        filetype=request_json["filetype"],
-        is_upsert=is_upsert)
+        filetype=import_filetype,
+        is_upsert=is_upsert,
+        is_tdr_sync_required=is_tdr_sync_required)
 
     with db.session_ctx() as sess:
         sess.add(new_import)

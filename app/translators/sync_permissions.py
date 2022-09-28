@@ -7,8 +7,8 @@ READER_ROLES = ["reader", "writer", "owner", "project-owner"]
 
 def sync_permissions_if_necessary(import_details: Import, import_status: ImportStatus):
     """Check if the status update is for a tdr snapshot sync that just completed, if yes, sync permissions."""
-    if import_status != ImportStatus.Done:
-        return # No sync required because import isn't done.
+    if import_status != ImportStatus.Done or not import_details.is_tdr_sync_required:
+        return # No sync required because import isn't done OR no sync is requested.
 
     # if the import job doesn't come with a snapshot id, don't perform a sync
     snapshot_id = import_details.snapshot_id

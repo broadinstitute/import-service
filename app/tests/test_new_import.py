@@ -1,10 +1,9 @@
 import flask.testing
-import jsonschema
 import pytest
 from app.external.rawls import RawlsWorkspaceResponse
 
 from app.tests import testutils
-from app import new_import, translate
+from app import translate
 from app.util import exceptions
 from app.db import db
 from app.db.model import *
@@ -12,6 +11,8 @@ from app.db.model import *
 
 good_json = {"path": f"https://{translate.VALID_NETLOCS[0]}/some/path", "filetype": "pfb"}
 good_headers = {"Authorization": "Bearer ya29.blahblah", "Accept": "application/json"}
+
+good_tdr_json = {"path": f"https://{translate.VALID_NETLOCS[0]}/some/path", "filetype": "tdrexport", "options": {"tdrSyncPermissions": True}}
 
 
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
@@ -25,6 +26,20 @@ def test_golden_path(client):
     dbres = sess.query(Import).filter(Import.id == id).all()
     assert len(dbres) == 1
     assert dbres[0].id == id
+    assert resp.headers["Content-Type"] == "application/json"
+
+@pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
+def test_tdr_json_golden_path(client):
+    resp = client.post('/mynamespace/myname/imports', json=good_tdr_json, headers=good_headers)
+    assert resp.status_code == 201
+
+    # response contains the job ID, check it's actually in the database
+    sess = db.get_session()
+    id = resp.json["jobId"]
+    dbres = sess.query(Import).filter(Import.id == id).all()
+    assert len(dbres) == 1
+    assert dbres[0].id == id
+    assert dbres[0].is_tdr_sync_required is True # could just assert True, adding check to be explicit
     assert resp.headers["Content-Type"] == "application/json"
 
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access")

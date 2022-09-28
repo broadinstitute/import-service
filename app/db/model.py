@@ -127,6 +127,7 @@ class Import(ImportServiceTable, EqMixin, Base):
     error_message = Column(String(2048), nullable=True)
     is_upsert = Column(Boolean, nullable=False, default=True)
     snapshot_id = Column(String(100), nullable=True)
+    is_tdr_sync_required = Column(Boolean, nullable=True, default=False)
 
     SNAPSHOT_FIELD_NAME = 'snapshot_id'
 
@@ -139,7 +140,7 @@ class Import(ImportServiceTable, EqMixin, Base):
         return value
 
     def __init__(self, workspace_name: str, workspace_ns: str, workspace_uuid: str, workspace_google_project: str,
-                 submitter: str, import_url: str, filetype: str, is_upsert: bool = True):
+                 submitter: str, import_url: str, filetype: str, is_upsert: bool = True, is_tdr_sync_required: bool = False):
         """Init method for Import model."""
         self.id = str(uuid.uuid4())
         self.workspace_name = workspace_name
@@ -154,6 +155,7 @@ class Import(ImportServiceTable, EqMixin, Base):
         self.error_message = None
         self.is_upsert = is_upsert
         self.snapshot_id = None
+        self.is_tdr_sync_required = is_tdr_sync_required
 
     @classmethod
     def get(cls, import_id: str, sess: DBSession) -> Import:
