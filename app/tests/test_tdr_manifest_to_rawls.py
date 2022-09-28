@@ -11,8 +11,10 @@ import pytest
 from app.db.model import Import
 from app.external.rawls_entity_model import AddListMember, AddUpdateAttribute, AttributeOperation, \
     CreateAttributeEntityReferenceList, CreateAttributeValueList, Entity, EntityReference, RemoveAttribute
-from app.external.tdr_manifest import TDRTable
-from app.translators.tdr_manifest_to_rawls import ParquetTranslator
+from app.external.tdr_manifest import TDRTable, TDRManifestParser
+from app.translators.tdr_manifest_to_rawls import ParquetTranslator, TDRManifestToRawls
+from app.translators import tdr_manifest_to_rawls
+import json
 
 def _import_timestamp(dt: datetime) -> AddUpdateAttribute:
     return AddUpdateAttribute('import:timestamp', dt.isoformat())
@@ -41,13 +43,13 @@ def test_translate_data_frame():
     assert len(entities) == 3
     assert entities[0].name == 'a'
     assert entities[0].entityType == 'unittest'
-    assert entities[0].operations == [AddUpdateAttribute('datarepo_row_id', 'a'), AddUpdateAttribute('one', 1), AddUpdateAttribute('two', 'foo'), _import_sourceid(random_snapshot_id), _import_timestamp(now)]
+    assert entities[0].operations == [_import_timestamp(now), _import_sourceid(random_snapshot_id), AddUpdateAttribute('datarepo_row_id', 'a'), AddUpdateAttribute('one', 1), AddUpdateAttribute('two', 'foo')]
     assert entities[1].name == 'b'
     assert entities[1].entityType == 'unittest'
-    assert entities[1].operations == [AddUpdateAttribute('datarepo_row_id', 'b'), AddUpdateAttribute('one', 2), AddUpdateAttribute('two', 'bar'), _import_sourceid(random_snapshot_id), _import_timestamp(now)]
+    assert entities[1].operations == [_import_timestamp(now), _import_sourceid(random_snapshot_id), AddUpdateAttribute('datarepo_row_id', 'b'), AddUpdateAttribute('one', 2), AddUpdateAttribute('two', 'bar')]
     assert entities[2].name == 'c'
     assert entities[2].entityType == 'unittest'
-    assert entities[2].operations == [AddUpdateAttribute('datarepo_row_id', 'c'), AddUpdateAttribute('one', 3), AddUpdateAttribute('two', 'baz'), _import_sourceid(random_snapshot_id), _import_timestamp(now)]
+    assert entities[2].operations == [_import_timestamp(now), _import_sourceid(random_snapshot_id), AddUpdateAttribute('datarepo_row_id', 'c'), AddUpdateAttribute('one', 3), AddUpdateAttribute('two', 'baz')]
 
 def get_fake_parquet_translator(import_submit_time: datetime = datetime.now(), table_name: str='unittest', primary_key: str='datarepo_row_id') -> ParquetTranslator:
     fake_table = TDRTable(table_name, primary_key, [], {'test_ref_column': 'other_entity_type'}, [])
@@ -79,13 +81,13 @@ def test_translate_parquet_file_to_entities():
     assert len(entities) == 3
     assert entities[0].name == 'a'
     assert entities[0].entityType == 'unittest'
-    assert entities[0].operations == [AddUpdateAttribute('datarepo_row_id', 'a'), AddUpdateAttribute('one', 1), AddUpdateAttribute('two', 'foo'), _import_sourceid(), _import_timestamp(now)]
+    assert entities[0].operations == [_import_timestamp(now), _import_sourceid(), AddUpdateAttribute('datarepo_row_id', 'a'), AddUpdateAttribute('one', 1), AddUpdateAttribute('two', 'foo')]
     assert entities[1].name == 'b'
     assert entities[1].entityType == 'unittest'
-    assert entities[1].operations == [AddUpdateAttribute('datarepo_row_id', 'b'), AddUpdateAttribute('one', 2), AddUpdateAttribute('two', 'bar'), _import_sourceid(), _import_timestamp(now)]
+    assert entities[1].operations == [_import_timestamp(now), _import_sourceid(), AddUpdateAttribute('datarepo_row_id', 'b'), AddUpdateAttribute('one', 2), AddUpdateAttribute('two', 'bar')]
     assert entities[2].name == 'c'
     assert entities[2].entityType == 'unittest'
-    assert entities[2].operations == [AddUpdateAttribute('datarepo_row_id', 'c'), AddUpdateAttribute('one', 3), AddUpdateAttribute('two', 'baz'), _import_sourceid(), _import_timestamp(now)]
+    assert entities[2].operations == [_import_timestamp(now), _import_sourceid(), AddUpdateAttribute('datarepo_row_id', 'c'), AddUpdateAttribute('one', 3), AddUpdateAttribute('two', 'baz')]
 
 # file-like to ([Entity])
 def test_translate_parquet_file_with_missing_pk():
@@ -103,10 +105,10 @@ def test_translate_parquet_file_with_missing_pk():
     assert len(entities) == 2
     assert entities[0].name == 'first'
     assert entities[0].entityType == 'unittest'
-    assert entities[0].operations == [AddUpdateAttribute('datarepo_row_id', 'a'), AddUpdateAttribute('custompk', 'first'), AddUpdateAttribute('two', 'foo'), _import_sourceid(), _import_timestamp(now)]
+    assert entities[0].operations == [_import_timestamp(now), _import_sourceid(), AddUpdateAttribute('datarepo_row_id', 'a'), AddUpdateAttribute('custompk', 'first'), AddUpdateAttribute('two', 'foo')]
     assert entities[1].name == 'third'
     assert entities[1].entityType == 'unittest'
-    assert entities[1].operations == [AddUpdateAttribute('datarepo_row_id', 'c'), AddUpdateAttribute('custompk', 'third'), AddUpdateAttribute('two', 'baz'), _import_sourceid(), _import_timestamp(now)]
+    assert entities[1].operations == [_import_timestamp(now), _import_sourceid(), AddUpdateAttribute('datarepo_row_id', 'c'), AddUpdateAttribute('custompk', 'third'), AddUpdateAttribute('two', 'baz')]
 
 # file-like to ([Entity])
 def test_translate_parquet_file_with_array_attrs():
@@ -128,27 +130,27 @@ def test_translate_parquet_file_with_array_attrs():
     assert len(entities) == 3
     assert entities[0].name == 'first'
     assert entities[0].entityType == 'unittest'
-    assert entities[0].operations == [AddUpdateAttribute('datarepo_row_id', 'a'),
+    assert entities[0].operations == [_import_timestamp(now), _import_sourceid(),
+        AddUpdateAttribute('datarepo_row_id', 'a'),
         AddUpdateAttribute('custompk', 'first'),
         RemoveAttribute('arrayattr'), CreateAttributeValueList('arrayattr'),
-        AddListMember('arrayattr', 'Philip'), AddListMember('arrayattr', 'Glass'),
-        _import_sourceid(), _import_timestamp(now)
+        AddListMember('arrayattr', 'Philip'), AddListMember('arrayattr', 'Glass')
     ]
     assert entities[1].name == 'second'
     assert entities[1].entityType == 'unittest'
-    assert entities[1].operations == [AddUpdateAttribute('datarepo_row_id', 'b'),
+    assert entities[1].operations == [_import_timestamp(now), _import_sourceid(),
+        AddUpdateAttribute('datarepo_row_id', 'b'),
         AddUpdateAttribute('custompk', 'second'),
         RemoveAttribute('arrayattr'), CreateAttributeValueList('arrayattr'),
-        AddListMember('arrayattr', 'Wolfgang'), AddListMember('arrayattr', 'Amadeus'), AddListMember('arrayattr', 'Mozart'),
-        _import_sourceid(), _import_timestamp(now)
+        AddListMember('arrayattr', 'Wolfgang'), AddListMember('arrayattr', 'Amadeus'), AddListMember('arrayattr', 'Mozart')
     ]
     assert entities[2].name == 'third'
     assert entities[2].entityType == 'unittest'
-    assert entities[2].operations == [AddUpdateAttribute('datarepo_row_id', 'c'),
+    assert entities[2].operations == [_import_timestamp(now), _import_sourceid(),
+        AddUpdateAttribute('datarepo_row_id', 'c'),
         AddUpdateAttribute('custompk', 'third'),
         RemoveAttribute('arrayattr'), CreateAttributeValueList('arrayattr'),
-        AddListMember('arrayattr', 'Dmitri'), AddListMember('arrayattr', 'Shostakovich'),
-        _import_sourceid(), _import_timestamp(now)
+        AddListMember('arrayattr', 'Dmitri'), AddListMember('arrayattr', 'Shostakovich')
     ]
 
 # KVP to AttributeOperation
@@ -334,3 +336,30 @@ def test_if_namespace_prefix_will_be_added():
     assert not ParquetTranslator.prefix_required('bam',  'sample')
     assert not ParquetTranslator.prefix_required('sample_id_id',  'sample')
     assert not ParquetTranslator.prefix_required('sample_ID_id',  'sample')
+
+
+def get_fake_cyclic_parquet_translator(table: TDRTable) -> ParquetTranslator:
+    fake_import_details = Import('workspace_name:', 'workspace_ns', 'workspace_uuid', 'workspace_google_project', 'submitter', 'import_url', 'filetype', True)
+    return ParquetTranslator(table, "doesntmatter", fake_import_details, 'source_snapshot_uuid', None, True)
+
+def open_fake_gcs_file(import_details, bucket, path, submitter, auth_key):
+    # Trick python into thinking this is from gcs, then open a local file
+    return open(path.strip("/"), 'rb')
+
+@pytest.mark.usefixtures("sam_valid_pet_key")
+def test_translate_cyclic_table(monkeypatch):
+    tmtr = TDRManifestToRawls()
+    fake_import_details = Import('workspace_name:', 'workspace_ns', 'workspace_uuid', 'workspace_google_project', 'submitter', 'import_url', 'filetype', True)
+    jso = json.load(open('app/tests/resources/simple_cycle.json'))
+    monkeypatch.setattr(tdr_manifest_to_rawls.gcs, "open_file", open_fake_gcs_file)
+    parsed_manifest = TDRManifestParser(jso, fake_import_details.id)
+    tables = parsed_manifest.get_tables()
+    test = tmtr.translate_tables(fake_import_details, "snapshot_id", tables, parsed_manifest.is_cyclical())
+    import itertools
+    all_ops = [op for entity in list(itertools.chain(*test)) for op in entity.operations]
+    #The beginning of the list should be entirely non-references
+    first_ops = list(itertools.takewhile(lambda op:"_ref" not in op.attributeName, all_ops))
+    assert first_ops
+    #All the references should be at the end
+    ref_ops = all_ops[len(first_ops):]
+    assert ref_ops == list(filter(lambda op: "_ref" in op.attributeName, ref_ops))
