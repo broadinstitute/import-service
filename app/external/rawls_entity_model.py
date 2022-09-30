@@ -42,7 +42,7 @@ class CreateAttributeValueList(AttributeOperation):
 
 @dataclass
 class CreateAttributeEntityReferenceList(AttributeOperation):
-    attributeName: str
+    attributeListName: str
     op: str = 'CreateAttributeEntityReferenceList'
 
 @dataclass
