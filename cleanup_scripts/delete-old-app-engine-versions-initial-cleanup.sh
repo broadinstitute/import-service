@@ -3,7 +3,7 @@
 # Deletes old Google App Engine (GAE) deployments of import-service in an environment. You
 # MUST have jq installed to be able to use this script.
 #
-# USAGE: ./delete-old-app-engine-version.sh ENV NUMBER_OF_VERSIONS_TO_MAINTAIN
+# USAGE: ./delete-old-app-engine-version.sh ENV REMAINING_VERSIONS_COUNT
 #   ENV must be one of dev, alpha, perf, staging, prod
 #   REMAINING_VERSIONS_COUNT how many versions should remain after cleanup in GAE
 #
@@ -88,10 +88,10 @@ esac
 
 NEW_PROJECT="terra-importservice-$1"
 REMAINING_VERSIONS_COUNT=$2
-DEFAULT_MININUM_VERSIONS=20
+DEFAULT_MININUM_VERSIONS=50
 
 if (( REMAINING_VERSIONS_COUNT < DEFAULT_MININUM_VERSIONS )); then
-    abort "For ${NEW_PROJECT}, user cannot delete more than the minimum amount of versions: ${DEFAULT_MININUM_VERSIONS}"
+    abort "For ${NEW_PROJECT}, user cannot have less than ${DEFAULT_MININUM_VERSIONS} versions available in GAE"
 fi
 
 check_user_permissions

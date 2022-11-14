@@ -106,10 +106,13 @@ or via Jenkins for all other environments. [See here for specific details](https
 [GAE allows a maximum of 210 versions of any app](https://cloud.google.com/appengine/docs/standard/an-overview-of-app-engine#limits), so we handle cleanup of old apps as 
 new versions are deployed.
 
-DSP caps the number of versions that can be stored at 20 (this is just an arbitrary number), just to ensure plenty of versions available for rollback if a bug were introduced.
+DSP caps the number of versions that can be stored at 50 (this is just an arbitrary number), just to ensure plenty of versions available for rollback if a bug were introduced.
 
-The `delete-old-app-engine-versions` bash script handles programmatic cleanup of the versions.  For `dev` GAE versions, the `delete-old-app-engine-versions` script is automatically
-invoked during each merge into the `develop` branch, which will deleted the oldest version amongst the 20 versions in GAE, and replace with the newest version.
+In `cleanup_scripts`:
+
+The `delete-old-app-engine-versions-initial-cleanup` bash script handles cleanup of multiple versions, sorted by oldest. It has a cap of at least 50 versions that must remain after cleanup.
+
+The `delete-old-app-engine-versions` bash script handles programmatic cleanup of the oldest version, in exchange for the upload of the newest version.  For `dev` GAE versions, the `delete-old-app-engine-versions` script is automatically
+invoked during each merge into the `develop` branch.
 
 For other environments (such as `alpha, perf, staging, prod`), the script must be run manually. This is to ensure that the deletion of versions is intentional by an authenticated user.
-
