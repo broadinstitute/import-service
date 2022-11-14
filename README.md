@@ -113,6 +113,3 @@ invoked during each merge into the `develop` branch, which will deleted the olde
 
 For other environments (such as `alpha, perf, staging, prod`), the script must be run manually. This is to ensure that the deletion of versions is intentional by an authenticated user.
 
-
-
-
