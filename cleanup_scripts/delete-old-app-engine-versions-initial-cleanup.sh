@@ -7,6 +7,8 @@
 #   ENV must be one of dev, alpha, perf, staging, prod
 #   REMAINING_VERSIONS_COUNT how many versions should remain after cleanup in GAE
 #
+# Credit to developers in terra-ui who developed https://github.com/DataBiosphere/terra-ui/blob/dev/scripts/delete-old-app-engine-versions.sh
+# Some of this code was copy/pasta'd from there
 
 set -eu
 set -o pipefail

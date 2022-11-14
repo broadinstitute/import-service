@@ -7,6 +7,9 @@
 # USAGE: ./delete-old-app-engine-version.sh
 #   ENV must be one of dev, alpha, perf, staging, prod
 #
+# Credit to developers in terra-ui who developed https://github.com/DataBiosphere/terra-ui/blob/dev/scripts/delete-old-app-engine-versions.sh
+# Some of this code was copy/pasta'd from there
+
 
 set -eu
 set -o pipefail

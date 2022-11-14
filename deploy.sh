@@ -68,9 +68,20 @@ docker pull $CLOUD_SDK_DOCKER_IMG
 # If this deploy fails with the following error message:
 #    ERROR: (gcloud.app.deploy) Permissions error fetching application [apps/$GOOGLE_PROJECT]. Please make sure you are using the correct project ID and that you have permission to view applications on the project.
 # This could be due to the service account described by deployer.json either being destroyed and re-created in the project.
-docker run -v $PWD:/app \
-  -e GOOGLE_PROJECT=${GOOGLE_PROJECT} \
-  -w /app \
-  --entrypoint "/bin/bash" \
-   $CLOUD_SDK_DOCKER_IMG \
-  -c "ls app && gcloud auth activate-service-account --key-file=deployer.json --project=$GOOGLE_PROJECT && gcloud app deploy app.yaml cron.yaml --project=$GOOGLE_PROJECT"
+
+# If dev environment, we also perform cleanup on older versions of the app automatically via CircleCI
+if [[ "ENVIRONMENT" ="dev" ]]; then
+  docker run -v $PWD:/app \
+    -e GOOGLE_PROJECT=${GOOGLE_PROJECT} \
+    -w /app \
+    --entrypoint "/bin/bash" \
+     $CLOUD_SDK_DOCKER_IMG \
+    -c "ls app && gcloud auth activate-service-account --key-file=deployer.json --project=$GOOGLE_PROJECT && ./cleanup_scripts/delete-old-app-engine-version dev && gcloud app deploy app.yaml cron.yaml --project=$GOOGLE_PROJECT"
+else
+    docker run -v $PWD:/app \
+      -e GOOGLE_PROJECT=${GOOGLE_PROJECT} \
+      -w /app \
+      --entrypoint "/bin/bash" \
+       $CLOUD_SDK_DOCKER_IMG \
+      -c "ls app && gcloud auth activate-service-account --key-file=deployer.json --project=$GOOGLE_PROJECT && gcloud app deploy app.yaml cron.yaml --project=$GOOGLE_PROJECT"
+fi
