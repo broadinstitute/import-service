@@ -1,11 +1,11 @@
 #!/bin/bash
 #
-# Deletes old Google App Engine (GAE) deployments of import-service in an environment. You
-# MUST have jq installed to be able to use this script.
+# Deletes the oldest Google App Engine (GAE) of import-service in an environment, ensuring that the count of versions
+# remains the same over time. This script would be invoked after the initial `delete-odd-app-engine-versions-initial-cleanup.sh`
+# You MUST have jq installed to be able to use this script.
 #
-# USAGE: ./delete-old-app-engine-version.sh ENV NUMBER_OF_VERSIONS_TO_MAINTAIN
+# USAGE: ./delete-old-app-engine-version.sh
 #   ENV must be one of dev, alpha, perf, staging, prod
-#   REMAINING_VERSIONS_COUNT how many versions should remain after cleanup in GAE
 #
 
 set -eu
@@ -63,12 +63,9 @@ check_user_permissions() {
 }
 
 execute_delete() {
-    ## Ensure that we are not deleting the most recent versions, then delete
-    ALL_VERSIONS=($(gcloud app versions list --project="${NEW_PROJECT}" --format=json | jq -r '. |= sort_by(.last_deployed_time.datetime)' | jq -r '.[].id'))
-    ALL_VERSIONS_COUNT="${#ALL_VERSIONS[@]}"
-    VERSIONS_TO_DELETE_COUNT=ALL_VERSIONS_COUNT-REMAINING_VERSIONS_COUNT
-    VERSIONS_TO_DELETE=("${ALL_VERSIONS[@]:0:VERSIONS_TO_DELETE_COUNT}")
-    gcloud app versions delete "${VERSIONS_TO_DELETE[@]}" --project="${NEW_PROJECT}"
+    ## Ensure that we are not deleting the most recent version, then delete
+    VERSION_TO_DELETE=($(gcloud app versions list --project="${NEW_PROJECT}" --format=json | jq -r '. |= sort_by(.last_deployed_time.datetime)' | jq -r '.[].id' | head -1))
+    gcloud app versions delete "${VERSION_TO_DELETE}" --project="${NEW_PROJECT}"
 }
 
 check_color_support
@@ -87,12 +84,6 @@ case $1 in
 esac
 
 NEW_PROJECT="terra-importservice-$1"
-REMAINING_VERSIONS_COUNT=$2
-DEFAULT_MININUM_VERSIONS=20
-
-if (( REMAINING_VERSIONS_COUNT < DEFAULT_MININUM_VERSIONS )); then
-    abort "For ${NEW_PROJECT}, user cannot delete more than the minimum amount of versions: ${DEFAULT_MININUM_VERSIONS}"
-fi
 
 check_user_permissions
 
