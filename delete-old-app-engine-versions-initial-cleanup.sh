@@ -5,7 +5,7 @@
 #
 # USAGE: ./delete-old-app-engine-versions.sh ENV NUMBER_OF_VERSIONS_TO_MAINTAIN
 #   ENV must be one of dev, alpha, perf, staging, prod
-#   NUMBER_OF_VERSIONS_TO_MAINTAIN how many versions should remain in GAE. GAE will return
+#   REMAINING_VERSIONS_COUNT how many versions should remain after cleanup in GAE
 #
 
 set -eu
@@ -63,14 +63,12 @@ check_user_permissions() {
 }
 
 execute_delete() {
-    ALL_VERSIONS=($(gcloud app versions list --project="${NEW_PROJECT}" --format=json | jq -r '.[].version.id'))
+    ## Ensure that we are not deleting the most recent versions, then delete
+    ALL_VERSIONS=($(gcloud app versions list --project="${NEW_PROJECT}" --format=json | jq -r '. |= sort_by(.last_deployed_time.datetime)' | jq -r '.[].id'))
     ALL_VERSIONS_COUNT="${#ALL_VERSIONS[@]}"
-    VERSIONS_TO_DELETE_COUNT=ALL_VERSIONS_COUNT-REMAINING_VERSIONS
+    VERSIONS_TO_DELETE_COUNT=ALL_VERSIONS_COUNT-REMAINING_VERSIONS_COUNT
     VERSIONS_TO_DELETE=("${ALL_VERSIONS[@]:0:VERSIONS_TO_DELETE_COUNT}")
-    for VARIABLE in ${VERSIONS_TO_DELETE[@]}
-    do
-      echo "${VARIABLE}"
-    done
+    gcloud app versions delete "${VERSIONS_TO_DELETE[@]}" --project="${NEW_PROJECT}"
 }
 
 check_color_support
@@ -89,7 +87,7 @@ case $1 in
 esac
 
 NEW_PROJECT="terra-importservice-$1"
-REMAINING_VERSIONS=$2
+REMAINING_VERSIONS_COUNT=$2
 
 check_user_permissions
 

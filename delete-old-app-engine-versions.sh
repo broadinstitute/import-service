@@ -27,8 +27,6 @@ check_color_support() {
     INFO="${BLD}+${RST}"
 }
 
-REMAINING_VERSIONS=20
-
 # print out usage to stdout
 usage() {
     printf "Usage: %s ${BLD}ENV${RST}\n  ${BLD}ENV${RST} must be one of dev, alpha, perf, staging, prod.\n" "$0"
@@ -68,30 +66,45 @@ unix_epoch_to_date() {
     echo "$1" | jq -r '. | strftime("%Y-%m-%d")'
 }
 
+# ensure that the deletion date is always older than the oldest pr date
+set_dev_deletion_date() {
+    OLDEST_PR=$(gcloud app versions list --project="${NEW_PROJECT}" --format=json | jq '. |= sort_by(.last_deployed_time.datetime) | first')
+    OLDEST_PR_NAME=$(echo "${OLDEST_PR}" | jq -r '.id')
+    OLDEST_PR_TIME=$(echo "${OLDEST_PR}" | jq -r '.last_deployed_time.datetime | sub(":00$";"00") | strptime("%Y-%m-%d %H:%M:%S%z") | mktime')
+    OLDEST_PR_DATE=$(unix_epoch_to_date "${OLDEST_PR_TIME}")
+
+    printf "${INFO} ${GRN}%s${RST} is the oldest PR and was deployed on ${GRN}%s${RST}\n" "${OLDEST_PR_NAME}" "${OLDEST_PR_DATE}"
+
+    OLDEST_PR_DELETION_TIME=$(echo "${OLDEST_PR_TIME}" | jq -r '. - (24 * 60 * 60)') # 1 day
+    if [ "${DELETION_TIME}" -gt "${OLDEST_PR_DELETION_TIME}" ]; then
+        DELETION_DATE=$(unix_epoch_to_date "${OLDEST_PR_DELETION_TIME}")
+    fi
+}
+
 # return versions of app engine that match filter
 filter_app_engine_versions() {
-    gcloud app versions list --project="${NEW_PROJECT}" --format=json | jq -r '.[].version.id'
+    gcloud app versions list --project="${NEW_PROJECT}" --format=json 2>/dev/null | jq -r '.[].version.id'
 }
 
 # ensure that deletions leave a certain number of deployments
 check_remaining_items() {
-    REMAIN_LIST_ITEMS=($(filter_app_engine_versions))
+    REMAIN_LIST_ITEMS=($(filter_app_engine_versions "version.createTime.date('%Y-%m-%d', Z)>'${DELETION_DATE}'"))
     REMAIN_LIST_COUNT="${#REMAIN_LIST_ITEMS[@]}"
     if [ "${REMAIN_LIST_COUNT}" -lt 1 ]; then
         abort "all deployments would be deleted"
-    elif [ "$REMAIN_LIST_COUNT" -lt "$REMAINING_VERSIONS" ]; then
-        abort "less than ${$REMAINING_VERSIONS} deployments would remain"
+    elif [ "$REMAIN_LIST_COUNT" -lt 15 ]; then
+        abort "less than 15 deployments would remain"
     fi
 }
 
 # ensure that deletions erase a certain number of deployments
 check_deletion_items() {
-    DELETE_LIST_ITEMS=($(filter_app_engine_versions))
+    DELETE_LIST_ITEMS=($(filter_app_engine_versions "version.createTime.date('%Y-%m-%d', Z)<='${DELETION_DATE}'"))
     DELETE_LIST_COUNT="${#DELETE_LIST_ITEMS[@]}"
     if [ "${DELETE_LIST_COUNT}" -lt 1 ]; then
         abort "no deployments to delete"
-    elif [ "${DELETE_LIST_COUNT}" -lt "$REMAINING_VERSIONS" ]; then
-        abort "less than ${$REMAINING_VERSIONS} deployments to delete"
+    elif [ "${DELETE_LIST_COUNT}" -lt 10 ]; then
+        abort "less than 10 deployments to delete"
     fi
 }
 
@@ -110,7 +123,7 @@ deletion_preflight_summary() {
 # actually execute the deletion process
 execute_delete() {
     printf "${RED}THIS OPERATION WILL IRREVERSIBLY DELETE ${DELETE_LIST_COUNT} DEPLOYMENTS FROM %s AND EARLIER IN THE ${NEW_PROJECT} PROJECT.${RST}\n" "${DELETION_DATE}"
-#    gcloud app versions delete "${DELETE_LIST_ITEMS[@]}" --project="${NEW_PROJECT}"
+    gcloud app versions delete "${DELETE_LIST_ITEMS[@]}" --project="${NEW_PROJECT}"
 }
 
 check_color_support
@@ -130,12 +143,17 @@ esac
 
 NEW_PROJECT="terra-importservice-$1"
 
+SPECIFIC_VERSION="$2"
+
 check_user_permissions
 
 printf "${INFO} Selected project ${GRN}%s${RST}\n" "${NEW_PROJECT}"
 
 DELETION_TIME=$(jq -n 'now - (7 * 24 * 60 * 60)') # 7 days
 DELETION_DATE=$(unix_epoch_to_date "${DELETION_TIME}")
+if [ "$1" == "dev" ]; then
+    set_dev_deletion_date
+fi
 printf "${INFO} Set the deletion date to ${RED}%s and earlier${RST}\n" "${DELETION_DATE}"
 
 deletion_preflight_checks
