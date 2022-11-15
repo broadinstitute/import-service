@@ -115,4 +115,6 @@ The `delete-old-app-engine-versions-initial-cleanup` bash script handles cleanup
 The `delete-old-app-engine-versions` bash script handles programmatic cleanup of the oldest version, in exchange for the upload of the newest version.  For `dev` GAE versions, the `delete-old-app-engine-versions` script is automatically
 invoked during each merge into the `develop` branch.
 
-For other environments (such as `alpha, perf, staging, prod`), the script must be run manually. This is to ensure that the deletion of versions is intentional by an authenticated user.
+For other environments other than `prod` (such as `alpha, perf, staging`), the script must be run manually. This is to ensure that the deletion of versions is intentional by an authenticated user.
+
+For `prod`, the suggestion is that the deletions occur deliberately in the Google App Engine console.

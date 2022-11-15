@@ -83,9 +83,9 @@ fi
 
 case $1 in
     --help ) usage;;
-    dev|alpha|staging ) ;;
+    dev|alpha|perf|staging ) ;;
     prod ) error "This script cannot be run against prod.";;
-    * ) error "ENV must be one of dev, alpha, or staging";;
+    * ) error "ENV must be one of dev, alpha, perf, or staging";;
 esac
 
 NEW_PROJECT="terra-importservice-$1"
