@@ -17,4 +17,5 @@ node_modules
 #!include:.gitignore
 
 #import-service exclusions
+app/cleanup_scripts/
 secrets.yaml
