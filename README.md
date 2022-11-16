@@ -98,3 +98,23 @@ the `TIER` to which you want to deploy:
 that all tiers other than `dev` are kept in sync and are running the same versions of code.  This is essential so that
 as other DSP services are tested during their release process, they can ensure that their code will work properly with
 the latest version of Bond running in `prod`.
+
+## Deployment Maintenance & Cleanup
+
+`Import Service` is a Google App Engine (GAE) application.  Versions of `import-service` are deployed to GAE either via a merge into the `develop` branch (for `dev` apps),
+or via Jenkins for all other environments. [See here for specific details](https://github.com/broadinstitute/import-service#deployment-for-broad-only).
+[GAE allows a maximum of 210 versions of any app](https://cloud.google.com/appengine/docs/standard/an-overview-of-app-engine#limits), so we handle cleanup of old apps as 
+new versions are deployed.
+
+DSP caps the number of versions that can be stored at 50 (this is just an arbitrary number), just to ensure plenty of versions available for rollback if a bug were introduced.
+
+In `cleanup_scripts`:
+
+The `delete-old-app-engine-versions-initial-cleanup` bash script handles cleanup of multiple versions, sorted by oldest. It has a cap of at least 50 versions that must remain after cleanup.
+
+The `delete-old-app-engine-versions` bash script handles programmatic cleanup of the oldest version, in exchange for the upload of the newest version.  For `dev` GAE versions, the `delete-old-app-engine-versions` script is automatically
+invoked during each merge into the `develop` branch.
+
+For other environments other than `prod` (such as `alpha, perf, staging`), the script must be run manually. This is to ensure that the deletion of versions is intentional by an authenticated user.
+
+For `prod`, the suggestion is that the deletions occur deliberately in the Google App Engine console.
