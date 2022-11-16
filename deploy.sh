@@ -60,7 +60,7 @@ docker run -v $PWD:/app \
   -e ENVIRONMENT=${ENVIRONMENT} \
    $DSDE_TOOLBOX_DOCKER_IMG render-templates.sh
 
-export CLOUD_SDK_DOCKER_IMG=gcr.io/google.com/cloudsdktool/cloud-sdk:latest-alpine
+export CLOUD_SDK_DOCKER_IMG=gcr.io/google.com/cloudsdktool/cloud-sdk:404.0.0
 docker pull $CLOUD_SDK_DOCKER_IMG
 
 
