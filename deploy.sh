@@ -77,7 +77,7 @@ if [ "$ENVIRONMENT" == "dev" ]; then
     -w /app \
     --entrypoint "/bin/bash" \
      $CLOUD_SDK_DOCKER_IMG \
-    -c "ls app && gcloud auth activate-service-account --key-file=deployer.json --project=$GOOGLE_PROJECT && ./cleanup_scripts/delete-old-app-engine-version dev && gcloud app deploy app.yaml cron.yaml --project=$GOOGLE_PROJECT"
+    -c "ls app && gcloud auth activate-service-account --key-file=deployer.json --project=$GOOGLE_PROJECT && ./cleanup_scripts/delete-old-app-engine-version.sh dev && gcloud app deploy app.yaml cron.yaml --project=$GOOGLE_PROJECT"
 else
     docker run -v $PWD:/app \
       -e GOOGLE_PROJECT=${GOOGLE_PROJECT} \
