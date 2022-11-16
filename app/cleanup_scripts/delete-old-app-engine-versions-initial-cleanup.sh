@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
 #
 # Deletes old Google App Engine (GAE) deployments of import-service in an environment. You
 # MUST have jq installed to be able to use this script.

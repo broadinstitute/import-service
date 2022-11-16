@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
 #
 # Deletes the oldest Google App Engine (GAE) of import-service in an environment, ensuring that the count of versions
 # remains the same over time. This script would be invoked after the initial `delete-odd-app-engine-versions-initial-cleanup.sh`
