@@ -108,12 +108,9 @@ new versions are deployed.
 
 DSP caps the number of versions that can be stored at 50 (this is just an arbitrary number), just to ensure plenty of versions available for rollback if a bug were introduced.
 
-In `app/cleanup_scripts`:
+In `cleanup_scripts`:
 
-The `delete-old-app-engine-versions-initial-cleanup` bash script handles cleanup of multiple versions, sorted by oldest. It has a cap of at least 50 versions that must remain after cleanup.
-
-The `delete-old-app-engine-versions` bash script handles programmatic cleanup of the oldest version, in exchange for the upload of the newest version.  For `dev` GAE versions, the `delete-old-app-engine-versions` script is automatically
-invoked during each merge into the `develop` branch.
+The `delete-old-app-engine-versions-cleanup` bash script handles cleanup of multiple versions, sorted by oldest. It has a cap of at least 50 versions that must remain after cleanup.
 
 For other environments other than `prod` (such as `alpha, perf, staging`), the script must be run manually. This is to ensure that the deletion of versions is intentional by an authenticated user.
 
