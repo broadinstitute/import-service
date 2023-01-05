@@ -113,6 +113,9 @@ jobs:
             # SA copied from secret/dsde/dsp-techops/common/dspci-wb-gcr-service-account.json
             # Get the credentials used to push to GCR from CircleCI from the CircleCI environment variables
             echo ${GCR_SA} > ${HOME}/gcr_auth_key_file.json
+            # echo SA email to log
+            echo "Using service account:"
+            cat gcr_auth_key_file.json | jq '.client_email'
             gcloud auth activate-service-account --key-file ${HOME}/gcr_auth_key_file.json
             # Register `gcloud` as a Docker credential helper. Add `-q` to silence confirmation prompts
             gcloud auth configure-docker ${GCR_REGISTRY_HOST} -q
