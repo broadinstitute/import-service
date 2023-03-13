@@ -44,7 +44,7 @@ jobs:
     <<: *job_defaults
 
     docker:
-      - image: circleci/python:3.9.16
+      - image: circleci/python:3.9.5
 
     steps:
       - checkout
