@@ -1,4 +1,4 @@
-FROM python:3.9.7 AS build
+FROM python:3.9.16 AS build
 
 RUN python3 -m venv /venv
 
