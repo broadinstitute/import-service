@@ -5,7 +5,7 @@ wheel==0.37.0
 Flask==2.0.2
 werkzeug==2.0.3 # later version incompatible with Flask, newer Flask incompatible with pypfb
 MarkupSafe==2.0.1
-jsonschema==4.2.1
+jsonschema==3.2.0
 pytest==6.2.5
 mypy==0.910
 sqlalchemy==1.4.28
@@ -16,11 +16,11 @@ google-cloud-logging==3.0.0
 google-auth==2.3.3
 google-api-python-client==2.33.0
 google-cloud-pubsub==2.9.0
-pypfb==0.5.0   # 0.5.16 is latest, but is not on pypi
+pypfb==0.5.21
 gcsfs==2021.11.1
 memunit==0.5.2
 pyhumps==3.0.2
 flask-restx==0.5.1
 pyarrow==6.0.1
 pydantic==1.8.2
-pandas==1.3.5
+pandas==1.5.3
