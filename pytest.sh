@@ -8,4 +8,4 @@ then
     exit 1
 fi
 
-python3 -m pytest
+poetry run pytest

@@ -14,10 +14,10 @@ Create and activate the Python virtualenvironment:
 ```
 $ python3 -m venv venv
 $ source venv/bin/activate
-(venv) $ python3 -m pip install -r requirements.txt
+(venv) $ poetry install
 ```
 
-You should periodically run the `pip install` line within your venv to keep it up-to-date with changes in dependencies.
+You should periodically run the `poetry install` line within your venv to keep it up-to-date with changes in dependencies.
 
 ### Normal usage
 
