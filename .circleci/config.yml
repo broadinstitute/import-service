@@ -59,20 +59,26 @@ jobs:
       - run:
           name: install dependencies
           command: |
+            python3 -m venv venv
+            . ls && pwd
             poetry self update
             poetry install
 
       - save_cache:
+          paths:
+            - ./venv
           key: v1-dependencies-{{ checksum "pyproject.toml" }}
 
       - run:
           name: run tests
           command: |
+            . venv/bin/activate
             ./pytest.sh
 
       - run:
           name: run linter
           command: |
+            . venv/bin/activate
             ./mypy.sh
 
 
