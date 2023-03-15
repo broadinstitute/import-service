@@ -44,7 +44,7 @@ jobs:
     <<: *job_defaults
 
     docker:
-      - image: cimg/python:3.9
+      - image: circleci/python:3.9.5
 
     steps:
       - checkout
@@ -61,7 +61,7 @@ jobs:
           command: |
             python3 -m venv venv
             . venv/bin/activate
-            poetry self update
+            curl -sSL https://install.python-poetry.org | POETRY_VERSION=1.4.0 python3 -
             poetry install
 
       - save_cache:
