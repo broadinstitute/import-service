@@ -7,7 +7,7 @@ on:
     branches: [ '**' ]
 
 jobs:
-  build:
+  build-and-test:
 
     runs-on: ubuntu-latest
 
@@ -27,3 +27,6 @@ jobs:
 
       - name: Run tests
         run: poetry run pytest
+
+      - name: Run linter
+        run: poetry run mypy ./*.py && poetry run mypy -p app

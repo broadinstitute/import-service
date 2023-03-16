@@ -1,0 +1,56 @@
+name: Publish Docker image to GCR
+on:
+  workflow_call:
+    inputs:
+      new-tag:
+        required: true
+        type: string
+    secrets:
+      BROADBOT_TOKEN:
+        required: true
+
+env:
+  SERVICE_NAME: ${{ github.event.repository.name }}
+  GCR_REGISTRY: us.gcr.io
+  GOOGLE_PROJECT: broad-dsp-gcr-public
+
+jobs:
+  publish-docker-job:
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set commit short hash
+        id: setHash
+        run: |
+          git_short_sha=$(git rev-parse --short HEAD)
+          echo $git_short_sha
+          echo "::set-output name=git_short_sha::${git_short_sha}"
+
+      - name: Authenticate to Google Cloud
+        uses: 'google-github-actions/auth@v0'
+        with:
+          # Centralized in dsp-tools-k8s; ask in #dsp-devops-champions for help troubleshooting
+          workload_identity_provider: 'projects/1038484894585/locations/global/workloadIdentityPools/github-wi-pool/providers/github-wi-provider'
+          service_account: 'gcr-publish@broad-dsp-gcr-public.iam.gserviceaccount.com'
+
+      - name: Explicitly auth Docker for GCR
+        run: gcloud auth configure-docker --quiet
+
+      - name: Construct GCR docker image name
+        id: gcr-image-name
+        run: echo "name=${GCR_REGISTRY}/${GOOGLE_PROJECT}/${SERVICE_NAME}" >> $GITHUB_OUTPUT
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Build Docker image
+        run: docker build . -t ${{ steps.gcr-image-name.outputs.name }}:${{ steps.setHash.outputs.git_short_sha }}
+
+      - name: Push Docker image
+        run: docker push --all-tags ${{ steps.gcr-image-name.outputs.name }}
