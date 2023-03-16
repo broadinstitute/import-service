@@ -1,34 +1,31 @@
+name: Build and test
 
-  Aaron Kanzer (he/him)
-    2:25 PM
-  name: Build and test
+on:
+  push:
+    paths-ignore: [ '*.md' ]
+  pull_request:
+    branches: [ '**' ]
 
-  on:
-    push:
-      paths-ignore: [ '*.md' ]
-    pull_request:
-      branches: [ '**' ]
+jobs:
+  build:
 
-  jobs:
-    build:
+    runs-on: ubuntu-latest
 
-      runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
 
-      steps:
-        - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9.16'
 
-        - name: Set up Python
-          uses: actions/setup-python@v2
-          with:
-            python-version: '3.9.16'
+      - name: Install Poetry
+        run: |
+          curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
+          source $HOME/.poetry/env
 
-        - name: Install Poetry
-          run: |
-            curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
-            source $HOME/.poetry/env
+      - name: Install dependencies
+        run: poetry install
 
-        - name: Install dependencies
-          run: poetry install
-
-        - name: Run tests
-          run: poetry run pytest
+      - name: Run tests
+        run: poetry run pytest
