@@ -6,6 +6,7 @@ on:
   pull_request:
     branches: [ '**' ]
 
+# TODO: refine if we need this
 #on:
 #  workflow_call:
 #    inputs:

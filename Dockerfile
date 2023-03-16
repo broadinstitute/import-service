@@ -24,6 +24,8 @@ RUN poetry lock
 RUN poetry install --no-cache
 RUN poetry add gunicorn
 
+# TODO: Need to inject permissions to pull from Broad registry
+
 #FROM us.gcr.io/broad-dsp-gcr-public/base/python:3.9-debian
 #
 #WORKDIR /app

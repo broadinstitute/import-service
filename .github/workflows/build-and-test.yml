@@ -28,5 +28,6 @@ jobs:
       - name: Run tests
         run: poetry run pytest
 
+# TODO: Resolve mypy versions with SqlAlchemy>2
 #      - name: Run linter
 #        run: poetry run mypy ./*.py && poetry run mypy -p app
