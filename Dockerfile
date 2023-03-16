@@ -24,12 +24,12 @@ RUN poetry lock
 RUN poetry install
 RUN poetry add gunicorn
 
-FROM us.gcr.io/broad-dsp-gcr-public/base/python:3.9-debian
-
-WORKDIR /app
-COPY --from=build /venv /venv
-COPY . .
-
-EXPOSE 8080
-
-CMD /venv/bin/gunicorn -b :8080 main:app
+#FROM us.gcr.io/broad-dsp-gcr-public/base/python:3.9-debian
+#
+#WORKDIR /app
+#COPY --from=build /venv /venv
+#COPY . .
+#
+#EXPOSE 8080
+#
+#CMD /venv/bin/gunicorn -b :8080 main:app
