@@ -1,4 +1,4 @@
-FROM us.gcr.io/broad-dsp-gcr-public/base/python:3.9-debian
+FROM python:3.9
 
 # Configure Poetry
 ENV POETRY_VERSION=1.4.0
@@ -21,7 +21,7 @@ COPY pyproject.toml ./
 COPY poetry.lock ./
 
 RUN poetry lock
-RUN poetry install --no-cache
+RUN poetry install
 RUN poetry add gunicorn
 
 COPY . .
