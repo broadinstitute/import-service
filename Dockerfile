@@ -1,4 +1,4 @@
-FROM python:3.9 AS build
+FROM us.gcr.io/broad-dsp-gcr-public/base/python:3.9-debian
 
 # Configure Poetry
 ENV POETRY_VERSION=1.4.0
@@ -21,15 +21,11 @@ COPY pyproject.toml ./
 COPY poetry.lock ./
 
 RUN poetry lock
-RUN poetry install --no-cache
+RUN poetry install
 RUN poetry add gunicorn
 
-FROM us.gcr.io/broad-dsp-gcr-public/base/python:3.9-debian
-
-WORKDIR /app
-COPY --from=build /venv /venv
 COPY . .
 
 EXPOSE 8080
 
-CMD /venv/bin/gunicorn -b :8080 main:app
+CMD poetry run gunicorn -b :8080 main:app
