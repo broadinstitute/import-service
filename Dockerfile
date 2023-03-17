@@ -1,4 +1,4 @@
-FROM python:3.9
+FROM python:3.9 AS base
 
 # Configure Poetry
 ENV POETRY_VERSION=1.4.0
@@ -24,14 +24,12 @@ RUN poetry lock
 RUN poetry install --no-cache
 RUN poetry add gunicorn
 
-# TODO: Need to inject permissions to pull from Broad registry
+FROM us.gcr.io/broad-dsp-gcr-public/base/python:3.9-debian
 
-#FROM us.gcr.io/broad-dsp-gcr-public/base/python:3.9-debian
-#
-#WORKDIR /app
-#COPY --from=build /venv /venv
-#COPY . .
-#
-#EXPOSE 8080
-#
-#CMD /venv/bin/gunicorn -b :8080 main:app
+WORKDIR /app
+COPY --from=build /venv /venv
+COPY . .
+
+EXPOSE 8080
+
+CMD /venv/bin/gunicorn -b :8080 main:app
