@@ -8,7 +8,8 @@ from typing import Optional, Dict
 
 from flask_restx import fields
 from sqlalchemy import Column, DateTime, String
-from sqlalchemy.orm import validates, declarative_base
+from sqlalchemy.orm import validates
+from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.schema import Table
 from sqlalchemy.sql.sqltypes import Boolean
 from sqlalchemy_repr import RepresentableBase

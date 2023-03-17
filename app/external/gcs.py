@@ -13,7 +13,7 @@ from app.util.exceptions import FileTooBigToDownload
 # convenience function to read a GCS file as a user's pet SA
 # this method is broken out from translate.py to make it easy to mock in unit tests
 @contextmanager
-def open_file(project: str, bucket: str, path: str, submitter: str, auth_key: Dict[str, Any] = None,
+def open_file(project: str, bucket: str, path: str, submitter: str, auth_key: Dict[str, Any] = None,  # type: ignore
               file_limit_bytes: int = TWO_GB_IN_BYTES, gcsfs: GCSFileSystem = None) -> Iterator[IO]:
 
     if auth_key:
