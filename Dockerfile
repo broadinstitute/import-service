@@ -1,4 +1,4 @@
-FROM python:3.9 AS base
+FROM python:3.9 AS build
 
 # Configure Poetry
 ENV POETRY_VERSION=1.4.0
