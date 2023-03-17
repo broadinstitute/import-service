@@ -30,12 +30,12 @@ $ source venv/bin/activate
 
 To run tests:
 ```
-(venv) $ ./pytest.sh
+(venv) poetry run pytest
 ```
 
 To run the type linter, go to the repo root directory and run:
 ```
-(venv) $ ./mypy.sh
+(venv) poetry run mypy ./*.py && poetry run mypy -p app
 ```
 
 You should make mypy happy before opening a PR. Note that errors in some modules will be listed twice. This is annoying, but the good news is that you only have to fix them once.
