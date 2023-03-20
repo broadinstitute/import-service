@@ -1,4 +1,4 @@
-FROM python:3.9-bullseye
+FROM python:3.9
 
 # Configure Poetry
 ENV POETRY_VERSION=1.4.0
