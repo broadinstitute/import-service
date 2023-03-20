@@ -1,4 +1,4 @@
-FROM python:3.9
+FROM us.gcr.io/broad-dsp-gcr-public/base/python:3.9-debian
 
 # Configure Poetry
 ENV POETRY_VERSION=1.4.0
