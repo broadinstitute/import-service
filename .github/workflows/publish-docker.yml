@@ -49,4 +49,4 @@ jobs:
         run: docker build . -t ${{ steps.gcr-image-name.outputs.name }}:${{ steps.setHash.outputs.git_short_sha }}
 
       - name: Push Docker image
-        run: docker push --all-tags ${{ steps.gcr-image-name.outputs.name }}
+        run: docker push ${{ steps.gcr-image-name.outputs.name }}:${{ steps.setHash.outputs.git_short_sha }}
