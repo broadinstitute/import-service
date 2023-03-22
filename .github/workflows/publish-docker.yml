@@ -2,8 +2,9 @@ name: Publish Docker image to GCR
 
 on:
   push:
-    branches:
-      - develop
+    paths-ignore: [ '*.md' ]
+  pull_request:
+    branches: [ '**' ]
 
 env:
   SERVICE_NAME: ${{ github.event.repository.name }}
@@ -20,6 +21,13 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+
+      - name: Set commit short hash
+        id: setHash
+        run: |
+          git_short_sha=$(git rev-parse --short HEAD)
+          echo $git_short_sha
+          echo "::set-output name=git_short_sha::${git_short_sha}"
 
       - name: Auth to GCR
         uses: google-github-actions/setup-gcloud@v0
@@ -38,7 +46,7 @@ jobs:
         uses: docker/setup-buildx-action@v1
 
       - name: Build Docker image
-        run: docker build . -t ${{ steps.gcr-image-name.outputs.name }}:latest
+        run: docker build . -t ${{ steps.gcr-image-name.outputs.name }}:abc123
 
       - name: Push Docker image
-        run: docker push ${{ steps.gcr-image-name.outputs.name }}:latest
+        run: docker push ${{ steps.gcr-image-name.outputs.name }}:abc123
