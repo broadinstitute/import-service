@@ -1,5 +1,10 @@
 FROM python:3.9
 
+RUN addgroup -S nonroot \
+    && adduser -S nonroot -G nonroot
+
+USER nonroot
+
 # Configure Poetry
 ENV POETRY_VERSION=1.4.0
 ENV POETRY_HOME=/opt/poetry
