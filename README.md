@@ -38,6 +38,17 @@ To run the type linter, go to the repo root directory and run:
 (venv) poetry run mypy ./*.py && poetry run mypy -p app
 ```
 
+If you'd like to run `import-service` locally, the following steps should help:
+
+```
+# At the root of the directory run:
+docker build . -t <your-favorite-name>
+
+# Then, find your Image ID -- run the following command and get the SHA value associated with your new container
+
+docker ps && docker run <image-id>
+```
+
 You should make mypy happy before opening a PR. Note that errors in some modules will be listed twice. This is annoying, but the good news is that you only have to fix them once.
 
 # Deployment (for Broad only)

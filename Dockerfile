@@ -27,3 +27,5 @@ RUN poetry add gunicorn
 COPY . .
 
 EXPOSE 8080
+
+CMD poetry run gunicorn -b :8080 main:app
