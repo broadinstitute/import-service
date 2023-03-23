@@ -1,5 +1,6 @@
 name: Publish Docker image to GCR
 
+# Comment out this 'on' clause if you desire to push a GCR image for your branch for usage in a BEE, etc.
 on:
   push:
     branches:
@@ -37,8 +38,15 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
 
-      - name: Build Docker image
-        run: docker build . -t ${{ steps.gcr-image-name.outputs.name }}:latest
+      - name: Build and push Docker image
+        if: ${{ github.ref == 'refs/heads/develop' }}
+        run: | 
+          docker build . -t ${{ steps.gcr-image-name.outputs.name }}:latest
+          docker push ${{ steps.gcr-image-name.outputs.name }}:latest
+        else:
+          run: | 
+            docker build . -t ${{ steps.gcr-image-name.outputs.name }}:$(git rev-parse --short HEAD)-${{ github.ref }}
+            docker push ${{ steps.gcr-image-name.outputs.name }}:$(git rev-parse --short HEAD)-${{ github.ref }}
 
       - name: Push Docker image
         run: docker push ${{ steps.gcr-image-name.outputs.name }}:latest
