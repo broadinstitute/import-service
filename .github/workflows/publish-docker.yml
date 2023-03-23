@@ -1,10 +1,7 @@
 name: Publish Docker image to GCR
 
-# Comment out this 'on' clause if you desire to push a GCR image for your branch for usage in a BEE, etc.
 on:
-  push:
-    branches:
-      - develop
+  workflow_dispatch:
 
 env:
   SERVICE_NAME: ${{ github.event.repository.name }}
@@ -47,6 +44,3 @@ jobs:
           run: | 
             docker build . -t ${{ steps.gcr-image-name.outputs.name }}:$(git rev-parse --short HEAD)-${{ github.ref }}
             docker push ${{ steps.gcr-image-name.outputs.name }}:$(git rev-parse --short HEAD)-${{ github.ref }}
-
-      - name: Push Docker image
-        run: docker push ${{ steps.gcr-image-name.outputs.name }}:latest
