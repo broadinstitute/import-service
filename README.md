@@ -79,6 +79,10 @@ When doing a production deployment, each step of the checklist must be performed
 
 ### Production Deployment Preparation
 
+- [ ] Re-run `poetry export -f requirements.txt -o requirements.txt --without-hashes` locally. Google App Engine requires a
+      `requirements.txt` be present in order to run a Python app. Since `poetry` uses `pyproject.toml`, you'll need to convert
+      the file to `requirements.txt`
+
 - [ ] Create and push a new [semver](https://semver.org/) tag for the commit you want to deploy; typically this will be
       the head of the develop branch.  You should look at the existing tags
       to ensure that the tag is incremented properly based on the last released version.  Tags should be plain semver numbers
