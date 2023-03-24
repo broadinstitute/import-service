@@ -1,0 +1,38 @@
+[tool.poetry]
+name = "import-service"
+version = "0.1.0"
+description = "Terra Import Service"
+authors = ["Broad Analysis Journeys Team"]
+license = "BSD-3"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.9,<3.10"
+requests = "2.28.2"
+types-requests = "2.28.11.15"
+setuptools = "67.6.0"
+wheel = "0.40.0"
+Flask = "2.0.3"
+jsonschema = "3.2.0" # pypfb requires <4, even though jsonschema > 4 right now in terms of versioning
+pytest = "7.2.2"
+mypy = "1.1.1"
+sqlalchemy = "2.0.6"
+sqlalchemy-stubs = "0.4"
+sqlalchemy-repr = "0.1.0"
+pymysql = "1.0.2"
+google-cloud-logging = "3.5.0"
+google-auth = "2.16.2"
+google-api-python-client = "2.81.0"
+google-cloud-pubsub = "2.15.1"
+pypfb = "0.5.21"
+gcsfs = "2023.3.0"
+memunit = "0.5.2"
+pyhumps = "3.8.0"
+flask-restx = "1.1.0"
+pyarrow = "11.0.0"
+pydantic = "1.10.6"
+pandas = "1.5.3"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

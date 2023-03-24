@@ -89,7 +89,7 @@ def good_http_tdr_manifest(monkeypatch, fake_tdr_manifest):
 # N.B. this copy/pastes the fake_parquet() and fake_tdr_manifest() implementations from conftest.py. I can't get the
 # multiple layers of fixtures to work correctly together so a copy/paste seemed an ok solution.
 @contextmanager
-def open_tdr_manifest_or_parquet_file_gcp(project: str, bucket: str, path: str, submitter: str, pet_key: Dict[str, Any] = None) -> Iterator[IO]:
+def open_tdr_manifest_or_parquet_file_gcp(project: str, bucket: str, path: str, submitter: str, pet_key: Dict[str, Any] = None) -> Iterator[IO]:  # type: ignore
     if path.endswith('parquet'):
         with open("app/tests/empty.parquet", 'rb') as out:
             yield out

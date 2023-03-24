@@ -14,10 +14,10 @@ Create and activate the Python virtualenvironment:
 ```
 $ python3 -m venv venv
 $ source venv/bin/activate
-(venv) $ python3 -m pip install -r requirements.txt
+(venv) $ poetry install
 ```
 
-You should periodically run the `pip install` line within your venv to keep it up-to-date with changes in dependencies.
+You should periodically run the `poetry install` line within your venv to keep it up-to-date with changes in dependencies.
 
 ### Normal usage
 
@@ -30,12 +30,23 @@ $ source venv/bin/activate
 
 To run tests:
 ```
-(venv) $ ./pytest.sh
+(venv) poetry run pytest
 ```
 
 To run the type linter, go to the repo root directory and run:
 ```
-(venv) $ ./mypy.sh
+(venv) poetry run mypy ./*.py && poetry run mypy -p app
+```
+
+If you'd like to run `import-service` locally, the following steps should help:
+
+```
+# At the root of the directory run:
+docker build . -t <your-favorite-name>
+
+# Then, find your Image ID -- run the following command and get the SHA value associated with your new container
+
+docker ps && docker run <image-id>
 ```
 
 You should make mypy happy before opening a PR. Note that errors in some modules will be listed twice. This is annoying, but the good news is that you only have to fix them once.
@@ -67,6 +78,10 @@ deployment of the `develop` branch will be triggered if anyone commits or pushes
 When doing a production deployment, each step of the checklist must be performed.
 
 ### Production Deployment Preparation
+
+- [ ] Re-run `poetry export -f requirements.txt -o requirements.txt --without-hashes` locally. Google App Engine requires a
+      `requirements.txt` be present in order to run a Python app. Since `poetry` uses `pyproject.toml`, you'll need to convert
+      the file to `requirements.txt`
 
 - [ ] Create and push a new [semver](https://semver.org/) tag for the commit you want to deploy; typically this will be
       the head of the develop branch.  You should look at the existing tags

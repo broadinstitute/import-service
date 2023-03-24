@@ -1,4 +1,5 @@
 from flask_restx import fields
+from sqlalchemy.sql import text
 
 from app.db import db, model
 from app.external import sam, rawls
@@ -36,5 +37,5 @@ def handle_health_check() -> HealthResponse:
 def check_health() -> bool:
     with db.session_ctx() as sess:
 
-        res = sess.execute("select true").rowcount
+        res = sess.execute(text("select true")).rowcount
         return bool(res)

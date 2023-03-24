@@ -1,4 +1,5 @@
 from app.db import db, model
+from sqlalchemy.sql import text
 
 
 def test_db_add():
@@ -14,7 +15,7 @@ def test_db_add():
     dbsession.add(new_import)
 
     # session doesn't write to the db until it's flushed
-    unflushed = dbsession.execute("select * from imports").fetchall()
+    unflushed = dbsession.execute(text("select * from imports")).fetchall()
     assert len(unflushed) == 0
 
     # it's there if we query
@@ -22,7 +23,7 @@ def test_db_add():
     assert len(res) == 1
 
     # query invokes a flush
-    flushed = dbsession.execute("select * from imports").fetchall()
+    flushed = dbsession.execute(text("select * from imports")).fetchall()
     assert len(flushed) == 1
 
     # actually commit the txn so other sessions can see it.
@@ -32,7 +33,7 @@ def test_db_add():
 def test_db_rollback():
     # previous test should have been rolled back
     dbsession = db.get_session()
-    rows = dbsession.execute("select * from imports").fetchall()
+    rows = dbsession.execute(text("select * from imports")).fetchall()
     assert len(rows) == 0
 
 

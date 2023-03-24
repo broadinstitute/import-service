@@ -78,7 +78,7 @@ class TDRManifestToRawls(Translator):
             raise IOError(error_message)
 
 class ParquetTranslator:
-    def __init__(self, table: TDRTable, filelocation: str, import_details: Import, source_snapshot_id: str, auth_key: Dict[str, Any] = None, is_cyclical: bool = False):
+    def __init__(self, table: TDRTable, filelocation: str, import_details: Import, source_snapshot_id: str, auth_key: Dict[str, Any] = None, is_cyclical: bool = False):  # type: ignore
         """Translator for Parquet files coming from a TDR manifest."""
         self.table = table
         self.import_details = import_details

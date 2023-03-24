@@ -340,7 +340,7 @@ def test_if_namespace_prefix_will_be_added():
 
 def get_fake_cyclic_parquet_translator(table: TDRTable) -> ParquetTranslator:
     fake_import_details = Import('workspace_name:', 'workspace_ns', 'workspace_uuid', 'workspace_google_project', 'submitter', 'import_url', 'filetype', True)
-    return ParquetTranslator(table, "doesntmatter", fake_import_details, 'source_snapshot_uuid', None, True)
+    return ParquetTranslator(table, "doesntmatter", fake_import_details, 'source_snapshot_uuid', None, True)  # type: ignore
 
 def open_fake_gcs_file(import_details, bucket, path, submitter, auth_key):
     # Trick python into thinking this is from gcs, then open a local file

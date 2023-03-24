@@ -1,0 +1,32 @@
+name: Build and test
+
+on:
+  push:
+    paths-ignore: [ '*.md' ]
+  pull_request:
+    branches: [ '**' ]
+
+jobs:
+  build-and-test:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9.16'
+
+      - name: Install and configure Poetry
+        uses: snok/install-poetry@v1
+
+      - name: Install dependencies
+        run: poetry install
+
+      - name: Run tests
+        run: poetry run pytest
+
+      - name: Run linter
+        run: poetry run mypy ./*.py && poetry run mypy -p app
