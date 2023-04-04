@@ -357,7 +357,8 @@ def test_bad_gcs(fake_import, fake_publish_rawls, client):
 user_info = UserInfo("subject-id", "awesomepossum@broadinstitute.org", True)
 @pytest.mark.parametrize("import_url, is_valid", [
     ("https://something.anvil.gi.ucsc.edu/manifest/files", True),
-    ("https://something.anvil.gi.ucsc.edu/manifest/files", True),
+    ("https://something-else.anvil.gi.ucsc.edu/manifest/files", True),
+    ("https://*.anvil.gi.ucsc.edu/manifest/files", True),
     ("https://something.anvil.gi.ucsc.edu", True),
     ("something.anvil.gi.ucsc.edu", False),
 ])
