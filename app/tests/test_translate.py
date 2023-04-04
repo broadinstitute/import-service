@@ -14,7 +14,7 @@ from app.db import model
 from app.external.rawls_entity_model import Entity
 from app.server import requestutils
 from app.tests import testutils
-from app.translate import validate_import_url, FILETYPE_TRANSLATORS
+from app.translate import FILETYPE_TRANSLATORS, validate_import_url
 from app.translators import Translator
 from app.util.exceptions import InvalidPathException
 
@@ -23,17 +23,14 @@ from app.util.exceptions import InvalidPathException
 # an error where expected is "unittest-allowed-bucket" but actual is "None"
 os.environ.setdefault("BATCH_UPSERT_BUCKET", "unittest-allowed-bucket")
 
-
 class StreamyNoOpTranslator(Translator):
     """Well-behaved no-op translator: does nothing, while streaming"""
-
     def translate(self, import_details: model.Import, file_like: IO) -> Iterator[Entity]:
         return (Entity(line, 'line', []) for line in file_like)
 
 
 class BadNoOpTranslator(Translator):
     """Badly-behaved no-op translator: does nothing, using lots of memory"""
-
     def translate(self, import_details: model.Import, file_like: IO) -> Iterator[Entity]:
         return iter([Entity(line, 'line', []) for line in file_like])
 
@@ -83,11 +80,9 @@ def test_stream_translate(tmp_path):
 def good_http_pfb(monkeypatch, fake_pfb):
     monkeypatch.setattr(translate.http, "http_as_filelike", mock.MagicMock(return_value=fake_pfb))
 
-
 @pytest.fixture(scope="function")
 def good_http_tdr_manifest(monkeypatch, fake_tdr_manifest):
     monkeypatch.setattr(translate.gcs, "open_file", mock.MagicMock(return_value=fake_tdr_manifest))
-
 
 # method to patch in for end-to-end tdr manifest tests; returns either the fake_tdr_manifest or the fake_parquet,
 # based on input args. Inside the tdr manifest translator, we use gcs.open_file first to open the json manifest,
@@ -97,15 +92,13 @@ def good_http_tdr_manifest(monkeypatch, fake_tdr_manifest):
 # N.B. this copy/pastes the fake_parquet() and fake_tdr_manifest() implementations from conftest.py. I can't get the
 # multiple layers of fixtures to work correctly together so a copy/paste seemed an ok solution.
 @contextmanager
-def open_tdr_manifest_or_parquet_file_gcp(project: str, bucket: str, path: str, submitter: str,
-                                          pet_key: Dict[str, Any] = None) -> Iterator[IO]:  # type: ignore
+def open_tdr_manifest_or_parquet_file_gcp(project: str, bucket: str, path: str, submitter: str, pet_key: Dict[str, Any] = None) -> Iterator[IO]:  # type: ignore
     if path.endswith('parquet'):
         with open("app/tests/empty.parquet", 'rb') as out:
             yield out
     else:
         with open("app/tests/resources/test_tdr_response_gcp.json", 'rb') as out:
             yield out
-
 
 @contextmanager
 def open_tdr_manifest_or_parquet_file_azure(url: str) -> Iterator[IO]:
@@ -116,7 +109,6 @@ def open_tdr_manifest_or_parquet_file_azure(url: str) -> Iterator[IO]:
         with open("app/tests/resources/test_tdr_response_azure.json", 'rb') as out:
             yield out
 
-
 @contextmanager
 def open_tdr_manifest_or_parquet_file_azure_bad(url: str) -> Iterator[IO]:
     if url.find(".parquet") > -1:
@@ -126,21 +118,17 @@ def open_tdr_manifest_or_parquet_file_azure_bad(url: str) -> Iterator[IO]:
         with open("app/tests/resources/test_tdr_response_azure_invalid_parquet.json", 'rb') as out:
             yield out
 
-
 @pytest.fixture(scope="function")
 def good_tdr_manifest_or_parquet_file_gcp(monkeypatch):
     monkeypatch.setattr(translate.gcs, "open_file", open_tdr_manifest_or_parquet_file_gcp)
-
 
 @pytest.fixture(scope="function")
 def good_tdr_manifest_or_parquet_file_azure(monkeypatch):
     monkeypatch.setattr(translate.http, "http_as_filelike", open_tdr_manifest_or_parquet_file_azure)
 
-
 @pytest.fixture(scope="function")
 def bad_tdr_manifest_or_parquet_file_azure(monkeypatch):
     monkeypatch.setattr(translate.http, "http_as_filelike", open_tdr_manifest_or_parquet_file_azure_bad)
-
 
 @pytest.fixture(scope="function")
 def forbidden_http_pfb(monkeypatch):
@@ -182,8 +170,8 @@ def bad_gcs_dest(monkeypatch, pubsub_fake_env):
 
     gcsfs_mock = mock.MagicMock()
     monkeypatch.setattr(translate, "GCSFileSystem", gcsfs_mock)
-    error_msg = {"message": "Anonymous caller does not have storage.objects.create access", "code": 403}
-    gcsfs_mock.return_value.open.return_value.__exit__ = mock.MagicMock(side_effect=gcsfs.retry.HttpError(error_msg))
+    error_msg = {"message":"Anonymous caller does not have storage.objects.create access", "code":403}
+    gcsfs_mock.return_value.open.return_value.__exit__ = mock.MagicMock(side_effect = gcsfs.retry.HttpError(error_msg))
 
 
 @pytest.fixture(scope="function")
@@ -200,7 +188,7 @@ def test_golden_path_pfb(fake_import, fake_publish_rawls, client):
         sess.add(fake_import)
 
     resp = client.post("/_ah/push-handlers/receive_messages",
-                       json=testutils.pubsub_json_body({"action": "translate", "import_id": fake_import.id}))
+                       json=testutils.pubsub_json_body({"action":"translate", "import_id":fake_import.id}))
 
     # result should be OK
     assert resp.status_code == 200
@@ -214,16 +202,14 @@ def test_golden_path_pfb(fake_import, fake_publish_rawls, client):
     fake_publish_rawls.assert_called_once()
 
 
-@pytest.mark.usefixtures("good_tdr_manifest_or_parquet_file_gcp", "good_gcs_dest", "incoming_valid_pubsub",
-                         "sam_valid_pet_key")
+@pytest.mark.usefixtures("good_tdr_manifest_or_parquet_file_gcp", "good_gcs_dest", "incoming_valid_pubsub", "sam_valid_pet_key")
 def test_golden_path_tdr_manifest_gcp(fake_import_tdr_manifest_gcp, fake_publish_rawls, client):
     """Everything is fine: the tdr manifest file is valid and retrievable, and we can write to the destination."""
     with db.session_ctx() as sess:
         sess.add(fake_import_tdr_manifest_gcp)
 
     resp = client.post("/_ah/push-handlers/receive_messages",
-                       json=testutils.pubsub_json_body(
-                           {"action": "translate", "import_id": fake_import_tdr_manifest_gcp.id}))
+                       json=testutils.pubsub_json_body({"action":"translate", "import_id":fake_import_tdr_manifest_gcp.id}))
 
     # result should be OK
     assert resp.status_code == 200
@@ -238,16 +224,14 @@ def test_golden_path_tdr_manifest_gcp(fake_import_tdr_manifest_gcp, fake_publish
     fake_publish_rawls.assert_called_once()
 
 
-@pytest.mark.usefixtures("good_tdr_manifest_or_parquet_file_azure", "good_gcs_dest", "incoming_valid_pubsub",
-                         "sam_valid_pet_key")
+@pytest.mark.usefixtures("good_tdr_manifest_or_parquet_file_azure", "good_gcs_dest", "incoming_valid_pubsub", "sam_valid_pet_key")
 def test_golden_path_tdr_manifest_azure(fake_import_tdr_manifest_azure, fake_publish_rawls, client):
     """Everything is fine: the tdr manifest file is valid and retrievable, and we can write to the destination."""
     with db.session_ctx() as sess:
         sess.add(fake_import_tdr_manifest_azure)
 
     resp = client.post("/_ah/push-handlers/receive_messages",
-                       json=testutils.pubsub_json_body(
-                           {"action": "translate", "import_id": fake_import_tdr_manifest_azure.id}))
+                       json=testutils.pubsub_json_body({"action":"translate", "import_id":fake_import_tdr_manifest_azure.id}))
 
     # result should be OK
     assert resp.status_code == 200
@@ -261,17 +245,14 @@ def test_golden_path_tdr_manifest_azure(fake_import_tdr_manifest_azure, fake_pub
     # rawls should have been told to do something
     fake_publish_rawls.assert_called_once()
 
-
-@pytest.mark.usefixtures("bad_tdr_manifest_or_parquet_file_azure", "good_gcs_dest", "incoming_valid_pubsub",
-                         "sam_valid_pet_key")
+@pytest.mark.usefixtures("bad_tdr_manifest_or_parquet_file_azure", "good_gcs_dest", "incoming_valid_pubsub", "sam_valid_pet_key")
 def test_bad_actor_path_tdr_manifest_azure(fake_import_tdr_manifest_azure, fake_publish_rawls, client):
     """Everything is fine: the tdr manifest file is valid and retrievable, and we can write to the destination."""
     with db.session_ctx() as sess:
         sess.add(fake_import_tdr_manifest_azure)
 
     resp = client.post("/_ah/push-handlers/receive_messages",
-                       json=testutils.pubsub_json_body(
-                           {"action": "translate", "import_id": fake_import_tdr_manifest_azure.id}))
+                       json=testutils.pubsub_json_body({"action":"translate", "import_id":fake_import_tdr_manifest_azure.id}))
 
     # result should be not-OK
     assert resp.status_code == requestutils.PUBSUB_STATUS_NOTOK
@@ -287,7 +268,7 @@ def test_publish_rawls_is_upsert_passed_on(is_upsert, fake_publish_rawls, client
         sess.add(test_import)
 
     resp = client.post("/_ah/push-handlers/receive_messages",
-                       json=testutils.pubsub_json_body({"action": "translate", "import_id": test_import.id}))
+                       json=testutils.pubsub_json_body({"action":"translate", "import_id":test_import.id}))
 
     # result should be OK
     assert resp.status_code == 200
@@ -307,7 +288,6 @@ def test_publish_rawls_is_upsert_passed_on(is_upsert, fake_publish_rawls, client
             "isUpsert": str(is_upsert)
         })
 
-
 @pytest.mark.usefixtures("forbidden_http_pfb", "good_gcs_dest", "incoming_valid_pubsub")
 def test_forbidden_pfb(fake_import, fake_publish_rawls, client):
     """PFB retrieval fails with a 403 Forbidden."""
@@ -315,7 +295,7 @@ def test_forbidden_pfb(fake_import, fake_publish_rawls, client):
         sess.add(fake_import)
 
     resp = client.post("/_ah/push-handlers/receive_messages",
-                       json=testutils.pubsub_json_body({"action": "translate", "import_id": fake_import.id}))
+                       json=testutils.pubsub_json_body({"action":"translate", "import_id":fake_import.id}))
 
     # result should be not-OK
     assert resp.status_code == requestutils.PUBSUB_STATUS_NOTOK
@@ -333,10 +313,10 @@ def test_forbidden_pfb(fake_import, fake_publish_rawls, client):
 @pytest.mark.usefixtures("junk_http_pfb", "good_gcs_dest", "incoming_valid_pubsub")
 def test_junk_pfb(fake_import, fake_publish_rawls, client):
     with db.session_ctx() as sess:
-        sess.add(fake_import)
+            sess.add(fake_import)
 
     resp = client.post("/_ah/push-handlers/receive_messages",
-                       json=testutils.pubsub_json_body({"action": "translate", "import_id": fake_import.id}))
+                       json=testutils.pubsub_json_body({"action":"translate", "import_id":fake_import.id}))
 
     # result should be not-OK
     assert resp.status_code == requestutils.PUBSUB_STATUS_NOTOK
@@ -359,7 +339,7 @@ def test_bad_gcs(fake_import, fake_publish_rawls, client):
         sess.add(fake_import)
 
     resp = client.post("/_ah/push-handlers/receive_messages",
-                       json=testutils.pubsub_json_body({"action": "translate", "import_id": fake_import.id}))
+                       json=testutils.pubsub_json_body({"action":"translate", "import_id":fake_import.id}))
 
     # result should be not-OK
     assert resp.status_code == requestutils.PUBSUB_STATUS_NOTOK
@@ -388,4 +368,3 @@ def test_validate_import_url(import_url, is_valid):
                 validate_import_url(import_url=import_url, import_filetype=file_type, user_info=user_info)
         else:
             assert validate_import_url(import_url=import_url, import_filetype=file_type, user_info=user_info) is is_valid
-
