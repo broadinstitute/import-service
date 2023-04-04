@@ -27,7 +27,7 @@ FILETYPE_TRANSLATORS = {"pfb": PFBToRawls, "tdrexport": TDRManifestToRawls}
 # this filetype is accepted as-is
 FILETYPE_NOTRANSLATION = "rawlsjson"
 
-VALID_NETLOCS = ["s3.amazonaws.com", "storage.googleapis.com", "service.azul.data.humancellatlas.org", "dev.singlecell.gi.ucsc.edu", "core.windows.net"]
+VALID_NETLOCS = ["anvil.gi.ucsc.edu", "s3.amazonaws.com", "storage.googleapis.com", "service.azul.data.humancellatlas.org", "dev.singlecell.gi.ucsc.edu", "core.windows.net"]
 
 VALID_TDR_SCHEMES = ["gs", "https"]
 
