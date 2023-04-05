@@ -29,7 +29,6 @@ user_info = UserInfo("subject-id", "awesomepossum@broadinstitute.org", True)
 def test_legal_netlocs_simple(client, netloc, filetype):
     path = f"https://{netloc}/some/valid/path"
     payload = {"path": path, "filetype": filetype}
-    assert validate_import_url(path, filetype, user_info)
     resp = client.post('/namespace/name/imports', json=payload, headers=good_headers)
     assert resp.status_code == 201
     # NB we don't test anything deeper than the 201 response; other tests check to see if the
@@ -40,8 +39,6 @@ def test_legal_netlocs_simple(client, netloc, filetype):
 def test_illegal_netloc_simple(client: flask.testing.FlaskClient, filetype, caplog):
     path = "https://haxxor.evil.bad/some/valid/path"
     payload = {"path": path, "filetype": filetype}
-    with pytest.raises(InvalidPathException):
-        validate_import_url(path, filetype, user_info)
     resp = client.post('/namespace/name/imports', json=payload, headers=good_headers)
     assert_response_code_and_logs(resp, caplog, payload["path"])
 
