@@ -9,11 +9,14 @@ import gcsfs.retry
 import memunit
 import pytest
 from app import db, translate
+from app.auth.userinfo import UserInfo
 from app.db import model
 from app.external.rawls_entity_model import Entity
 from app.server import requestutils
 from app.tests import testutils
+from app.translate import FILETYPE_TRANSLATORS, validate_import_url
 from app.translators import Translator
+from app.util.exceptions import InvalidPathException
 
 # necessary to set this env var for unit tests; at runtime this is set by app.yaml
 # if we don't set it here, assertions that compare gs:// paths can fail with
@@ -349,3 +352,20 @@ def test_bad_gcs(fake_import, fake_publish_rawls, client):
 
     # no pubsub message should have been sent
     fake_publish_rawls.assert_not_called()
+
+
+user_info = UserInfo("subject-id", "awesomepossum@broadinstitute.org", True)
+@pytest.mark.parametrize("import_url, is_valid", [
+    ("https://something.anvil.gi.ucsc.edu/manifest/files", True),
+    ("https://something-else.anvil.gi.ucsc.edu/manifest/files", True),
+    ("https://*.anvil.gi.ucsc.edu/manifest/files", True),
+    ("https://something.anvil.gi.ucsc.edu", True),
+    ("something.anvil.gi.ucsc.edu", False),
+])
+def test_validate_import_url(import_url, is_valid):
+    for file_type in FILETYPE_TRANSLATORS:
+        if not is_valid:
+            with pytest.raises(InvalidPathException):
+                validate_import_url(import_url=import_url, import_filetype=file_type, user_info=user_info)
+        else:
+            assert validate_import_url(import_url=import_url, import_filetype=file_type, user_info=user_info) is is_valid
