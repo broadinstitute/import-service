@@ -3,10 +3,8 @@ import pytest
 import os
 
 from app.auth.userinfo import UserInfo
-from app.translate import validate_import_url
 
 from app import translate
-from app.util.exceptions import InvalidPathException
 
 good_headers = {"Authorization": "Bearer ya29.blahblah"}
 

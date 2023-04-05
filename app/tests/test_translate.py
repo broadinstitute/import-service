@@ -355,6 +355,7 @@ def test_bad_gcs(fake_import, fake_publish_rawls, client):
 
 
 user_info = UserInfo("subject-id", "awesomepossum@broadinstitute.org", True)
+
 @pytest.mark.parametrize("import_url, is_valid", [
     ("https://something.anvil.gi.ucsc.edu/manifest/files", True),
     ("https://something-else.anvil.gi.ucsc.edu/manifest/files", True),
@@ -362,10 +363,10 @@ user_info = UserInfo("subject-id", "awesomepossum@broadinstitute.org", True)
     ("https://something.anvil.gi.ucsc.edu", True),
     ("something.anvil.gi.ucsc.edu", False),
 ])
-def test_validate_import_url(import_url, is_valid):
-    for file_type in FILETYPE_TRANSLATORS:
-        if not is_valid:
-            with pytest.raises(InvalidPathException):
-                validate_import_url(import_url=import_url, import_filetype=file_type, user_info=user_info)
-        else:
-            assert validate_import_url(import_url=import_url, import_filetype=file_type, user_info=user_info) is is_valid
+@pytest.mark.parametrize("file_type_translator", FILETYPE_TRANSLATORS)
+def test_validate_import_url(import_url, is_valid, file_type_translator):
+    if not is_valid:
+        with pytest.raises(InvalidPathException):
+            validate_import_url(import_url=import_url, import_filetype=file_type_translator, user_info=user_info)
+    else:
+        assert validate_import_url(import_url=import_url, import_filetype=file_type_translator, user_info=user_info) is is_valid
