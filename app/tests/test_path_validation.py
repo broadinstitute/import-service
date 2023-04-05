@@ -18,8 +18,12 @@ def assert_response_code_and_logs(resp, caplog, import_url):
     auditlog = filter(lambda rec: rec.message == f"User 123456 hello@bees.com attempted to import from path {import_url}", caplog.records)
     assert list(auditlog), "Expected audit log message to exist if user specified illegal domain; did not find such message in log."
 
+
 user_info = UserInfo("subject-id", "awesomepossum@broadinstitute.org", True)
-@pytest.mark.parametrize("netloc", translate.VALID_NETLOCS)
+@pytest.mark.parametrize("netloc", translate.VALID_NETLOCS + ["something.anvil.gi.ucsc.edu/manifest/files",
+                                                              "something-else.anvil.gi.ucsc.edu/manifest/files",
+                                                              "*.anvil.gi.ucsc.edu/manifest/files",
+                                                              "something.anvil.gi.ucsc.edu"])
 @pytest.mark.parametrize("filetype", translate.FILETYPE_TRANSLATORS.keys())
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
 def test_legal_netlocs_simple(client, netloc, filetype):
