@@ -7,6 +7,8 @@ from app import translate
 from app.util import exceptions
 from app.db import db
 from app.db.model import *
+from app.new_import import is_protected
+
 
 
 good_json = {"path": f"https://{translate.VALID_NETLOCS[0]}/some/path", "filetype": "pfb"}
@@ -162,3 +164,19 @@ def test_bad_request_when_isUpsert_is_not_boolean(input_value, client):
 
     resp = client.post('/mynamespace/myname/imports', json=json_payload, headers=good_headers)
     assert resp.status_code == 400
+
+@pytest.mark.parametrize("import_url, protected", [
+    ("https://something.anvil.gi.ucsc.edu/manifest/files", True),
+    ("https://something-else.anvil.gi.ucsc.edu/manifest/files", True),
+    ("https://*.anvil.gi.ucsc.edu/manifest/files", True),
+    ("https://something.anvil.gi.ucsc.edu", True),
+    ("https://something.anvilproject.org", True),
+    ("https://something.anvil.edu", False),
+    ("https://something.org", False)
+])
+@pytest.mark.parametrize("file_type", ["pfb", "tdrexport"])
+def test_is_protected(import_url, protected, file_type):
+    if file_type == "pfb":
+        assert is_protected(import_url=import_url, import_filetype=file_type) is protected
+    else:
+        assert is_protected(import_url=import_url, import_filetype=file_type) is False

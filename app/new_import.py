@@ -7,6 +7,8 @@ from app.db import db, model
 from app.external import sam, pubsub
 from app.auth import user_auth
 from app.util import exceptions
+from typing import Optional
+from urllib.parse import urlparse
 
 
 def handle(request: flask.Request, ws_ns: str, ws_name: str) -> model.ImportStatusResponse:
@@ -59,3 +61,17 @@ def handle(request: flask.Request, ws_ns: str, ws_name: str) -> model.ImportStat
     pubsub.publish_self({"action": "translate", "import_id": new_import_id})
 
     return new_import.to_status_response()
+
+PROTECTED_NETLOCS = ["anvil.gi.ucsc.edu", "anvilproject.org"]
+
+def is_protected(import_url: Optional[str], import_filetype: Optional[str]) -> bool:
+    """Determines whether an import is protected data based on where it's imported from
+    and its filetype.  Initially, only PFBs from AnVIl are considered protected data"""
+    if import_filetype == "pfb":
+        #TODO: reduce repetition with translate.py
+        parsedurl = urlparse(import_url).netloc
+
+        return any(parsedurl.endswith(s) for s in PROTECTED_NETLOCS)
+    return False
+
+
