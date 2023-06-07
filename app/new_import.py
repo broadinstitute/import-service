@@ -59,5 +59,3 @@ def handle(request: flask.Request, ws_ns: str, ws_name: str) -> model.ImportStat
     pubsub.publish_self({"action": "translate", "import_id": new_import_id})
 
     return new_import.to_status_response()
-
-
