@@ -375,6 +375,7 @@ def test_validate_import_url(import_url, is_valid, file_type_translator):
     ("something.anvil.gi.ucsc.edu", True),
     ("something-else.anvil.gi.ucsc.edu", True),
     ("something.anvilproject.org", True),
+    ("gen3.biodatacatalyst.nhlbi.nih.gov", True),
     ("something.anvil.edu", False),
     ("something.org", False)
 ])
