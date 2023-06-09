@@ -27,9 +27,12 @@ FILETYPE_TRANSLATORS = {"pfb": PFBToRawls, "tdrexport": TDRManifestToRawls}
 # this filetype is accepted as-is
 FILETYPE_NOTRANSLATION = "rawlsjson"
 
-VALID_NETLOCS = ["anvil.gi.ucsc.edu", "s3.amazonaws.com", "storage.googleapis.com", "service.azul.data.humancellatlas.org", "dev.singlecell.gi.ucsc.edu", "core.windows.net"]
+PROTECTED_NETLOCS = ["anvil.gi.ucsc.edu", "anvilproject.org", "gen3.biodatacatalyst.nhlbi.nih.gov"]
+
+VALID_NETLOCS = PROTECTED_NETLOCS + ["s3.amazonaws.com", "storage.googleapis.com", "service.azul.data.humancellatlas.org", "dev.singlecell.gi.ucsc.edu", "core.windows.net"]
 
 VALID_TDR_SCHEMES = ["gs", "https"]
+
 
 def handle(msg: Dict[str, str]) -> ImportStatusResponse:
     import_id = msg["import_id"]
@@ -162,6 +165,8 @@ def validate_import_url(import_url: Optional[str], import_filetype: Optional[str
     # for "rawlsjson" requests, we validate that the file-to-be-imported is already in our
     # dedicated bucket.
     actual_netloc = parsedurl.netloc
+    # Later: change behavior based on whether data is protected
+    is_protected(actual_netloc, import_filetype)
     if import_filetype == FILETYPE_NOTRANSLATION and actual_netloc == os.environ.get("BATCH_UPSERT_BUCKET"):
         return True
     elif import_filetype in FILETYPE_TRANSLATORS.keys() and any(actual_netloc.endswith(s) for s in VALID_NETLOCS):
@@ -173,3 +178,10 @@ def validate_import_url(import_url: Optional[str], import_filetype: Optional[str
     else:
         logging.warning(f"Unrecognized netloc or bucket for import: [{parsedurl.netloc}] from [{import_url}]")
         raise exceptions.InvalidPathException(import_url, user_info, "File cannot be imported from this URL.")
+
+def is_protected(import_netloc: str, import_filetype: Optional[str]) -> bool:
+    """Determines whether an import is protected data based on where it's imported from
+    and its filetype.  Initially, only PFBs from AnVIl are considered protected data"""
+    if import_filetype == "pfb":
+        return any(import_netloc.endswith(s) for s in PROTECTED_NETLOCS)
+    return False
