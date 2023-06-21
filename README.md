@@ -127,6 +127,6 @@ In `cleanup_scripts`:
 
 The `delete-old-app-engine-versions-cleanup` bash script handles cleanup of multiple versions, sorted by oldest. It has a cap of at least 50 versions that must remain after cleanup.
 
-For other environments other than `prod` (such as `alpha, perf, staging`), the script must be run manually. This is to ensure that the deletion of versions is intentional by an authenticated user.
+For other environments other than `prod` (such as `alpha` or `staging`), the script must be run manually. This is to ensure that the deletion of versions is intentional by an authenticated user.
 
 For `prod`, the suggestion is that the deletions occur deliberately in the Google App Engine console.

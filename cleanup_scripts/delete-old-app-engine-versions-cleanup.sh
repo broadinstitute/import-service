@@ -5,7 +5,7 @@
 # MUST have jq installed to be able to use this script.
 #
 # USAGE: ./delete-old-app-engine-version.sh ENV REMAINING_VERSIONS_COUNT
-#   ENV must be one of dev, alpha, perf, staging, prod
+#   ENV must be one of dev, alpha, staging, prod
 #   REMAINING_VERSIONS_COUNT how many versions should remain after cleanup in GAE
 #
 # Credit to developers in terra-ui who developed https://github.com/DataBiosphere/terra-ui/blob/dev/scripts/delete-old-app-engine-versions.sh
@@ -33,7 +33,7 @@ check_color_support() {
 
 # print out usage to stdout
 usage() {
-    printf "Usage: %s ${BLD}ENV${RST}\n  ${BLD}ENV${RST} must be one of dev, alpha, perf, staging, prod.\n" "$0"
+    printf "Usage: %s ${BLD}ENV${RST}\n  ${BLD}ENV${RST} must be one of dev, alpha, staging, prod.\n" "$0"
     exit 0
 }
 
@@ -84,9 +84,9 @@ fi
 
 case $1 in
     --help ) usage;;
-    dev|alpha|perf|staging ) ;;
+    dev|alpha|staging ) ;;
     prod ) error "This script cannot be run against prod.";;
-    * ) error "ENV must be one of dev, alpha, perf, or staging";;
+    * ) error "ENV must be one of dev, alpha, or staging";;
 esac
 
 NEW_PROJECT="terra-importservice-$1"
