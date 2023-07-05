@@ -11,8 +11,8 @@ from app.util.exceptions import ISvcException
 class RawlsWorkspaceResponse:
      workspace_id: str
      google_project: str
-     authorizationDomain: Optional[Set[str]] = None
-     bucketName: Optional[str] = None
+     authorization_domain: Optional[Set[str]] = None
+     bucket_name: Optional[str] = None
 
 
 #TODO: rename this method since now it gets more than just uuid and project
@@ -23,7 +23,7 @@ def get_workspace_uuid_and_project(workspace_namespace: str, workspace_name: str
 
     if resp.ok:
         jso = resp.json()
-        return RawlsWorkspaceResponse(workspace_id=jso["workspace"]["workspaceId"], google_project=jso["workspace"]["googleProject"], authorizationDomain=jso["workspace"].get("authorizationDomain"), bucketName=jso["workspace"].get("bucketName"))
+        return RawlsWorkspaceResponse(workspace_id=jso["workspace"]["workspaceId"], google_project=jso["workspace"]["googleProject"], authorization_domain=jso["workspace"].get("authorizationDomain"), bucket_name=jso["workspace"].get("bucketName"))
     else:
         # just pass the error upwards
         workspace_dict = { 'workspace': { 'namespace': workspace_namespace, 'name': workspace_name} }

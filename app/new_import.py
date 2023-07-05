@@ -36,10 +36,8 @@ def handle(request: flask.Request, ws_ns: str, ws_name: str) -> model.ImportStat
     uuid_and_project = user_auth.workspace_uuid_and_project_with_auth(ws_ns, ws_name, access_token, "write")
     workspace_uuid = uuid_and_project.workspace_id
     google_project = uuid_and_project.google_project
-    authorizationDomain = uuid_and_project.authorizationDomain
-    bucketName = uuid_and_project.bucketName
-
-
+    authorization_domain = uuid_and_project.authorization_domain
+    bucket_name = uuid_and_project.bucket_name
 
     import_url = request_json["path"]
     import_filetype = request_json["filetype"]
@@ -54,7 +52,7 @@ def handle(request: flask.Request, ws_ns: str, ws_name: str) -> model.ImportStat
     actual_netloc = translate.validate_import_url(import_url, import_filetype, user_info)
     # Refuse to import protected data into unprotected workspace
     if is_protected_data(actual_netloc, import_filetype):
-        if not is_protected_workspace(authorizationDomain, bucketName):
+        if not is_protected_workspace(authorization_domain, bucket_name):
             raise exceptions.AuthorizationException("Unable to import protected data into an unprotected workspace")
 
     # parse is_upsert from a str into a bool
@@ -79,10 +77,10 @@ def handle(request: flask.Request, ws_ns: str, ws_name: str) -> model.ImportStat
 
     return new_import.to_status_response()
 
-def is_protected_workspace(authorizationDomain: Set[str],  bucketName: str):
-    if len(authorizationDomain) > 0:
+def is_protected_workspace(authorization_domain: Set[str], bucket_name: str):
+    if len(authorization_domain) > 0:
         return True
-    return bucketName.startswith("fc-secure")
+    return bucket_name.startswith("fc-secure")
 
 def validate_import_url(import_url: Optional[str], import_filetype: Optional[str], user_info: UserInfo) -> str:
     """Inspects the URI from which the user wants to import data. Because our service will make an
@@ -93,12 +91,12 @@ def validate_import_url(import_url: Optional[str], import_filetype: Optional[str
     return the url host for further validation"""
     # json schema validation ensures that "import_url" exists, but we'll be safe
     if import_url is None:
-        logging.info(f"Missing path from inbound translate request:")
+        logging.info("Missing path from inbound translate request:")
         raise exceptions.InvalidPathException(import_url, user_info, "Missing path to file to import")
 
     # json schema validation ensures that "import_filetype" exists, but we'll be safe
     if import_filetype is None:
-        logging.info(f"Missing filetype from inbound translate request:")
+        logging.info("Missing filetype from inbound translate request:")
         raise exceptions.InvalidFiletypeException(import_filetype, user_info, "Missing filetype")
 
     try:

@@ -117,7 +117,7 @@ def mock_auth_for_read_policies(workspace_ns: str, workspace_name: str, bearer_t
 
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
 def test_is_upsert_defaults_true_when_missing_from_json(client):
-    json_payload = {"path": f"https://{translate.VALID_NETLOCS[0]}/some/path", "filetype": "pfb"}
+    json_payload = {"path": f"https://{new_import.VALID_NETLOCS[0]}/some/path", "filetype": "pfb"}
 
     resp = client.post('/mynamespace/myname/imports', json=json_payload, headers=good_headers)
     assert resp.status_code == 201
@@ -132,7 +132,7 @@ def test_is_upsert_defaults_true_when_missing_from_json(client):
 
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
 def test_is_upsert_is_false_when_false_in_json(client):
-    json_payload = {"path": f"https://{translate.VALID_NETLOCS[0]}/some/path", "filetype": "pfb", "isUpsert": False}
+    json_payload = {"path": f"https://{new_import.VALID_NETLOCS[0]}/some/path", "filetype": "pfb", "isUpsert": False}
 
     resp = client.post('/mynamespace/myname/imports', json=json_payload, headers=good_headers)
     assert resp.status_code == 201
@@ -147,7 +147,7 @@ def test_is_upsert_is_false_when_false_in_json(client):
 
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
 def test_is_upsert_is_true_when_true_in_json(client):
-    json_payload = {"path": f"https://{translate.VALID_NETLOCS[0]}/some/path", "filetype": "pfb", "isUpsert": True}
+    json_payload = {"path": f"https://{new_import.VALID_NETLOCS[0]}/some/path", "filetype": "pfb", "isUpsert": True}
 
     resp = client.post('/mynamespace/myname/imports', json=json_payload, headers=good_headers)
     assert resp.status_code == 201
@@ -163,7 +163,7 @@ def test_is_upsert_is_true_when_true_in_json(client):
 @pytest.mark.parametrize("input_value", ["true", "True", "yes", 1, "false", "False", "no", 0, "", "something else"])
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
 def test_bad_request_when_isUpsert_is_not_boolean(input_value, client):
-    json_payload = {"path": f"https://{translate.VALID_NETLOCS[0]}/some/path", "filetype": "pfb", "isUpsert": input_value}
+    json_payload = {"path": f"https://{new_import.VALID_NETLOCS[0]}/some/path", "filetype": "pfb", "isUpsert": input_value}
 
     resp = client.post('/mynamespace/myname/imports', json=json_payload, headers=good_headers)
     assert resp.status_code == 400
