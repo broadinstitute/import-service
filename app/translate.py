@@ -27,10 +27,6 @@ FILETYPE_TRANSLATORS = {"pfb": PFBToRawls, "tdrexport": TDRManifestToRawls}
 # this filetype is accepted as-is
 FILETYPE_NOTRANSLATION = "rawlsjson"
 
-PROTECTED_NETLOCS = ["anvil.gi.ucsc.edu", "anvilproject.org", "gen3.biodatacatalyst.nhlbi.nih.gov"]
-
-VALID_NETLOCS = PROTECTED_NETLOCS + ["s3.amazonaws.com", "storage.googleapis.com", "service.azul.data.humancellatlas.org", "dev.singlecell.gi.ucsc.edu", "core.windows.net"]
-
 VALID_TDR_SCHEMES = ["gs", "https"]
 
 
@@ -136,52 +132,3 @@ def _stream_translate(import_details: Import, source: IO, dest: IO, translator: 
             last_log_time = chunk_time
 
         dest.write(chunk.encode())  # encodes as utf-8 by default
-
-def validate_import_url(import_url: Optional[str], import_filetype: Optional[str], user_info: UserInfo) -> bool:
-    """Inspects the URI from which the user wants to import data. Because our service will make an
-    outbound request to the user-supplied URI, we want to make sure that our service only visits
-    safe and acceptable domains. Especially if we were to add authentication tokens to these outbound
-    requests in the future, visiting arbitrary domains would allow malicious users to collect sensitive
-    data. Therefore, we whitelist the domains we are willing to visit."""
-    # json schema validation ensures that "import_url" exists, but we'll be safe
-    if import_url is None:
-        logging.info(f"Missing path from inbound translate request:")
-        raise exceptions.InvalidPathException(import_url, user_info, "Missing path to file to import")
-
-    # json schema validation ensures that "import_filetype" exists, but we'll be safe
-    if import_filetype is None:
-        logging.info(f"Missing filetype from inbound translate request:")
-        raise exceptions.InvalidFiletypeException(import_filetype, user_info, "Missing filetype")
-
-    try:
-        parsedurl = urlparse(import_url)
-    except Exception as e:
-        # catch any/all exceptions here so we can ensure audit logging
-        raise exceptions.InvalidPathException(import_url, user_info, f"{e}")
-
-    # parse path into url parts, verify the netloc is one that we allow
-    # we validate netloc suffixes ("s3.amazonaws.com") instead of entire string matches; this allows
-    # for subdomains of the netlocs we deem safe.
-    # for "rawlsjson" requests, we validate that the file-to-be-imported is already in our
-    # dedicated bucket.
-    actual_netloc = parsedurl.netloc
-    # Later: change behavior based on whether data is protected
-    is_protected(actual_netloc, import_filetype)
-    if import_filetype == FILETYPE_NOTRANSLATION and actual_netloc == os.environ.get("BATCH_UPSERT_BUCKET"):
-        return True
-    elif import_filetype in FILETYPE_TRANSLATORS.keys() and any(actual_netloc.endswith(s) for s in VALID_NETLOCS):
-        return True
-    elif import_filetype == "tdrexport" and parsedurl.scheme == "gs":
-        return True
-    elif import_filetype == "tdrexport" and parsedurl.scheme == "https" and any(actual_netloc.endswith(s) for s in VALID_NETLOCS):
-        return True
-    else:
-        logging.warning(f"Unrecognized netloc or bucket for import: [{parsedurl.netloc}] from [{import_url}]")
-        raise exceptions.InvalidPathException(import_url, user_info, "File cannot be imported from this URL.")
-
-def is_protected(import_netloc: str, import_filetype: Optional[str]) -> bool:
-    """Determines whether an import is protected data based on where it's imported from
-    and its filetype.  Initially, only PFBs from AnVIl are considered protected data"""
-    if import_filetype == "pfb":
-        return any(import_netloc.endswith(s) for s in PROTECTED_NETLOCS)
-    return False

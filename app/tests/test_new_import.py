@@ -3,16 +3,21 @@ import pytest
 from app.external.rawls import RawlsWorkspaceResponse
 
 from app.tests import testutils
-from app import translate
+from app import translate, new_import
 from app.util import exceptions
 from app.db import db
 from app.db.model import *
 
+from app.translate import FILETYPE_TRANSLATORS
+from app.new_import import validate_import_url, is_protected_data, is_protected_workspace
+from app.util.exceptions import InvalidPathException
+from app.auth.userinfo import UserInfo
 
-good_json = {"path": f"https://{translate.VALID_NETLOCS[0]}/some/path", "filetype": "pfb"}
+
+good_json = {"path": f"https://{new_import.VALID_NETLOCS[0]}/some/path", "filetype": "pfb"}
 good_headers = {"Authorization": "Bearer ya29.blahblah", "Accept": "application/json"}
 
-good_tdr_json = {"path": f"https://{translate.VALID_NETLOCS[0]}/some/path", "filetype": "tdrexport", "options": {"tdrSyncPermissions": True}}
+good_tdr_json = {"path": f"https://{new_import.VALID_NETLOCS[0]}/some/path", "filetype": "tdrexport", "options": {"tdrSyncPermissions": True}}
 
 
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
@@ -162,3 +167,45 @@ def test_bad_request_when_isUpsert_is_not_boolean(input_value, client):
 
     resp = client.post('/mynamespace/myname/imports', json=json_payload, headers=good_headers)
     assert resp.status_code == 400
+
+user_info = UserInfo("subject-id", "awesomepossum@broadinstitute.org", True)
+
+@pytest.mark.parametrize("import_url, netloc", [
+    ("https://something.anvil.gi.ucsc.edu/manifest/files", 'something.anvil.gi.ucsc.edu'),
+    ("https://something-else.anvil.gi.ucsc.edu/manifest/files", 'something-else.anvil.gi.ucsc.edu'),
+    ("https://anvil.gi.ucsc.edu/manifest/files", 'anvil.gi.ucsc.edu'),
+    ("https://something.anvil.gi.ucsc.edu", 'something.anvil.gi.ucsc.edu'),
+    ("something.anvil.gi.ucsc.edu", None),
+])
+@pytest.mark.parametrize("file_type_translator", FILETYPE_TRANSLATORS)
+def test_validate_import_url(import_url, netloc, file_type_translator):
+    if not netloc:
+        with pytest.raises(InvalidPathException):
+            validate_import_url(import_url=import_url, import_filetype=file_type_translator, user_info=user_info)
+    else:
+        assert validate_import_url(import_url=import_url, import_filetype=file_type_translator, user_info=user_info) == netloc
+
+@pytest.mark.parametrize("import_url, protected", [
+    ("something.anvil.gi.ucsc.edu", True),
+    ("something-else.anvil.gi.ucsc.edu", True),
+    ("something.anvilproject.org", True),
+    ("gen3.biodatacatalyst.nhlbi.nih.gov", True),
+    ("something.anvil.edu", False),
+    ("something.org", False)
+])
+@pytest.mark.parametrize("file_type", ["pfb", "tdrexport"])
+def test_is_protected_data(import_url, protected, file_type):
+    if file_type == "pfb":
+        assert is_protected_data(import_netloc=import_url, import_filetype=file_type) is protected
+    else:
+        assert is_protected_data(import_netloc=import_url, import_filetype=file_type) is False
+
+
+@pytest.mark.parametrize("authorizationDomain, bucketName, protected", [
+    (set(), "fc-12345678-a901-23b4-c5d6-7ef8a90b1cd2", False),
+    (set(), "fc-secure-12345678-a901-23b4-c5d6-7ef8a90b1cd2", True),
+    (set("authDomain"), "fc-secure-12345678-a901-23b4-c5d6-7ef8a90b1cd2", True),
+    (set("authDomain"), "fc-12345678-a901-23b4-c5d6-7ef8a90b1cd2", True) #This shouldn't happen in real life
+])
+def test_is_protected_workspace(authorizationDomain, bucketName, protected):
+    assert is_protected_workspace(authorizationDomain, bucketName) is protected
