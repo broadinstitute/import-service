@@ -49,7 +49,7 @@ def handle(request: flask.Request, ws_ns: str, ws_name: str) -> model.ImportStat
         options: {options}, tdrSyncFlag: {is_tdr_sync_required}")
 
     # and validate the input's path
-    actual_netloc = translate.validate_import_url(import_url, import_filetype, user_info)
+    actual_netloc = validate_import_url(import_url, import_filetype, user_info)
     # Refuse to import protected data into unprotected workspace
     if is_protected_data(actual_netloc, import_filetype):
         if not is_protected_workspace(authorization_domain, bucket_name):

@@ -201,11 +201,11 @@ def test_is_protected_data(import_url, protected, file_type):
         assert is_protected_data(import_netloc=import_url, import_filetype=file_type) is False
 
 
-@pytest.mark.parametrize("authorizationDomain, bucketName, protected", [
+@pytest.mark.parametrize("authorization_domain, bucket_name, protected", [
     (set(), "fc-12345678-a901-23b4-c5d6-7ef8a90b1cd2", False),
     (set(), "fc-secure-12345678-a901-23b4-c5d6-7ef8a90b1cd2", True),
     (set("authDomain"), "fc-secure-12345678-a901-23b4-c5d6-7ef8a90b1cd2", True),
     (set("authDomain"), "fc-12345678-a901-23b4-c5d6-7ef8a90b1cd2", True) #This shouldn't happen in real life
 ])
-def test_is_protected_workspace(authorizationDomain, bucketName, protected):
-    assert is_protected_workspace(authorizationDomain, bucketName) is protected
+def test_is_protected_workspace(authorization_domain, bucket_name, protected):
+    assert is_protected_workspace(authorization_domain, bucket_name) is protected
