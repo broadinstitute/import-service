@@ -78,7 +78,7 @@ def handle(request: flask.Request, ws_ns: str, ws_name: str) -> model.ImportStat
     return new_import.to_status_response()
 
 def is_protected_workspace(authorization_domain: Set[str], bucket_name: str):
-    if len(authorization_domain) > 0:
+    if authorization_domain and len(authorization_domain) > 0:
         return True
     return bucket_name.startswith("fc-secure")
 
