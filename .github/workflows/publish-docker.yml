@@ -33,7 +33,7 @@ jobs:
         run: echo "name=${GCR_REGISTRY}/${GOOGLE_PROJECT}/${SERVICE_NAME}" >> $GITHUB_OUTPUT
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@v2
 
       - name: Build and push Docker image
         if: ${{ github.ref == 'refs/heads/develop' }}
