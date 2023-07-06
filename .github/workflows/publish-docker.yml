@@ -40,7 +40,9 @@ jobs:
         run: | 
           docker build . -t ${{ steps.gcr-image-name.outputs.name }}:latest
           docker push ${{ steps.gcr-image-name.outputs.name }}:latest
-        else:
-          run: | 
+        
+      - name: Build and push Docker image (non-develop)
+        if: ${{ github.ref != 'refs/heads/develop' }}
+        run: | 
             docker build . -t ${{ steps.gcr-image-name.outputs.name }}:$(git rev-parse --short HEAD)-${{ github.ref }}
             docker push ${{ steps.gcr-image-name.outputs.name }}:$(git rev-parse --short HEAD)-${{ github.ref }}
