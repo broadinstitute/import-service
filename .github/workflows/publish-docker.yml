@@ -19,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-       - name: Auth to GCR
+      - name: Auth to GCR
         uses: google-github-actions/setup-gcloud@v0
         with:
           service_account_email: ${{ secrets.GCR_PUBLISH_EMAIL }}
@@ -44,5 +44,5 @@ jobs:
       - name: Build and push Docker image (non-develop)
         if: ${{ github.ref != 'refs/heads/develop' }}
         run: | 
-            docker build . -t ${{ steps.gcr-image-name.outputs.name }}:$(git rev-parse --short HEAD)-${{ github.head_ref }}
-            docker push ${{ steps.gcr-image-name.outputs.name }}:$(git rev-parse --short HEAD)-${{ github.head_ref }}
+            docker build . -t ${{ steps.gcr-image-name.outputs.name }}:$(git rev-parse --short HEAD)-${{ github.ref_name }}
+            docker push ${{ steps.gcr-image-name.outputs.name }}:$(git rev-parse --short HEAD)-${{ github.ref_name }}
