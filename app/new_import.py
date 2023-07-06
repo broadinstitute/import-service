@@ -80,7 +80,7 @@ def handle(request: flask.Request, ws_ns: str, ws_name: str) -> model.ImportStat
 def is_protected_workspace(authorization_domain: Set[str], bucket_name: str):
     if authorization_domain and len(authorization_domain) > 0:
         return True
-    return bucket_name.startswith("fc-secure")
+    return bucket_name and bucket_name.startswith("fc-secure")
 
 def validate_import_url(import_url: Optional[str], import_filetype: Optional[str], user_info: UserInfo) -> str:
     """Inspects the URI from which the user wants to import data. Because our service will make an
