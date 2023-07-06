@@ -46,5 +46,5 @@ jobs:
       - name: Build and push Docker image (non-develop)
         if: ${{ github.ref != 'refs/heads/develop' }}
         run: | 
-            docker build . -t ${{ steps.gcr-image-name.outputs.name }}:$(git rev-parse --short HEAD)-${{ github.ref_name }}
-            docker push ${{ steps.gcr-image-name.outputs.name }}:$(git rev-parse --short HEAD)-${{ github.ref_name }}
+            docker build . -t ${{ steps.gcr-image-name.outputs.name }}:${{ github.ref_name }}
+            docker push ${{ steps.gcr-image-name.outputs.name }}:${{ github.ref_name }}
