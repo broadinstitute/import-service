@@ -9,16 +9,16 @@ def test_get_workspace_uuid():
     # rawls returns non-OK response
     with testutils.patch_request("app.external.rawls", "get", status_code = 403, text="no"):
         with pytest.raises(exceptions.ISvcException):
-            rawls.get_workspace_uuid_and_project("a", "a", "a")
+            rawls.get_rawls_workspace_info("a", "a", "a")
 
     # rawls returns ok response with dodgy json
     with testutils.patch_request("app.external.rawls", "get", status_code = 200, json={"spacework" : {"wOrKsPaCeId" : "uuid", "googleProject": "proj"}}):
         with pytest.raises(KeyError):
-            rawls.get_workspace_uuid_and_project("a", "a", "a")
+            rawls.get_rawls_workspace_info("a", "a", "a")
 
     # rawls returns ok with good json, parse it out
     with testutils.patch_request("app.external.rawls", "get", status_code = 200, json={"workspace" : {"workspaceId" : "the-uuid", "googleProject": "proj"}}):
-        assert rawls.get_workspace_uuid_and_project("a", "a", "a") == RawlsWorkspaceResponse("the-uuid", "proj")
+        assert rawls.get_rawls_workspace_info("a", "a", "a") == RawlsWorkspaceResponse("the-uuid", "proj")
 
 
 def test_check_workspace_iam_action():

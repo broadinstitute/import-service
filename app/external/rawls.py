@@ -15,8 +15,7 @@ class RawlsWorkspaceResponse:
      bucket_name: Optional[str] = None
 
 
-#TODO: rename this method since now it gets more than just uuid and project
-def get_workspace_uuid_and_project(workspace_namespace: str, workspace_name: str, bearer_token: str) -> RawlsWorkspaceResponse:
+def get_rawls_workspace_info(workspace_namespace: str, workspace_name: str, bearer_token: str) -> RawlsWorkspaceResponse:
     resp = requests.get(
         f"{os.environ.get('RAWLS_URL')}/api/workspaces/{workspace_namespace}/{workspace_name}?fields=workspace.workspaceId,workspace.googleProject,workspace.authorizationDomain,workspace.bucketName",
         headers={"Authorization": bearer_token})
