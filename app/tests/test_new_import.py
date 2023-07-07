@@ -191,7 +191,8 @@ def test_validate_import_url(import_url, netloc, file_type_translator):
     ("something.anvilproject.org", True),
     ("gen3.biodatacatalyst.nhlbi.nih.gov", True),
     ("something.anvil.edu", False),
-    ("something.org", False)
+    ("something.org", False),
+    ("gen3-biodatacatalyst-nhlbi-nih-gov-pfb-export.s3.amazonaws.com", True)
 ])
 @pytest.mark.parametrize("file_type", ["pfb", "tdrexport"])
 def test_is_protected_data(import_url, protected, file_type):

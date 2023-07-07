@@ -15,7 +15,7 @@ import os
 
 from app.auth.userinfo import UserInfo
 
-PROTECTED_NETLOCS = ["anvil.gi.ucsc.edu", "anvilproject.org", "gen3.biodatacatalyst.nhlbi.nih.gov"]
+PROTECTED_NETLOCS = ["anvil.gi.ucsc.edu", "anvilproject.org", "gen3.biodatacatalyst.nhlbi.nih.gov", "gen3-biodatacatalyst-nhlbi-nih-gov-pfb-export.s3.amazonaws.com"]
 
 VALID_NETLOCS = PROTECTED_NETLOCS + ["s3.amazonaws.com", "storage.googleapis.com", "service.azul.data.humancellatlas.org", "dev.singlecell.gi.ucsc.edu", "core.windows.net"]
 
@@ -50,6 +50,7 @@ def handle(request: flask.Request, ws_ns: str, ws_name: str) -> model.ImportStat
 
     # and validate the input's path
     actual_netloc = validate_import_url(import_url, import_filetype, user_info)
+    logging.info(f"Validating protected data status for host {actual_netloc} on workspace with authorization_domain {str(authorization_domain)}")
     # Refuse to import protected data into unprotected workspace
     if is_protected_data(actual_netloc, import_filetype):
         if not is_protected_workspace(authorization_domain, bucket_name):
