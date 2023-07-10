@@ -122,7 +122,7 @@ def sam_valid_pet_key(monkeypatch):
 def user_has_ws_access(monkeypatch):
     """Makes us think that the user has access to the workspace in Rawls."""
     monkeypatch.setattr("app.auth.user_auth.workspace_uuid_and_project_with_auth",
-                        mock.MagicMock(return_value=RawlsWorkspaceResponse("some-uuid", "some-project")))
+                        mock.MagicMock(return_value=RawlsWorkspaceResponse("some-uuid", "some-project", set(), "fc-secure-12345678-a901-23b4-c5d6-7ef8a90b1cd2")))
 
 
 @pytest.fixture(scope="function")

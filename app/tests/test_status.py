@@ -1,13 +1,13 @@
 import pytest
 import unittest.mock as mock
 
-from app import translate
+from app import new_import
 from app.db import db
 from app.db.model import Import, ImportStatus
 from app.server.requestutils import PUBSUB_STATUS_NOTOK
 from app.tests import testutils
 
-good_json = {"path": f"https://{translate.VALID_NETLOCS[0]}/some/path", "filetype": "pfb"}
+good_json = {"path": f"https://{new_import.VALID_NETLOCS[0]}/some/path", "filetype": "pfb"}
 good_headers = {"Authorization": "Bearer ya29.blahblah"}
 
 

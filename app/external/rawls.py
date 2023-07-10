@@ -1,6 +1,7 @@
 import logging
 import os
 from dataclasses import dataclass
+from typing import Optional, Set
 
 import requests
 from app.util.exceptions import ISvcException
@@ -10,16 +11,18 @@ from app.util.exceptions import ISvcException
 class RawlsWorkspaceResponse:
      workspace_id: str
      google_project: str
+     authorization_domain: Optional[Set[str]] = None
+     bucket_name: Optional[str] = None
 
 
-def get_workspace_uuid_and_project(workspace_namespace: str, workspace_name: str, bearer_token: str) -> RawlsWorkspaceResponse:
+def get_rawls_workspace_info(workspace_namespace: str, workspace_name: str, bearer_token: str) -> RawlsWorkspaceResponse:
     resp = requests.get(
-        f"{os.environ.get('RAWLS_URL')}/api/workspaces/{workspace_namespace}/{workspace_name}?fields=workspace.workspaceId,workspace.googleProject",
+        f"{os.environ.get('RAWLS_URL')}/api/workspaces/{workspace_namespace}/{workspace_name}?fields=workspace.workspaceId,workspace.googleProject,workspace.authorizationDomain,workspace.bucketName",
         headers={"Authorization": bearer_token})
 
     if resp.ok:
         jso = resp.json()
-        return RawlsWorkspaceResponse(workspace_id=jso["workspace"]["workspaceId"], google_project=jso["workspace"]["googleProject"])
+        return RawlsWorkspaceResponse(workspace_id=jso["workspace"]["workspaceId"], google_project=jso["workspace"]["googleProject"], authorization_domain=jso["workspace"].get("authorizationDomain"), bucket_name=jso["workspace"].get("bucketName"))
     else:
         # just pass the error upwards
         workspace_dict = { 'workspace': { 'namespace': workspace_namespace, 'name': workspace_name} }

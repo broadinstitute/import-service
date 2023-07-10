@@ -22,7 +22,7 @@ def extract_auth_token(request: flask.Request) -> str:
 def workspace_uuid_and_project_with_auth(workspace_ns: str, workspace_name: str, bearer_token: str, sam_action: str = "read") -> RawlsWorkspaceResponse:
     """Checks Rawls to get the workspace UUID, and then checks Sam to see if the user has the given action on the workspace resource.
     If so, returns the workspace UUID."""
-    uuid_and_project = rawls.get_workspace_uuid_and_project(workspace_ns, workspace_name, bearer_token)
+    uuid_and_project = rawls.get_rawls_workspace_info(workspace_ns, workspace_name, bearer_token)
 
     # the read check is done when you ask rawls for the workspace UUID, so don't redo it
     if sam_action != "read" and not rawls.check_workspace_iam_action(workspace_ns, workspace_name, sam_action, bearer_token):

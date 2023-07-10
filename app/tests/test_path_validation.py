@@ -4,7 +4,7 @@ import os
 
 from app.auth.userinfo import UserInfo
 
-from app import translate
+from app import translate, new_import
 
 good_headers = {"Authorization": "Bearer ya29.blahblah"}
 
@@ -18,7 +18,7 @@ def assert_response_code_and_logs(resp, caplog, import_url):
 
 
 user_info = UserInfo("subject-id", "awesomepossum@broadinstitute.org", True)
-@pytest.mark.parametrize("netloc", translate.VALID_NETLOCS + ["something.anvil.gi.ucsc.edu/manifest/files",
+@pytest.mark.parametrize("netloc", new_import.VALID_NETLOCS + ["something.anvil.gi.ucsc.edu/manifest/files",
                                                               "something-else.anvil.gi.ucsc.edu/manifest/files",
                                                               "*.anvil.gi.ucsc.edu/manifest/files",
                                                               "something.anvil.gi.ucsc.edu"])
@@ -46,35 +46,35 @@ def test_unparsable_path(client: flask.testing.FlaskClient, caplog):
     resp = client.post('/namespace/name/imports', json=payload, headers=good_headers)
     assert_response_code_and_logs(resp, caplog, payload["path"])
 
-@pytest.mark.parametrize("netloc", translate.VALID_NETLOCS)
+@pytest.mark.parametrize("netloc", new_import.VALID_NETLOCS)
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
 def test_subdomain_of_legal_netlocs(client, netloc, caplog):
     payload = {"path": f"https://subdomain.{netloc}/some/valid/path", "filetype": "pfb"}
     resp = client.post('/namespace/name/imports', json=payload, headers=good_headers)
     assert resp.status_code == 201
 
-@pytest.mark.parametrize("netloc", translate.VALID_NETLOCS)
+@pytest.mark.parametrize("netloc", new_import.VALID_NETLOCS)
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
 def test_legal_netloc_as_subdomain_of_bad_tld(client, netloc, caplog):
     payload = {"path": f"https://{netloc}.evil/some/valid/path", "filetype": "pfb"}
     resp = client.post('/namespace/name/imports', json=payload, headers=good_headers)
     assert_response_code_and_logs(resp, caplog, payload["path"])
 
-@pytest.mark.parametrize("netloc", translate.VALID_NETLOCS)
+@pytest.mark.parametrize("netloc", new_import.VALID_NETLOCS)
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
 def test_legal_netloc_in_fragment(client, netloc, caplog):
     payload = {"path": f"https://evil.bad/some/valid/path#{netloc}", "filetype": "pfb"}
     resp = client.post('/namespace/name/imports', json=payload, headers=good_headers)
     assert_response_code_and_logs(resp, caplog, payload["path"])
 
-@pytest.mark.parametrize("netloc", translate.VALID_NETLOCS)
+@pytest.mark.parametrize("netloc", new_import.VALID_NETLOCS)
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
 def test_legal_netloc_in_query(client, netloc, caplog):
     payload = {"path": f"https://evil.bad/some/valid/path?q={netloc}", "filetype": "pfb"}
     resp = client.post('/namespace/name/imports', json=payload, headers=good_headers)
     assert_response_code_and_logs(resp, caplog, payload["path"])
 
-@pytest.mark.parametrize("netloc", translate.VALID_NETLOCS)
+@pytest.mark.parametrize("netloc", new_import.VALID_NETLOCS)
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
 def test_legal_netloc_in_path(client, netloc, caplog):
     payload = {"path": f"https://evil.bad/hide/{netloc}/in/path", "filetype": "pfb"}
@@ -105,7 +105,7 @@ def test_illegal_bucket_for_rawlsjson(client: flask.testing.FlaskClient, caplog)
     resp = client.post('/namespace/name/imports', json=payload, headers=good_headers)
     assert_response_code_and_logs(resp, caplog, payload["path"])
 
-@pytest.mark.parametrize("netloc", translate.VALID_NETLOCS)
+@pytest.mark.parametrize("netloc", new_import.VALID_NETLOCS)
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
 def test_legal_netlocs_but_rawlsjson(client, netloc, caplog):
     payload = {"path": f"https://{netloc}/some/valid/path", "filetype": "rawlsjson"}
