@@ -1,8 +1,6 @@
 import flask
 import logging
 
-
-from app import translate
 from app.translate import FILETYPE_TRANSLATORS, FILETYPE_NOTRANSLATION
 from app.db import db, model
 from app.external import sam, pubsub

@@ -1,7 +1,7 @@
 import pytest
 import unittest.mock as mock
 
-from app import translate, new_import
+from app import new_import
 from app.db import db
 from app.db.model import Import, ImportStatus
 from app.server.requestutils import PUBSUB_STATUS_NOTOK
