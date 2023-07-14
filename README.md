@@ -84,27 +84,38 @@ When doing a production deployment, each step of the checklist must be performed
       the file to `requirements.txt`
 
 - [ ] Create and push a new [semver](https://semver.org/) tag for the commit you want to deploy; typically this will be
-      the head of the develop branch.  You should look at the existing tags
-      to ensure that the tag is incremented properly based on the last released version.  Tags should be plain semver numbers
+      the head of the develop branch.  Go to [existing tags](https://github.com/broadinstitute/import-service/releases) 
+      and select 'Draft a new Release'. Ensure that the tag is incremented properly based on the last released version.  Tags should be plain semver numbers
       like `1.0.0` and should not have any additional prefix like `v1.0.0` or `releases/1.0.0`.  Suffixes are permitted so
       long as they conform to the [semver spec](https://semver.org/).
 
+- [ ] Create a ticket for the release and be sure to leave the 'Fix Version' field blank.  Add a checklist to the ticket and select 'Load Templates'
+      from the ... menu to the right of the checklist.  Use 'Import Service Release Checklist'.
+      You may refer to (or clone) a [previous release ticket](https://broadworkbench.atlassian.net/browse/AJ-1165)
+      for an example.  This ticket ensures that the release is recorded for compliance, and that
+      any release notes are picked up to be published.  It also helps to keep track of the steps along the way,
+      outlined in the next section.  
+
 ### Deploy and Test
-You must deploy to each tier one-by-one and [manually test](https://docs.google.com/document/d/17edO6O7Rz5voxWa2oXbTc3pWZArbkOMNJn1woaILlpQ/edit?ts=5e9f6dd5#heading=h.flskep5qnamc)
-in each tier after you deploy to it.  Your deployment to a tier should not be considered complete until you have
-successfully executed each step of the [manual test](https://docs.google.com/document/d/17edO6O7Rz5voxWa2oXbTc3pWZArbkOMNJn1woaILlpQ/edit?ts=5e9f6dd5#heading=h.flskep5qnamc)
-on that tier.  To deploy the application code, navigate to the [import-service-manual-deploy](https://fc-jenkins.dsp-techops.broadinstitute.org/view/Deploy/job/import-service-manual-deploy/)
+You must deploy to each tier one-by-one and manually test
+in each tier after you deploy to it.  This test should consist of uploading a large-ish (~2MB should suffice) tsv to a GCP workspace and ensuring
+it asynchronously uploads, as well as any specific changes made in the release.  You may refer also to [this](https://docs.google.com/document/d/17edO6O7Rz5voxWa2oXbTc3pWZArbkOMNJn1woaILlpQ/edit?ts=5e9f6dd5#heading=h.flskep5qnamc)
+document, although it is now somewhat out of date.
+Your deployment to a tier should not be considered complete until you have
+successfully executed each step of the manual test on that tier.  Mark each step complete on the release ticket created above.
+
+To deploy the application code, navigate to the [import-service-manual-deploy](https://fc-jenkins.dsp-techops.broadinstitute.org/view/Deploy/job/import-service-manual-deploy/)
 job and click the "Build with Parameters" link.  Select the `TAG` that you just created during the preparation steps and
 the `TIER` to which you want to deploy:
 
-- [ ] `dev` deploy job succeeded and [manual test](https://docs.google.com/document/d/17edO6O7Rz5voxWa2oXbTc3pWZArbkOMNJn1woaILlpQ/edit?ts=5e9f6dd5#heading=h.flskep5qnamc) passed
+- [ ] `dev` deploy job succeeded and manual test passed
       - (Technically, this same commit is probably already running on `dev` courtesy of the automatic `dev` deployment
       job. However, deploying again is an important step because someone else may have triggered a `dev` deployment and
       we want to ensure that you understand the deployment process, the deployment tools are working properly, and that
       everything is working as intended.)
-- [ ] `alpha` deploy job succeeded and [manual test](https://docs.google.com/document/d/17edO6O7Rz5voxWa2oXbTc3pWZArbkOMNJn1woaILlpQ/edit?ts=5e9f6dd5#heading=h.flskep5qnamc) passed
-- [ ] `staging` deploy job succeeded and [manual test](https://docs.google.com/document/d/17edO6O7Rz5voxWa2oXbTc3pWZArbkOMNJn1woaILlpQ/edit?ts=5e9f6dd5#heading=h.flskep5qnamc) passed
-- [ ] `prod` deploy job succeeded and [manual test](https://docs.google.com/document/d/17edO6O7Rz5voxWa2oXbTc3pWZArbkOMNJn1woaILlpQ/edit?ts=5e9f6dd5#heading=h.flskep5qnamc) passed
+- [ ] `alpha` deploy job succeeded and manual test passed.
+- [ ] `staging` deploy job succeeded and manual test passed
+- [ ] `prod` deploy job succeeded and manual test passed
       - In order to deploy to `prod`, you must be on the DSP Suitability Roster.  You will need to log into the
       production Jenkins instance and use the "import-service-manual-deploy" job to release the same tag to production.
 
