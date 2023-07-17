@@ -51,6 +51,18 @@ docker ps && docker run <image-id>
 
 You should make mypy happy before opening a PR. Note that errors in some modules will be listed twice. This is annoying, but the good news is that you only have to fix them once.
 
+### Dependency Management
+
+This repo uses `poetry` for dependency management. But, it deploys to App Engine and App Engine requires a `requirements.txt` file. Therefore,
+**_you must simultaneously update `requirements.txt` AND poetry's `poetry.lock`/`pyproject.toml` when changing dependencies._**
+
+To sync `requirements.txt` to poetry:
+```
+poetry export -f requirements.txt -o requirements.txt --without-hashes
+```
+
+For other poetry commands, such as to add a new dependency or update an existing dependency, see https://python-poetry.org/docs/cli/.
+
 # Deployment (for Broad only)
 
 Deployments to non-production and production environments are performed in Jenkins.  In order to access Jenkins, you
@@ -79,9 +91,7 @@ When doing a production deployment, each step of the checklist must be performed
 
 ### Production Deployment Preparation
 
-- [ ] Re-run `poetry export -f requirements.txt -o requirements.txt --without-hashes` locally. Google App Engine requires a
-      `requirements.txt` be present in order to run a Python app. Since `poetry` uses `pyproject.toml`, you'll need to convert
-      the file to `requirements.txt`
+- [ ] Double-check that `requirements.txt` is up to date with poetry; see [Dependency Management](#dependency-management).
 
 - [ ] Create and push a new [semver](https://semver.org/) tag for the commit you want to deploy; typically this will be
       the head of the develop branch.  Go to [existing tags](https://github.com/broadinstitute/import-service/releases) 
