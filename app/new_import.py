@@ -82,9 +82,12 @@ def is_protected_workspace(authorization_domain: Optional[Set[str]], bucket_name
     return bucket_name and bucket_name.startswith("fc-secure")
 
 @validate_arguments
-def validate_and_parse_url(url: AnyUrl) -> ParseResult:
+def _validate_url(url: AnyUrl) -> str:
+    return str(url)
+
+def validate_and_parse_url(url: str) -> ParseResult:
     """Validates the input URL using pydantic and parses it with urlparse."""
-    return urlparse(str(url))
+    return urlparse(_validate_url(url)) # type: ignore
 
 def validate_import_url(import_url: Optional[str], import_filetype: Optional[str], user_info: UserInfo) -> str:
     """Inspects the URI from which the user wants to import data. Because our service will make an
