@@ -20,7 +20,6 @@ def assert_response_code_and_logs(resp, caplog, import_url):
 user_info = UserInfo("subject-id", "awesomepossum@broadinstitute.org", True)
 @pytest.mark.parametrize("netloc", new_import.VALID_NETLOCS + ["something.anvil.gi.ucsc.edu/manifest/files",
                                                               "something-else.anvil.gi.ucsc.edu/manifest/files",
-                                                              "*.anvil.gi.ucsc.edu/manifest/files",
                                                               "something.anvil.gi.ucsc.edu"])
 @pytest.mark.parametrize("filetype", translate.FILETYPE_TRANSLATORS.keys())
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
@@ -45,6 +44,12 @@ def test_unparsable_path(client: flask.testing.FlaskClient, caplog):
     payload = {"path": f"https://[:-999/~~~~~~~~~~~", "filetype": "pfb"}
     resp = client.post('/namespace/name/imports', json=payload, headers=good_headers)
     assert_response_code_and_logs(resp, caplog, payload["path"])
+
+@pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
+def test_invalid_tdrexport_gcs_url(client):
+    payload = {"path": "gs://bucket https://example.com/foo", "filetype": "tdrexport"}
+    resp = client.post('/namespace/name/imports', json=payload, headers=good_headers)
+    assert resp.status_code == 400
 
 @pytest.mark.parametrize("netloc", new_import.VALID_NETLOCS)
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")

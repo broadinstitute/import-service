@@ -7,8 +7,9 @@ from app.external import sam, pubsub
 from app.auth import user_auth
 from app.util import exceptions
 
+from pydantic import AnyUrl, validate_arguments
 from typing import Optional, Set
-from urllib.parse import urlparse
+from urllib.parse import ParseResult, urlparse
 import os
 
 from app.auth.userinfo import UserInfo
@@ -80,6 +81,11 @@ def is_protected_workspace(authorization_domain: Optional[Set[str]], bucket_name
         return True
     return bucket_name and bucket_name.startswith("fc-secure")
 
+@validate_arguments
+def validate_and_parse_url(url: AnyUrl) -> ParseResult:
+    """Validates the input URL using pydantic and parses it with urlparse."""
+    return urlparse(str(url))
+
 def validate_import_url(import_url: Optional[str], import_filetype: Optional[str], user_info: UserInfo) -> str:
     """Inspects the URI from which the user wants to import data. Because our service will make an
     outbound request to the user-supplied URI, we want to make sure that our service only visits
@@ -98,7 +104,7 @@ def validate_import_url(import_url: Optional[str], import_filetype: Optional[str
         raise exceptions.InvalidFiletypeException(import_filetype, user_info, "Missing filetype")
 
     try:
-        parsedurl = urlparse(import_url)
+        parsedurl = validate_and_parse_url(import_url)
     except Exception as e:
         # catch any/all exceptions here so we can ensure audit logging
         raise exceptions.InvalidPathException(import_url, user_info, f"{e}")
