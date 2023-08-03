@@ -46,8 +46,13 @@ def test_unparsable_path(client: flask.testing.FlaskClient, caplog):
     assert_response_code_and_logs(resp, caplog, payload["path"])
 
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
-def test_invalid_tdrexport_gcs_url(client):
-    payload = {"path": "gs://bucket https://example.com/foo", "filetype": "tdrexport"}
+@pytest.mark.parametrize("path,filetype", [
+    ("gs://bucket https://example.com/foo", "tdrexport"),
+    ("https://*/foo", "tdrexport"),
+    ("https://example.com https://example.com", "pfb"),
+])
+def test_invalid_url(client, path, filetype):
+    payload = {"path": path, "filetype": filetype}
     resp = client.post('/namespace/name/imports', json=payload, headers=good_headers)
     assert resp.status_code == 400
 
