@@ -87,6 +87,8 @@ def _validate_url(url: AnyUrl) -> str:
 
 def validate_and_parse_url(url: str) -> ParseResult:
     """Validates the input URL using pydantic and parses it with urlparse."""
+    # Mypy expects _validate_url to take an AnyUrl argument, but it actually can accept a string, which pydantic
+    # will coerce into an AnyUrl. Breaking this up into two functions keeps the type: ignore confined here.
     return urlparse(_validate_url(url)) # type: ignore
 
 def validate_import_url(import_url: Optional[str], import_filetype: Optional[str], user_info: UserInfo) -> str:
