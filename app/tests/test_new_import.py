@@ -185,9 +185,8 @@ def test_validate_import_url(import_url, netloc, file_type_translator):
         assert validate_import_url(import_url=import_url, import_filetype=file_type_translator, user_info=user_info) == netloc
 
 @pytest.mark.parametrize("import_url, protected", [
-    ("something.anvil.gi.ucsc.edu", True),
-    ("something-else.anvil.gi.ucsc.edu", True),
-    ("something.anvilproject.org", True),
+    ("service.prod.anvil.gi.ucsc.edu", True),
+    ("service.anvil.gi.ucsc.edu", True),
     ("gen3.biodatacatalyst.nhlbi.nih.gov", True),
     ("something.anvil.edu", False),
     ("something.org", False),

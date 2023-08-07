@@ -14,7 +14,7 @@ import os
 
 from app.auth.userinfo import UserInfo
 
-PROTECTED_NETLOCS = ["anvil.gi.ucsc.edu", "anvilproject.org", "gen3.biodatacatalyst.nhlbi.nih.gov", "gen3-biodatacatalyst-nhlbi-nih-gov-pfb-export.s3.amazonaws.com", "gen3-theanvil-io-pfb-export.s3.amazonaws.com"]
+PROTECTED_NETLOCS = ["service.prod.anvil.gi.ucsc.edu", "service.anvil.gi.ucsc.edu", "gen3.biodatacatalyst.nhlbi.nih.gov", "gen3-biodatacatalyst-nhlbi-nih-gov-pfb-export.s3.amazonaws.com", "gen3-theanvil-io-pfb-export.s3.amazonaws.com"]
 
 # Allow downloads from any GCS bucket, Azure storage container, or S3 bucket
 VALID_NETLOCS = ["storage.googleapis.com", "*.core.windows.net", "*.s3.amazonaws.com"]
