@@ -66,6 +66,8 @@ env_variables:
  RAWLS_PUBSUB_PROJECT: "broad-dsde-{{$env}}"
  RAWLS_PUBSUB_TOPIC: "rawls-async-import-topic-{{$env}}"
 
+ IMPORT_ALLOWED_NETLOCS: {{if eq $env "prod"}}"service.prod.anvil.gi.ucsc.edu,*dev.singlecell.gi.ucsc.edu,*gen3.biodatacatalyst.nhlbi.nih.gov,gen3-biodatacatalyst-nhlbi-nih-gov-pfb-export.s3.amazonaws.com,gen3-theanvil-io-pfb-export.s3.amazonaws.com,*service.azul.data.humancellatlas.org"
+                         {{else}}"service.anvil.gi.ucsc.edu,*dev.singlecell.gi.ucsc.edu,*gen3.biodatacatalyst.nhlbi.nih.gov,gen3-biodatacatalyst-nhlbi-nih-gov-pfb-export.s3.amazonaws.com,gen3-theanvil-io-pfb-export.s3.amazonaws.com,*service.azul.data.humancellatlas.org"{{end}}
 
 {{end}}{{end}}{{end}}{{end}}{{end}}{{end}}{{end}}{{end}}{{end}}
 

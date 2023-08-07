@@ -1,6 +1,7 @@
 import flask.testing
 import pytest
 import os
+from unittest.mock import patch
 
 from app.auth.userinfo import UserInfo
 
@@ -18,12 +19,12 @@ def assert_response_code_and_logs(resp, caplog, import_url):
 
 
 user_info = UserInfo("subject-id", "awesomepossum@broadinstitute.org", True)
-@pytest.mark.parametrize("netloc", new_import.VALID_NETLOCS + ["something.anvil.gi.ucsc.edu/manifest/files",
-                                                              "something-else.anvil.gi.ucsc.edu/manifest/files",
-                                                              "something.anvil.gi.ucsc.edu"])
+@pytest.mark.parametrize("netloc", ["storage.googleapis.com",
+                                    "test-container.blob.core.windows.net",
+                                    "test-bucket.s3.amazonaws.com"])
 @pytest.mark.parametrize("filetype", translate.FILETYPE_TRANSLATORS.keys())
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
-def test_legal_netlocs_simple(client, netloc, filetype):
+def test_default_valid_netlocs(client, netloc, filetype):
     path = f"https://{netloc}/some/valid/path"
     payload = {"path": path, "filetype": filetype}
     resp = client.post('/namespace/name/imports', json=payload, headers=good_headers)
@@ -31,10 +32,25 @@ def test_legal_netlocs_simple(client, netloc, filetype):
     # NB we don't test anything deeper than the 201 response; other tests check to see if the
     # db is updated, etc.
 
+@patch.object(new_import, "VALID_NETLOCS", ["exact-test.example.com", "*subdomain-test.example.com"])
+@pytest.mark.parametrize("netloc", ["exact-test.example.com",
+                                    "subdomain-test.example.com",
+                                    "subdomain.subdomain-test.example.com"])
+@pytest.mark.parametrize("filetype", translate.FILETYPE_TRANSLATORS.keys())
+@pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
+def test_configured_valid_netlocs(client, netloc, filetype):
+    path = f"https://{netloc}/some/valid/path"
+    payload = {"path": path, "filetype": filetype}
+    resp = client.post('/namespace/name/imports', json=payload, headers=good_headers)
+    assert resp.status_code == 201
+    # NB we don't test anything deeper than the 201 response; other tests check to see if the
+    # db is updated, etc.
+
+@patch.object(new_import, "VALID_NETLOCS", ["example.com"])
+@pytest.mark.parametrize("path", ["https://haxxor.evil.bad/some/valid/path", "https://test.example.com/path/to/file"])
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
 @pytest.mark.parametrize("filetype", translate.FILETYPE_TRANSLATORS.keys())
-def test_illegal_netloc_simple(client: flask.testing.FlaskClient, filetype, caplog):
-    path = "https://haxxor.evil.bad/some/valid/path"
+def test_invalid_netlocs(client: flask.testing.FlaskClient, filetype, caplog, path):
     payload = {"path": path, "filetype": filetype}
     resp = client.post('/namespace/name/imports', json=payload, headers=good_headers)
     assert_response_code_and_logs(resp, caplog, payload["path"])
@@ -55,13 +71,6 @@ def test_invalid_url(client, path, filetype):
     payload = {"path": path, "filetype": filetype}
     resp = client.post('/namespace/name/imports', json=payload, headers=good_headers)
     assert resp.status_code == 400
-
-@pytest.mark.parametrize("netloc", new_import.VALID_NETLOCS)
-@pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
-def test_subdomain_of_legal_netlocs(client, netloc, caplog):
-    payload = {"path": f"https://subdomain.{netloc}/some/valid/path", "filetype": "pfb"}
-    resp = client.post('/namespace/name/imports', json=payload, headers=good_headers)
-    assert resp.status_code == 201
 
 @pytest.mark.parametrize("netloc", new_import.VALID_NETLOCS)
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")

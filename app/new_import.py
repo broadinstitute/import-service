@@ -16,8 +16,22 @@ from app.auth.userinfo import UserInfo
 
 PROTECTED_NETLOCS = ["anvil.gi.ucsc.edu", "anvilproject.org", "gen3.biodatacatalyst.nhlbi.nih.gov", "gen3-biodatacatalyst-nhlbi-nih-gov-pfb-export.s3.amazonaws.com", "gen3-theanvil-io-pfb-export.s3.amazonaws.com"]
 
-VALID_NETLOCS = PROTECTED_NETLOCS + ["s3.amazonaws.com", "storage.googleapis.com", "service.azul.data.humancellatlas.org", "dev.singlecell.gi.ucsc.edu", "core.windows.net"]
+# Allow downloads from any GCS bucket, Azure storage container, or S3 bucket
+VALID_NETLOCS = ["storage.googleapis.com", "*.core.windows.net", "*.s3.amazonaws.com"]
 
+# Allow configuration to specify additional netlocs from which imports are allowed.
+additional_valid_netlocs = os.getenv("IMPORT_ALLOWED_NETLOCS")
+if additional_valid_netlocs:
+    VALID_NETLOCS += [s.strip() for s in additional_valid_netlocs.split(",")]
+
+def is_valid_netloc(parsed_url: ParseResult) -> bool:
+    for valid_netloc in VALID_NETLOCS:
+        if valid_netloc[0] == "*" and parsed_url.netloc.endswith(valid_netloc[1:]):
+            return True
+        elif parsed_url.netloc == valid_netloc:
+            return True
+
+    return False
 
 def handle(request: flask.Request, ws_ns: str, ws_name: str) -> model.ImportStatusResponse:
     access_token = user_auth.extract_auth_token(request)
@@ -123,11 +137,9 @@ def validate_import_url(import_url: Optional[str], import_filetype: Optional[str
 
     if import_filetype == FILETYPE_NOTRANSLATION and actual_netloc == os.environ.get("BATCH_UPSERT_BUCKET"):
         return actual_netloc
-    elif import_filetype in FILETYPE_TRANSLATORS.keys() and any(actual_netloc.endswith(s) for s in VALID_NETLOCS):
+    elif import_filetype in FILETYPE_TRANSLATORS.keys() and is_valid_netloc(parsedurl):
         return actual_netloc
     elif import_filetype == "tdrexport" and parsedurl.scheme == "gs":
-        return actual_netloc
-    elif import_filetype == "tdrexport" and parsedurl.scheme == "https" and any(actual_netloc.endswith(s) for s in VALID_NETLOCS):
         return actual_netloc
     else:
         logging.warning(f"Unrecognized netloc or bucket for import: [{parsedurl.netloc}] from [{import_url}]")
