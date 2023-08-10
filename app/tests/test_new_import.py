@@ -171,11 +171,10 @@ def test_bad_request_when_isUpsert_is_not_boolean(input_value, client):
 user_info = UserInfo("subject-id", "awesomepossum@broadinstitute.org", True)
 
 @pytest.mark.parametrize("import_url, netloc", [
-    ("https://something.anvil.gi.ucsc.edu/manifest/files", 'something.anvil.gi.ucsc.edu'),
-    ("https://something-else.anvil.gi.ucsc.edu/manifest/files", 'something-else.anvil.gi.ucsc.edu'),
-    ("https://anvil.gi.ucsc.edu/manifest/files", 'anvil.gi.ucsc.edu'),
-    ("https://something.anvil.gi.ucsc.edu", 'something.anvil.gi.ucsc.edu'),
-    ("something.anvil.gi.ucsc.edu", None),
+    ("https://storage.googleapis.com/test-bucket/manifest/files", 'storage.googleapis.com'),
+    ("https://test-container.blob.core.windows.net/manifest/files", 'test-container.blob.core.windows.net'),
+    ("https://test-bucket.s3.amazonaws.com/manifest/files", 'test-bucket.s3.amazonaws.com'),
+    ("storage.googleapis.com", None),
 ])
 @pytest.mark.parametrize("file_type_translator", FILETYPE_TRANSLATORS)
 def test_validate_import_url(import_url, netloc, file_type_translator):
@@ -186,9 +185,8 @@ def test_validate_import_url(import_url, netloc, file_type_translator):
         assert validate_import_url(import_url=import_url, import_filetype=file_type_translator, user_info=user_info) == netloc
 
 @pytest.mark.parametrize("import_url, protected", [
-    ("something.anvil.gi.ucsc.edu", True),
-    ("something-else.anvil.gi.ucsc.edu", True),
-    ("something.anvilproject.org", True),
+    ("service.prod.anvil.gi.ucsc.edu", True),
+    ("service.anvil.gi.ucsc.edu", True),
     ("gen3.biodatacatalyst.nhlbi.nih.gov", True),
     ("something.anvil.edu", False),
     ("something.org", False),
