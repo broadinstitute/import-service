@@ -93,11 +93,10 @@ When doing a production deployment, each step of the checklist must be performed
 
 - [ ] Double-check that `requirements.txt` is up to date with poetry; see [Dependency Management](#dependency-management).
 
-- [ ] Create and push a new [semver](https://semver.org/) tag for the commit you want to deploy; typically this will be
-      the head of the develop branch.  Go to [existing tags](https://github.com/broadinstitute/import-service/releases) 
-      and select 'Draft a new Release'. Ensure that the tag is incremented properly based on the last released version.  Tags should be plain semver numbers
-      like `1.0.0` and should not have any additional prefix like `v1.0.0` or `releases/1.0.0`.  Suffixes are permitted so
-      long as they conform to the [semver spec](https://semver.org/).
+- [ ] Create and push a new version tag for the commit you want to deploy; typically this will be the head of the develop branch.
+      Go to [Releases](https://github.com/broadinstitute/import-service/releases) and select 'Draft a new Release'.
+      [Create a release](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository#creating-a-release)
+      with a new tag. Ensure that the tag is incremented properly based on the last released version.
 
 - [ ] Create a ticket for the release and be sure to leave the 'Fix Version' field blank.  Add a checklist to the ticket and select 'Load Templates'
       from the ... menu to the right of the checklist.  Use 'Import Service Release Checklist'.
