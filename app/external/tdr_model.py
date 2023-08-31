@@ -18,6 +18,7 @@ class Dataset(BaseModel):
     defaultProfileId: str
     createdDate: str
     storage: List[StorageItem]
+    secureMonitoringEnabled: Optional[bool] = False
 
 
 class SourceItem(BaseModel):

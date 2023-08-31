@@ -98,7 +98,7 @@ def fake_pfb() -> Iterator[IO]:
 
 @pytest.fixture(scope="function")
 def fake_tdr_manifest() -> Iterator[IO]:
-    with open("app/tests/response_1638551384572.json", 'rb') as out:
+    with open("app/tests/resources/test_tdr_response_gcp.json", 'rb') as out:
         yield out
 
 @pytest.fixture(scope="function")

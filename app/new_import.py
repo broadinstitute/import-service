@@ -1,11 +1,13 @@
 import flask
+import json
 import logging
 
 from app.translate import FILETYPE_TRANSLATORS, FILETYPE_NOTRANSLATION
 from app.db import db, model
-from app.external import sam, pubsub
+from app.external import gcs, sam, pubsub
+from app.external.tdr_model import TDRManifest
 from app.auth import user_auth
-from app.util import exceptions
+from app.util import exceptions, http
 
 from pydantic import AnyUrl, validate_arguments
 from typing import Optional, Set
@@ -64,7 +66,7 @@ def handle(request: flask.Request, ws_ns: str, ws_name: str) -> model.ImportStat
     # and validate the input's path
     validate_import_url(import_url, import_filetype, user_info)
     # Refuse to import protected data into unprotected workspace
-    if is_protected_data(import_url, import_filetype):
+    if is_protected_data(import_url, import_filetype, google_project=google_project, user_info=user_info):
         if not is_protected_workspace(authorization_domain, bucket_name):
             raise exceptions.AuthorizationException("Unable to import protected data into an unprotected workspace")
 
@@ -145,10 +147,28 @@ def validate_import_url(import_url: Optional[str], import_filetype: Optional[str
         logging.warning(f"Unrecognized netloc or bucket for import: [{parsedurl.netloc}] from [{import_url}]")
         raise exceptions.InvalidPathException(import_url, user_info, "File cannot be imported from this URL.")
 
-def is_protected_data(import_url: str, import_filetype: Optional[str]) -> bool:
+def is_protected_data(import_url: str, import_filetype: str, *, google_project: str, user_info: UserInfo) -> bool:
     """Determines whether an import is protected data based on where it's imported from
-    and its filetype.  Initially, only PFBs from AnVIl are considered protected data"""
+    and its filetype."""
+    parsed_url = urlparse(import_url)
     if import_filetype == "pfb":
-        parsed_url = urlparse(import_url)
         return any(parsed_url.netloc.endswith(s) for s in PROTECTED_NETLOCS)
+    
+    elif import_filetype == "tdrexport":
+        if parsed_url.scheme == "gs":
+            filereader = gcs.open_file(google_project, parsed_url.netloc, parsed_url.path, user_info.user_email)
+        elif parsed_url.scheme == "https":
+            filereader = http.http_as_filelike(import_url)
+        else:
+            # This case should never be reached since the request is validated before this function is called
+            logging.error(f"unsupported scheme {parsed_url.scheme} provided for TDR export")
+            raise exceptions.InvalidPathException(import_url, user_info, "File cannot be imported from this URL.")
+        
+        with filereader as manifest_file:
+            manifest_json = json.load(manifest_file)
+
+        manifest = TDRManifest(**manifest_json)
+        return any(source.dataset.secureMonitoringEnabled for source in manifest.snapshot.source)
+
+
     return False

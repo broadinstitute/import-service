@@ -1,7 +1,7 @@
 import flask.testing
 import pytest
 import os
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 from app.auth.userinfo import UserInfo
 
@@ -18,12 +18,17 @@ def assert_response_code_and_logs(resp, caplog, import_url):
     assert list(auditlog), "Expected audit log message to exist if user specified illegal domain; did not find such message in log."
 
 
+@pytest.fixture(scope="function")
+def good_http_tdr_manifest(monkeypatch, fake_tdr_manifest):
+    monkeypatch.setattr(new_import.http, "http_as_filelike", MagicMock(return_value=fake_tdr_manifest))
+
+
 user_info = UserInfo("subject-id", "awesomepossum@broadinstitute.org", True)
 @pytest.mark.parametrize("netloc", ["storage.googleapis.com",
                                     "test-container.blob.core.windows.net",
                                     "test-bucket.s3.amazonaws.com"])
 @pytest.mark.parametrize("filetype", translate.FILETYPE_TRANSLATORS.keys())
-@pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
+@pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env", "good_http_tdr_manifest")
 def test_default_valid_netlocs(client, netloc, filetype):
     path = f"https://{netloc}/some/valid/path"
     payload = {"path": path, "filetype": filetype}
@@ -37,7 +42,7 @@ def test_default_valid_netlocs(client, netloc, filetype):
                                     "subdomain-test.example.com",
                                     "subdomain.subdomain-test.example.com"])
 @pytest.mark.parametrize("filetype", translate.FILETYPE_TRANSLATORS.keys())
-@pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
+@pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env", "good_http_tdr_manifest")
 def test_configured_valid_netlocs(client, netloc, filetype):
     path = f"https://{netloc}/some/valid/path"
     payload = {"path": path, "filetype": filetype}

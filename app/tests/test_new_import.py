@@ -1,12 +1,13 @@
 import flask.testing
 import pytest
-from app.external.rawls import RawlsWorkspaceResponse
+from unittest import mock
 
 from app.tests import testutils
 from app import new_import
 from app.util import exceptions
 from app.db import db
 from app.db.model import *
+from app.external.rawls import RawlsWorkspaceResponse
 
 from app.translate import FILETYPE_TRANSLATORS
 from app.new_import import validate_import_url, is_protected_data, is_protected_workspace
@@ -18,6 +19,11 @@ good_json = {"path": f"https://{new_import.VALID_NETLOCS[0]}/some/path", "filety
 good_headers = {"Authorization": "Bearer ya29.blahblah", "Accept": "application/json"}
 
 good_tdr_json = {"path": f"https://{new_import.VALID_NETLOCS[0]}/some/path", "filetype": "tdrexport", "options": {"tdrSyncPermissions": True}}
+
+
+@pytest.fixture(scope="function")
+def good_http_tdr_manifest(monkeypatch, fake_tdr_manifest):
+    monkeypatch.setattr(new_import.http, "http_as_filelike", mock.MagicMock(return_value=fake_tdr_manifest))
 
 
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
@@ -33,7 +39,7 @@ def test_golden_path(client):
     assert dbres[0].id == id
     assert resp.headers["Content-Type"] == "application/json"
 
-@pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
+@pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env", "good_http_tdr_manifest")
 def test_tdr_json_golden_path(client):
     resp = client.post('/mynamespace/myname/imports', json=good_tdr_json, headers=good_headers)
     assert resp.status_code == 201
@@ -185,21 +191,24 @@ def test_validate_import_url(import_url, netloc, file_type_translator):
         assert validate_import_url(import_url=import_url, import_filetype=file_type_translator, user_info=user_info) == netloc
 
 @pytest.mark.parametrize("import_url, protected", [
-    ("https://service.prod.anvil.gi.ucsc.edu/path/to/file", True),
-    ("https://service.anvil.gi.ucsc.edu/path/to/file", True),
-    ("https://gen3.biodatacatalyst.nhlbi.nih.gov/path/to/file", True),
-    ("https://something.anvil.edu/path/to/file", False),
-    ("https://something.org/path/to/file", False),
-    ("https://gen3-biodatacatalyst-nhlbi-nih-gov-pfb-export.s3.amazonaws.com/path/to/file", True),
-    ("https://gen3-theanvil-io-pfb-export.s3.amazonaws.com/path/to/file", True)
+    ("https://service.prod.anvil.gi.ucsc.edu/path/to/file.pfb", True),
+    ("https://service.anvil.gi.ucsc.edu/path/to/file.pfb", True),
+    ("https://gen3.biodatacatalyst.nhlbi.nih.gov/path/to/file.pfb", True),
+    ("https://something.anvil.edu/path/to/file.pfb", False),
+    ("https://something.org/path/to/file.pfb", False),
+    ("https://gen3-biodatacatalyst-nhlbi-nih-gov-pfb-export.s3.amazonaws.com/path/to/file.pfb", True),
+    ("https://gen3-theanvil-io-pfb-export.s3.amazonaws.com/path/to/file.pfb", True)
 ])
-@pytest.mark.parametrize("file_type", ["pfb", "tdrexport"])
-def test_is_protected_data(import_url, protected, file_type):
-    if file_type == "pfb":
-        assert is_protected_data(import_url, file_type) is protected
-    else:
-        assert is_protected_data(import_url, file_type) is False
+def test_is_protected_data_pfb(import_url, protected):
+    assert is_protected_data(import_url, "pfb", google_project="test_project", user_info=UserInfo("subject-id", "user@example.com", True)) is protected
 
+@pytest.mark.parametrize("manifest,protected", [
+    ("test_tdr_response_gcp.json", False),
+    ("tdr_manifest_protected_dataset.json", True),
+])
+def test_is_protected_data_tdr(manifest, protected):
+    with mock.patch.object(new_import.http, "http_as_filelike", mock.MagicMock(return_value=open(f"app/tests/resources/{manifest}", "rb"))):
+        assert is_protected_data("https://storage.googleapis.com/test-bucket/manifest.json", "tdrexport", google_project="test_project", user_info=UserInfo("subject-id", "user@example.com", True)) is protected
 
 @pytest.mark.parametrize("authorization_domain, bucket_name, protected", [
     (set(), "fc-12345678-a901-23b4-c5d6-7ef8a90b1cd2", False),
