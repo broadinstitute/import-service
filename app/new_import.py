@@ -62,9 +62,9 @@ def handle(request: flask.Request, ws_ns: str, ws_name: str) -> model.ImportStat
         options: {options}, tdrSyncFlag: {is_tdr_sync_required}")
 
     # and validate the input's path
-    actual_netloc = validate_import_url(import_url, import_filetype, user_info)
+    validate_import_url(import_url, import_filetype, user_info)
     # Refuse to import protected data into unprotected workspace
-    if is_protected_data(actual_netloc, import_filetype):
+    if is_protected_data(import_url, import_filetype):
         if not is_protected_workspace(authorization_domain, bucket_name):
             raise exceptions.AuthorizationException("Unable to import protected data into an unprotected workspace")
 
@@ -145,9 +145,10 @@ def validate_import_url(import_url: Optional[str], import_filetype: Optional[str
         logging.warning(f"Unrecognized netloc or bucket for import: [{parsedurl.netloc}] from [{import_url}]")
         raise exceptions.InvalidPathException(import_url, user_info, "File cannot be imported from this URL.")
 
-def is_protected_data(import_netloc: str, import_filetype: Optional[str]) -> bool:
+def is_protected_data(import_url: str, import_filetype: Optional[str]) -> bool:
     """Determines whether an import is protected data based on where it's imported from
     and its filetype.  Initially, only PFBs from AnVIl are considered protected data"""
     if import_filetype == "pfb":
-        return any(import_netloc.endswith(s) for s in PROTECTED_NETLOCS)
+        parsed_url = urlparse(import_url)
+        return any(parsed_url.netloc.endswith(s) for s in PROTECTED_NETLOCS)
     return False

@@ -185,20 +185,20 @@ def test_validate_import_url(import_url, netloc, file_type_translator):
         assert validate_import_url(import_url=import_url, import_filetype=file_type_translator, user_info=user_info) == netloc
 
 @pytest.mark.parametrize("import_url, protected", [
-    ("service.prod.anvil.gi.ucsc.edu", True),
-    ("service.anvil.gi.ucsc.edu", True),
-    ("gen3.biodatacatalyst.nhlbi.nih.gov", True),
-    ("something.anvil.edu", False),
-    ("something.org", False),
-    ("gen3-biodatacatalyst-nhlbi-nih-gov-pfb-export.s3.amazonaws.com", True),
-    ("gen3-theanvil-io-pfb-export.s3.amazonaws.com", True)
+    ("https://service.prod.anvil.gi.ucsc.edu/path/to/file", True),
+    ("https://service.anvil.gi.ucsc.edu/path/to/file", True),
+    ("https://gen3.biodatacatalyst.nhlbi.nih.gov/path/to/file", True),
+    ("https://something.anvil.edu/path/to/file", False),
+    ("https://something.org/path/to/file", False),
+    ("https://gen3-biodatacatalyst-nhlbi-nih-gov-pfb-export.s3.amazonaws.com/path/to/file", True),
+    ("https://gen3-theanvil-io-pfb-export.s3.amazonaws.com/path/to/file", True)
 ])
 @pytest.mark.parametrize("file_type", ["pfb", "tdrexport"])
 def test_is_protected_data(import_url, protected, file_type):
     if file_type == "pfb":
-        assert is_protected_data(import_netloc=import_url, import_filetype=file_type) is protected
+        assert is_protected_data(import_url, file_type) is protected
     else:
-        assert is_protected_data(import_netloc=import_url, import_filetype=file_type) is False
+        assert is_protected_data(import_url, file_type) is False
 
 
 @pytest.mark.parametrize("authorization_domain, bucket_name, protected", [
