@@ -18,6 +18,8 @@ class Dataset(BaseModel):
     defaultProfileId: str
     createdDate: str
     storage: List[StorageItem]
+    # Older TDR manifests may not have this field, so made it optional when constructing a TDRManifest object.
+    secureMonitoringEnabled: Optional[bool] = False
 
 
 class SourceItem(BaseModel):
