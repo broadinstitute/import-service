@@ -19,7 +19,14 @@ from app.auth.userinfo import UserInfo
 PROTECTED_NETLOCS = ["service.prod.anvil.gi.ucsc.edu", "service.anvil.gi.ucsc.edu", "gen3.biodatacatalyst.nhlbi.nih.gov", "gen3-biodatacatalyst-nhlbi-nih-gov-pfb-export.s3.amazonaws.com", "gen3-theanvil-io-pfb-export.s3.amazonaws.com"]
 
 # Allow downloads from any GCS bucket, Azure storage container, or S3 bucket
-VALID_NETLOCS = ["storage.googleapis.com", "*.core.windows.net", "*.s3.amazonaws.com"]
+VALID_NETLOCS = [
+    "storage.googleapis.com",
+    "*.core.windows.net",
+    # S3 allows multiple URL formats
+    # https://docs.aws.amazon.com/AmazonS3/latest/userguide/VirtualHosting.html
+    "s3.amazonaws.com", # path style legacy global endpoint
+    "*.s3.amazonaws.com", # virtual host style legacy global endpoint
+]
 
 # Allow configuration to specify additional netlocs from which imports are allowed.
 additional_valid_netlocs = os.getenv("IMPORT_ALLOWED_NETLOCS")

@@ -26,7 +26,8 @@ def good_http_tdr_manifest(monkeypatch, fake_tdr_manifest):
 user_info = UserInfo("subject-id", "awesomepossum@broadinstitute.org", True)
 @pytest.mark.parametrize("netloc", ["storage.googleapis.com",
                                     "test-container.blob.core.windows.net",
-                                    "test-bucket.s3.amazonaws.com"])
+                                    "test-bucket.s3.amazonaws.com",
+                                    "s3.amazonaws.com"])
 @pytest.mark.parametrize("filetype", translate.FILETYPE_TRANSLATORS.keys())
 @pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env", "good_http_tdr_manifest")
 def test_default_valid_netlocs(client, netloc, filetype):
