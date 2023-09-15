@@ -23,6 +23,7 @@ def url_patterns_for_s3_bucket(bucket_name: str) -> List[re.Pattern]:
 PROTECTED_URL_PATTERNS: List[re.Pattern] = [
     # AnVIL production
     url_pattern_for_host("service.prod.anvil.gi.ucsc.edu"),
+    *url_patterns_for_s3_bucket("edu-ucsc-gi-platform-anvil-prod-storage-anvilprod.us-east-1"),
     # AnVIL development
     url_pattern_for_host("service.anvil.gi.ucsc.edu"),
     # BioData Catalyst

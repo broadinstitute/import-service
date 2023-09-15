@@ -201,6 +201,7 @@ def test_validate_import_url(import_url, netloc, file_type_translator):
     ("https://s3.amazonaws.com/gen3-biodatacatalyst-nhlbi-nih-gov-pfb-export/path/to/file.pfb", True),
     ("https://gen3-theanvil-io-pfb-export.s3.amazonaws.com/path/to/file.pfb", True),
     ("https://s3.amazonaws.com/gen3-theanvil-io-pfb-export/path/to/file.pfb", True),
+    ("https://s3.amazonaws.com/edu-ucsc-gi-platform-anvil-prod-storage-anvilprod.us-east-1/path/to/file.pfb", True),
 ])
 def test_is_protected_data_pfb(import_url, protected):
     assert is_protected_data(import_url, "pfb", google_project="test_project", user_info=UserInfo("subject-id", "user@example.com", True)) is protected
