@@ -15,8 +15,7 @@ from urllib.parse import ParseResult, urlparse
 import os
 
 from app.auth.userinfo import UserInfo
-
-PROTECTED_NETLOCS = ["service.prod.anvil.gi.ucsc.edu", "service.anvil.gi.ucsc.edu", "gen3.biodatacatalyst.nhlbi.nih.gov", "gen3-biodatacatalyst-nhlbi-nih-gov-pfb-export.s3.amazonaws.com", "gen3-theanvil-io-pfb-export.s3.amazonaws.com"]
+from app.protected_data import PROTECTED_URL_PATTERNS
 
 # Allow downloads from any GCS bucket, Azure storage container, or S3 bucket
 VALID_NETLOCS = [
@@ -157,11 +156,12 @@ def validate_import_url(import_url: Optional[str], import_filetype: Optional[str
 def is_protected_data(import_url: str, import_filetype: str, *, google_project: str, user_info: UserInfo) -> bool:
     """Determines whether an import is protected data based on where it's imported from
     and its filetype."""
-    parsed_url = urlparse(import_url)
-    if import_filetype == "pfb":
-        return any(parsed_url.netloc.endswith(s) for s in PROTECTED_NETLOCS)
     
+    if import_filetype == "pfb":
+        return any(pattern.match(import_url) for pattern in PROTECTED_URL_PATTERNS)
+
     elif import_filetype == "tdrexport":
+        parsed_url = urlparse(import_url)
         if parsed_url.scheme == "gs":
             filereader = gcs.open_file(google_project, parsed_url.netloc, parsed_url.path, user_info.user_email)
         elif parsed_url.scheme == "https":

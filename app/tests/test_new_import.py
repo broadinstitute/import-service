@@ -193,11 +193,14 @@ def test_validate_import_url(import_url, netloc, file_type_translator):
 @pytest.mark.parametrize("import_url, protected", [
     ("https://service.prod.anvil.gi.ucsc.edu/path/to/file.pfb", True),
     ("https://service.anvil.gi.ucsc.edu/path/to/file.pfb", True),
+    ("https://subdomain.service.anvil.gi.ucsc.edu/path/to/file.pfb", True),
     ("https://gen3.biodatacatalyst.nhlbi.nih.gov/path/to/file.pfb", True),
     ("https://something.anvil.edu/path/to/file.pfb", False),
     ("https://something.org/path/to/file.pfb", False),
     ("https://gen3-biodatacatalyst-nhlbi-nih-gov-pfb-export.s3.amazonaws.com/path/to/file.pfb", True),
-    ("https://gen3-theanvil-io-pfb-export.s3.amazonaws.com/path/to/file.pfb", True)
+    ("https://s3.amazonaws.com/gen3-biodatacatalyst-nhlbi-nih-gov-pfb-export/path/to/file.pfb", True),
+    ("https://gen3-theanvil-io-pfb-export.s3.amazonaws.com/path/to/file.pfb", True),
+    ("https://s3.amazonaws.com/gen3-theanvil-io-pfb-export/path/to/file.pfb", True),
 ])
 def test_is_protected_data_pfb(import_url, protected):
     assert is_protected_data(import_url, "pfb", google_project="test_project", user_info=UserInfo("subject-id", "user@example.com", True)) is protected
