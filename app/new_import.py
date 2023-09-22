@@ -74,7 +74,7 @@ def handle(request: flask.Request, ws_ns: str, ws_name: str) -> model.ImportStat
 
     # Refuse imports from restricted sources
     if protected_data.is_restricted_import(import_url):
-        raise exceptions.AuthorizationException("Unable to import data from this source")
+        raise exceptions.AuthorizationException("Unable to import data from this source into this Terra environment")
 
     # Refuse to import protected data into unprotected workspace
     if is_protected_data(import_url, import_filetype, google_project=google_project, user_info=user_info):
