@@ -13,6 +13,7 @@ from app.translate import FILETYPE_TRANSLATORS
 from app.new_import import validate_import_url, is_protected_data, is_protected_workspace
 from app.util.exceptions import InvalidPathException
 from app.auth.userinfo import UserInfo
+from app.protected_data import url_patterns_for_s3_bucket
 
 
 good_json = {"path": f"https://{new_import.VALID_NETLOCS[0]}/some/path", "filetype": "pfb"}
@@ -222,3 +223,10 @@ def test_is_protected_data_tdr(manifest, protected):
 ])
 def test_is_protected_workspace(authorization_domain, bucket_name, protected):
     assert is_protected_workspace(authorization_domain, bucket_name) is protected
+
+@mock.patch.object(new_import.protected_data, "RESTRICTED_URL_PATTERNS", url_patterns_for_s3_bucket("test-bucket"))
+@pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
+def test_restricted_imports(client):
+    payload = {"path": "https://s3.amazonaws.com/test-bucket/some/valid/path.pfb", "filetype": "pfb"}
+    resp = client.post('/namespace/name/imports', json=payload, headers=good_headers)
+    assert resp.status_code == 403
