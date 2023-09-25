@@ -15,7 +15,7 @@ from urllib.parse import ParseResult, urlparse
 import os
 
 from app.auth.userinfo import UserInfo
-from app.protected_data import PROTECTED_URL_PATTERNS
+from app import protected_data
 
 # Allow downloads from any GCS bucket, Azure storage container, or S3 bucket
 VALID_NETLOCS = [
@@ -71,6 +71,11 @@ def handle(request: flask.Request, ws_ns: str, ws_name: str) -> model.ImportStat
 
     # and validate the input's path
     validate_import_url(import_url, import_filetype, user_info)
+
+    # Refuse imports from restricted sources
+    if protected_data.is_restricted_import(import_url):
+        raise exceptions.AuthorizationException("Unable to import data from this source into this Terra environment")
+
     # Refuse to import protected data into unprotected workspace
     if is_protected_data(import_url, import_filetype, google_project=google_project, user_info=user_info):
         if not is_protected_workspace(authorization_domain, bucket_name):
@@ -158,7 +163,7 @@ def is_protected_data(import_url: str, import_filetype: str, *, google_project: 
     and its filetype."""
     
     if import_filetype == "pfb":
-        return any(pattern.match(import_url) for pattern in PROTECTED_URL_PATTERNS)
+        return any(pattern.match(import_url) for pattern in protected_data.PROTECTED_URL_PATTERNS)
 
     elif import_filetype == "tdrexport":
         parsed_url = urlparse(import_url)

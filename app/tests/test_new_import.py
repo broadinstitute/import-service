@@ -3,7 +3,7 @@ import pytest
 from unittest import mock
 
 from app.tests import testutils
-from app import new_import
+from app import new_import, protected_data
 from app.util import exceptions
 from app.db import db
 from app.db.model import *
@@ -222,3 +222,10 @@ def test_is_protected_data_tdr(manifest, protected):
 ])
 def test_is_protected_workspace(authorization_domain, bucket_name, protected):
     assert is_protected_workspace(authorization_domain, bucket_name) is protected
+
+@mock.patch.object(new_import.protected_data, "RESTRICTED_URL_PATTERNS", protected_data.url_patterns_for_s3_bucket("test-bucket"))
+@pytest.mark.usefixtures("sam_valid_user", "user_has_ws_access", "pubsub_publish", "pubsub_fake_env")
+def test_restricted_imports(client):
+    payload = {"path": "https://s3.amazonaws.com/test-bucket/some/valid/path.pfb", "filetype": "pfb"}
+    resp = client.post('/namespace/name/imports', json=payload, headers=good_headers)
+    assert resp.status_code == 403
