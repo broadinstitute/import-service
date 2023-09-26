@@ -1,4 +1,5 @@
 import flask.testing
+import json
 import pytest
 from unittest import mock
 
@@ -7,10 +8,11 @@ from app import new_import, protected_data
 from app.util import exceptions
 from app.db import db
 from app.db.model import *
+from app.external.tdr_model import TDRManifest
 from app.external.rawls import RawlsWorkspaceResponse
 
 from app.translate import FILETYPE_TRANSLATORS
-from app.new_import import validate_import_url, is_protected_data, is_protected_workspace
+from app.new_import import validate_import_url, is_protected_pfb, is_protected_snapshot, is_protected_workspace
 from app.util.exceptions import InvalidPathException
 from app.auth.userinfo import UserInfo
 
@@ -204,15 +206,17 @@ def test_validate_import_url(import_url, netloc, file_type_translator):
     ("https://s3.amazonaws.com/edu-ucsc-gi-platform-anvil-prod-storage-anvilprod.us-east-1/path/to/file.pfb", True),
 ])
 def test_is_protected_data_pfb(import_url, protected):
-    assert is_protected_data(import_url, "pfb", google_project="test_project", user_info=UserInfo("subject-id", "user@example.com", True)) is protected
+    assert is_protected_pfb(import_url) is protected
 
 @pytest.mark.parametrize("manifest,protected", [
     ("test_tdr_response_gcp.json", False),
     ("tdr_manifest_protected_dataset.json", True),
 ])
 def test_is_protected_data_tdr(manifest, protected):
-    with mock.patch.object(new_import.http, "http_as_filelike", mock.MagicMock(return_value=open(f"app/tests/resources/{manifest}", "rb"))):
-        assert is_protected_data("https://storage.googleapis.com/test-bucket/manifest.json", "tdrexport", google_project="test_project", user_info=UserInfo("subject-id", "user@example.com", True)) is protected
+    with open(f"app/tests/resources/{manifest}", "r") as manifest_file:
+        manifest_json = json.load(manifest_file)
+        manifest = TDRManifest(**manifest_json)
+        assert is_protected_snapshot(manifest) is protected
 
 @pytest.mark.parametrize("authorization_domain, bucket_name, protected", [
     (set(), "fc-12345678-a901-23b4-c5d6-7ef8a90b1cd2", False),
