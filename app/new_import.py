@@ -77,8 +77,12 @@ def handle(request: flask.Request, ws_ns: str, ws_name: str) -> model.ImportStat
         raise exceptions.AuthorizationException("Unable to import data from this source into this Terra environment")
 
     # Refuse to import protected data into unprotected workspace
-    if is_protected_data(import_url, import_filetype, google_project=google_project, user_info=user_info):
-        if not is_protected_workspace(authorization_domain, bucket_name):
+    if import_filetype == "pfb":
+        if is_protected_pfb(import_url) and not is_protected_workspace(authorization_domain, bucket_name):
+            raise exceptions.AuthorizationException("Unable to import protected data into an unprotected workspace")
+    elif import_filetype == "tdrexport":
+        manifest = load_tdr_manifest(import_url, google_project=google_project, user_info=user_info)
+        if is_protected_snapshot(manifest) and not is_protected_workspace(authorization_domain, bucket_name):
             raise exceptions.AuthorizationException("Unable to import protected data into an unprotected workspace")
 
     # parse is_upsert from a str into a bool
@@ -158,29 +162,28 @@ def validate_import_url(import_url: Optional[str], import_filetype: Optional[str
         logging.warning(f"Unrecognized netloc or bucket for import: [{parsedurl.netloc}] from [{import_url}]")
         raise exceptions.InvalidPathException(import_url, user_info, "File cannot be imported from this URL.")
 
-def is_protected_data(import_url: str, import_filetype: str, *, google_project: str, user_info: UserInfo) -> bool:
-    """Determines whether an import is protected data based on where it's imported from
-    and its filetype."""
+def is_protected_pfb(import_url: str) -> bool:
+    """Determine whether a PFB import is protected data based on where it's imported from."""
+    return any(pattern.match(import_url) for pattern in protected_data.PROTECTED_URL_PATTERNS)
+
+def load_tdr_manifest(manifest_url: str, *, google_project: str, user_info: UserInfo) -> TDRManifest:
+    """Load and parse a TDR manifest."""
+    parsed_url = urlparse(manifest_url)
+    if parsed_url.scheme == "gs":
+        filereader = gcs.open_file(google_project, parsed_url.netloc, parsed_url.path, user_info.user_email)
+    elif parsed_url.scheme == "https":
+        filereader = http.http_as_filelike(manifest_url)
+    else:
+        # This case should never be reached since the request is validated before this function is called
+        logging.error(f"unsupported scheme {parsed_url.scheme} provided for TDR export")
+        raise exceptions.InvalidPathException(manifest_url, user_info, "File cannot be imported from this URL.")
     
-    if import_filetype == "pfb":
-        return any(pattern.match(import_url) for pattern in protected_data.PROTECTED_URL_PATTERNS)
+    with filereader as manifest_file:
+        manifest_json = json.load(manifest_file)
 
-    elif import_filetype == "tdrexport":
-        parsed_url = urlparse(import_url)
-        if parsed_url.scheme == "gs":
-            filereader = gcs.open_file(google_project, parsed_url.netloc, parsed_url.path, user_info.user_email)
-        elif parsed_url.scheme == "https":
-            filereader = http.http_as_filelike(import_url)
-        else:
-            # This case should never be reached since the request is validated before this function is called
-            logging.error(f"unsupported scheme {parsed_url.scheme} provided for TDR export")
-            raise exceptions.InvalidPathException(import_url, user_info, "File cannot be imported from this URL.")
-        
-        with filereader as manifest_file:
-            manifest_json = json.load(manifest_file)
+    manifest = TDRManifest(**manifest_json)
+    return manifest
 
-        manifest = TDRManifest(**manifest_json)
-        return any(source.dataset.secureMonitoringEnabled for source in manifest.snapshot.source)
-
-
-    return False
+def is_protected_snapshot(manifest: TDRManifest) -> bool:
+    """Determine whether a TDR manifest contains protected data."""
+    return any(source.dataset.secureMonitoringEnabled for source in manifest.snapshot.source)
