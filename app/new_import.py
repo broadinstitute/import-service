@@ -166,21 +166,26 @@ def is_protected_data(import_url: str, import_filetype: str, *, google_project: 
         return any(pattern.match(import_url) for pattern in protected_data.PROTECTED_URL_PATTERNS)
 
     elif import_filetype == "tdrexport":
-        parsed_url = urlparse(import_url)
-        if parsed_url.scheme == "gs":
-            filereader = gcs.open_file(google_project, parsed_url.netloc, parsed_url.path, user_info.user_email)
-        elif parsed_url.scheme == "https":
-            filereader = http.http_as_filelike(import_url)
-        else:
-            # This case should never be reached since the request is validated before this function is called
-            logging.error(f"unsupported scheme {parsed_url.scheme} provided for TDR export")
-            raise exceptions.InvalidPathException(import_url, user_info, "File cannot be imported from this URL.")
-        
-        with filereader as manifest_file:
-            manifest_json = json.load(manifest_file)
-
-        manifest = TDRManifest(**manifest_json)
+        manifest = load_tdr_manifest(import_url, google_project=google_project, user_info=user_info)
         return any(source.dataset.secureMonitoringEnabled for source in manifest.snapshot.source)
 
 
     return False
+
+def load_tdr_manifest(manifest_url: str, *, google_project: str, user_info: UserInfo) -> TDRManifest:
+    """Load and parse a TDR manifest."""
+    parsed_url = urlparse(manifest_url)
+    if parsed_url.scheme == "gs":
+        filereader = gcs.open_file(google_project, parsed_url.netloc, parsed_url.path, user_info.user_email)
+    elif parsed_url.scheme == "https":
+        filereader = http.http_as_filelike(manifest_url)
+    else:
+        # This case should never be reached since the request is validated before this function is called
+        logging.error(f"unsupported scheme {parsed_url.scheme} provided for TDR export")
+        raise exceptions.InvalidPathException(manifest_url, user_info, "File cannot be imported from this URL.")
+    
+    with filereader as manifest_file:
+        manifest_json = json.load(manifest_file)
+
+    manifest = TDRManifest(**manifest_json)
+    return manifest
