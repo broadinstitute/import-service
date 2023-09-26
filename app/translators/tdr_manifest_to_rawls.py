@@ -27,6 +27,7 @@ from app.translators.translator import Translator
 from app.util import http, exceptions
 
 VALID_AZURE_DOMAIN = "core.windows.net"
+GOOGLE_STORAGE_DOMAIN = "storage.googleapis.com"
 
 class TDRManifestToRawls(Translator):
     def __init__(self, options=None):
@@ -100,12 +101,11 @@ class ParquetTranslator:
                 return self.translate_parquet_file_to_entities(pqfile, False, ref_only)
         elif (parsedurl.scheme == 'https'):
             hostname = parsedurl.netloc
-            if not hostname.endswith(VALID_AZURE_DOMAIN):
+            if not (hostname.endswith(VALID_AZURE_DOMAIN) or hostname == GOOGLE_STORAGE_DOMAIN):
                 logging.error(f"unsupported domain in url {self.filelocation} provided")
                 raise exceptions.InvalidPathException(self.filelocation, user_info, "Unsupported domain")
             with http.http_as_filelike(self.filelocation) as pqfile:
-                # Assumption is that if a file is using https, it's an Azure snapshot
-                return self.translate_parquet_file_to_entities(pqfile, True, ref_only)
+                return self.translate_parquet_file_to_entities(pqfile, hostname.endswith(VALID_AZURE_DOMAIN), ref_only)
         else:
             logging.error(f"unsupported scheme {parsedurl.scheme} provided")
             raise exceptions.InvalidPathException(self.filelocation, user_info, "Unsupported scheme")
