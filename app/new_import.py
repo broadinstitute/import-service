@@ -5,6 +5,7 @@ import logging
 from app.translate import FILETYPE_TRANSLATORS, FILETYPE_NOTRANSLATION
 from app.db import db, model
 from app.external import gcs, sam, pubsub
+from app.external.cloud_platform import CloudPlatform
 from app.external.tdr_model import TDRManifest
 from app.auth import user_auth
 from app.util import exceptions, http
@@ -54,11 +55,11 @@ def handle(request: flask.Request, ws_ns: str, ws_name: str) -> model.ImportStat
     request_json: dict = request_json_opt
 
     # make sure the user is allowed to import to this workspace
-    uuid_and_project = user_auth.workspace_uuid_and_project_with_auth(ws_ns, ws_name, access_token, "write")
-    workspace_uuid = uuid_and_project.workspace_id
-    google_project = uuid_and_project.google_project
-    authorization_domain = uuid_and_project.authorization_domain
-    bucket_name = uuid_and_project.bucket_name
+    workspace = user_auth.workspace_uuid_and_project_with_auth(ws_ns, ws_name, access_token, "write")
+    workspace_uuid = workspace.workspace_id
+    google_project = workspace.google_project
+    authorization_domain = workspace.authorization_domain
+    bucket_name = workspace.bucket_name
 
     import_url = request_json["path"]
     import_filetype = request_json["filetype"]
@@ -84,6 +85,9 @@ def handle(request: flask.Request, ws_ns: str, ws_name: str) -> model.ImportStat
         manifest = load_tdr_manifest(import_url, google_project=google_project, user_info=user_info)
         if is_protected_snapshot(manifest) and not is_protected_workspace(authorization_domain, bucket_name):
             raise exceptions.AuthorizationException("Unable to import protected data into an unprotected workspace")
+
+        if not all_sources_on_cloud_platform(manifest, workspace.cloud_platform):
+            raise exceptions.AuthorizationException("Unable to import TDR data across cloud platforms")
 
     # parse is_upsert from a str into a bool
     is_upsert = str(import_is_upsert).strip().lower() == "true"
@@ -187,3 +191,10 @@ def load_tdr_manifest(manifest_url: str, *, google_project: str, user_info: User
 def is_protected_snapshot(manifest: TDRManifest) -> bool:
     """Determine whether a TDR manifest contains protected data."""
     return any(source.dataset.secureMonitoringEnabled for source in manifest.snapshot.source)
+
+def all_sources_on_cloud_platform(manifest: TDRManifest, cloud_platform: CloudPlatform) -> bool:
+    """Determine whether all of the storage items listed in a TDR manifest are on a specific cloud platform."""
+    return all(
+        all(storage.cloudPlatform == cloud_platform for storage in source.dataset.storage)
+        for source in manifest.snapshot.source
+    )
