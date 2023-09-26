@@ -116,7 +116,7 @@ def test_user_cant_write_to_workspace(client):
 # returns ok when asked if the user has "write", but returns 456 when asked if the user has "read_policies"
 def mock_auth_for_read_policies(workspace_ns: str, workspace_name: str, bearer_token: str, sam_action: str = "read") -> RawlsWorkspaceResponse:
     if sam_action == "write":
-        return RawlsWorkspaceResponse(workspace_id="workspaceId", google_project="googleProject")
+        return RawlsWorkspaceResponse(workspace_id="workspaceId", google_project="googleProject", cloud_platform="gcp")
     elif sam_action == "read_policies":
         # specify 456 status code to disambiguate the read_policies response from any other response code
         raise exceptions.ISvcException("user does not have read_policies", 456)
