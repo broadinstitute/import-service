@@ -116,7 +116,7 @@ def test_user_cant_write_to_workspace(client):
 # returns ok when asked if the user has "write", but returns 456 when asked if the user has "read_policies"
 def mock_auth_for_read_policies(workspace_ns: str, workspace_name: str, bearer_token: str, sam_action: str = "read") -> RawlsWorkspaceResponse:
     if sam_action == "write":
-        return RawlsWorkspaceResponse(workspace_id="workspaceId", google_project="googleProject")
+        return RawlsWorkspaceResponse(workspace_id="workspaceId", google_project="googleProject", cloud_platform="gcp")
     elif sam_action == "read_policies":
         # specify 456 status code to disambiguate the read_policies response from any other response code
         raise exceptions.ISvcException("user does not have read_policies", 456)
@@ -233,3 +233,17 @@ def test_restricted_imports(client):
     payload = {"path": "https://s3.amazonaws.com/test-bucket/some/valid/path.pfb", "filetype": "pfb"}
     resp = client.post('/namespace/name/imports', json=payload, headers=good_headers)
     assert resp.status_code == 403
+
+@pytest.mark.parametrize("manifest,workspace_cloud_platform",[
+    ("test_tdr_response_gcp.json", "azure"),
+    ("test_tdr_response_azure.json", "gcp"),
+])
+@pytest.mark.usefixtures("sam_valid_user", "pubsub_publish", "pubsub_fake_env")
+def test_blocks_cross_platform_tdr_imports(monkeypatch, client, manifest, workspace_cloud_platform):
+    monkeypatch.setattr("app.auth.user_auth.workspace_uuid_and_project_with_auth",
+                        mock.MagicMock(return_value=RawlsWorkspaceResponse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", "some-project", workspace_cloud_platform, set(), "fc-11111111-2222-3333-4444-555555555555")))
+    monkeypatch.setattr("app.new_import.http.http_as_filelike", mock.MagicMock(return_value=open(f"app/tests/resources/{manifest}", "rb")))
+
+    resp = client.post('/mynamespace/myname/imports', json=good_tdr_json, headers=good_headers)
+    assert resp.status_code == 403
+    assert resp.text == "Unable to import TDR data across cloud platforms"

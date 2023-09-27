@@ -17,8 +17,8 @@ def test_get_workspace_uuid():
             rawls.get_rawls_workspace_info("a", "a", "a")
 
     # rawls returns ok with good json, parse it out
-    with testutils.patch_request("app.external.rawls", "get", status_code = 200, json={"workspace" : {"workspaceId" : "the-uuid", "googleProject": "proj"}}):
-        assert rawls.get_rawls_workspace_info("a", "a", "a") == RawlsWorkspaceResponse("the-uuid", "proj")
+    with testutils.patch_request("app.external.rawls", "get", status_code = 200, json={"workspace" : {"workspaceId" : "the-uuid", "googleProject": "proj", "cloudPlatform": "Gcp"}}):
+        assert rawls.get_rawls_workspace_info("a", "a", "a") == RawlsWorkspaceResponse("the-uuid", "proj", "gcp")
 
 
 def test_check_workspace_iam_action():

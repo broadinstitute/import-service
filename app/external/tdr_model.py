@@ -4,11 +4,13 @@ from typing import Any, List, Optional
 
 from pydantic import BaseModel, Field
 
+from app.external.cloud_platform import CloudPlatform
+
 
 class StorageItem(BaseModel):
     region: str
     cloudResource: str
-    cloudPlatform: str
+    cloudPlatform: CloudPlatform
 
 
 class Dataset(BaseModel):
