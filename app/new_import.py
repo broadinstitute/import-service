@@ -75,19 +75,19 @@ def handle(request: flask.Request, ws_ns: str, ws_name: str) -> model.ImportStat
 
     # Refuse imports from restricted sources
     if protected_data.is_restricted_import(import_url):
-        raise exceptions.AuthorizationException("Unable to import data from this source into this Terra environment")
+        raise exceptions.ForbiddenImportException(import_url, user_info, "Unable to import data from this source into this Terra environment")
 
     # Refuse to import protected data into unprotected workspace
     if import_filetype == "pfb":
         if is_protected_pfb(import_url) and not is_protected_workspace(authorization_domain, bucket_name):
-            raise exceptions.AuthorizationException("Unable to import protected data into an unprotected workspace")
+            raise exceptions.ForbiddenImportException(import_url, user_info, "Unable to import protected data into an unprotected workspace")
     elif import_filetype == "tdrexport":
         manifest = load_tdr_manifest(import_url, google_project=google_project, user_info=user_info)
         if is_protected_snapshot(manifest) and not is_protected_workspace(authorization_domain, bucket_name):
-            raise exceptions.AuthorizationException("Unable to import protected data into an unprotected workspace")
+            raise exceptions.ForbiddenImportException(import_url, user_info, "Unable to import protected data into an unprotected workspace")
 
         if not all_sources_on_cloud_platform(manifest, workspace.cloud_platform):
-            raise exceptions.AuthorizationException("Unable to import TDR data across cloud platforms")
+            raise exceptions.ForbiddenImportException(import_url, user_info, "Unable to import TDR data across cloud platforms")
 
     # parse is_upsert from a str into a bool
     is_upsert = str(import_is_upsert).strip().lower() == "true"

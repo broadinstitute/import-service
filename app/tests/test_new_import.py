@@ -232,7 +232,7 @@ def test_is_protected_workspace(authorization_domain, bucket_name, protected):
 def test_restricted_imports(client):
     payload = {"path": "https://s3.amazonaws.com/test-bucket/some/valid/path.pfb", "filetype": "pfb"}
     resp = client.post('/namespace/name/imports', json=payload, headers=good_headers)
-    assert resp.status_code == 403
+    assert resp.status_code == 400
 
 @pytest.mark.parametrize("manifest,workspace_cloud_platform",[
     ("test_tdr_response_gcp.json", "azure"),
@@ -245,5 +245,5 @@ def test_blocks_cross_platform_tdr_imports(monkeypatch, client, manifest, worksp
     monkeypatch.setattr("app.new_import.http.http_as_filelike", mock.MagicMock(return_value=open(f"app/tests/resources/{manifest}", "rb")))
 
     resp = client.post('/mynamespace/myname/imports', json=good_tdr_json, headers=good_headers)
-    assert resp.status_code == 403
-    assert resp.text == "Unable to import TDR data across cloud platforms"
+    assert resp.status_code == 400
+    assert resp.text == "Import Not Allowed - Unable to import TDR data across cloud platforms"
