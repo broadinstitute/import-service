@@ -98,14 +98,14 @@ class ParquetTranslator:
             bucket = parsedurl.netloc
             path = parsedurl.path
             with gcs.open_file(self.import_details.workspace_google_project, bucket, path, self.import_details.submitter, self.auth_key) as pqfile:
-                return self.translate_parquet_file_to_entities(pqfile, is_azure=False, ref_only=ref_only)
+                return self.translate_parquet_file_to_entities(pqfile, is_https=False, is_azure=False, ref_only=ref_only)
         elif (parsedurl.scheme == 'https'):
             hostname = parsedurl.netloc
             if not (hostname.endswith(VALID_AZURE_DOMAIN) or hostname == GOOGLE_STORAGE_DOMAIN):
                 logging.error(f"unsupported domain in url {self.filelocation} provided")
                 raise exceptions.InvalidPathException(self.filelocation, user_info, "Unsupported domain")
             with http.http_as_filelike(self.filelocation) as pqfile:
-                return self.translate_parquet_file_to_entities(pqfile, is_azure=hostname.endswith(VALID_AZURE_DOMAIN), ref_only=ref_only)
+                return self.translate_parquet_file_to_entities(pqfile, is_https=True, is_azure=hostname.endswith(VALID_AZURE_DOMAIN), ref_only=ref_only)
         else:
             logging.error(f"unsupported scheme {parsedurl.scheme} provided")
             raise exceptions.InvalidPathException(self.filelocation, user_info, "Unsupported scheme")
@@ -118,10 +118,10 @@ class ParquetTranslator:
     #     assert reader.schema == 'foo'
     #     entity_batches = (self.translate_data_frame(b.to_pandas(), b.column_names) for b in reader)
     #     return itertools.chain(*entity_batches)
-    def translate_parquet_file_to_entities(self, file_like: IO, is_azure: bool = False, ref_only: bool = False) -> Iterator[Entity]:
+    def translate_parquet_file_to_entities(self, file_like: IO, is_azure: bool = False, is_https: bool = False, ref_only: bool = False) -> Iterator[Entity]:
         """Converts single parquet file-like object to an iterator of Entity objects."""
         pq_table: pyarrow.Table
-        if (is_azure):
+        if (is_azure or is_https):
             # We need to read and wrap the bytes of the parquet file in a BytesIO object which implements methods required by the parquet reader
             pq_table = pq.read_table(io.BytesIO(file_like.read()))
         else:
