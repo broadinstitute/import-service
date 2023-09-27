@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from typing import IO, Iterator
 
 from app.constants import TWO_GB_IN_BYTES
-from app.util.exceptions import FileTooBigToDownload
+from app.util.exceptions import FileTooBigToDownload, InvalidFileUrl
 
 BYTE_RANGE = "0-0"
 
@@ -23,7 +23,10 @@ def http_as_filelike(url: str, file_limit_bytes: int = TWO_GB_IN_BYTES) -> Itera
     content_range = http_response.headers.get('Content-Range')
     if http_response.status_code != 206:
         logging.error(f"Content-Range header unexpectedly returned response code {http_response.status_code} for {url}")
-        raise FileTooBigToDownload
+        if http_response.status_code == 400:
+            raise InvalidFileUrl
+        else:
+            raise FileTooBigToDownload
     if content_range is None:
         logging.error(f"No Content-Range header provided from {url} we won't download")
         raise FileTooBigToDownload

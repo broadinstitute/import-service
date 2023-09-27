@@ -67,8 +67,12 @@ def fake_import() -> Iterator[model.Import]:
     yield model.Import("aa", "aa", "uuid", "project", "aa@aa.aa", "gs://aa/aa", "pfb")
 
 @pytest.fixture(scope="function")
-def fake_import_tdr_manifest_gcp() -> Iterator[model.Import]:
+def fake_import_tdr_manifest_gcp_gs() -> Iterator[model.Import]:
     yield model.Import("bb", "bb", "uuid2", "project2", "bb@bb.bb", "gs://bb/bb", "tdrexport")
+
+@pytest.fixture(scope="function")
+def fake_import_tdr_manifest_gcp_https() -> Iterator[model.Import]:
+    yield model.Import("bb", "bb", "uuid2", "project2", "bb@bb.bb", "https://storage.googleapis.com/bb/bb", "tdrexport")
 
 @pytest.fixture(scope="function")
 def fake_import_tdr_manifest_azure() -> Iterator[model.Import]:
