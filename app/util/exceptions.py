@@ -54,7 +54,7 @@ class FileTooBigToDownload(ISvcException):
         super().__init__(message, 413)
 
 class InvalidFileUrl(ISvcException):
-    def __init__(self, message: str = "The file URL was invalid. It is possible that the URL has expired"):
+    def __init__(self, message: str = "The file URL was invalid. It is possible that the URL has expired."):
         """Thrown when we detect a file URL is invalid.  Likely cause is an expired signed URL"""
         super().__init__(message, 400)
 

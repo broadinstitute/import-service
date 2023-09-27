@@ -98,14 +98,14 @@ class ParquetTranslator:
             bucket = parsedurl.netloc
             path = parsedurl.path
             with gcs.open_file(self.import_details.workspace_google_project, bucket, path, self.import_details.submitter, self.auth_key) as pqfile:
-                return self.translate_parquet_file_to_entities(pqfile, False, ref_only)
+                return self.translate_parquet_file_to_entities(pqfile, is_azure=False, ref_only=ref_only)
         elif (parsedurl.scheme == 'https'):
             hostname = parsedurl.netloc
             if not (hostname.endswith(VALID_AZURE_DOMAIN) or hostname == GOOGLE_STORAGE_DOMAIN):
                 logging.error(f"unsupported domain in url {self.filelocation} provided")
                 raise exceptions.InvalidPathException(self.filelocation, user_info, "Unsupported domain")
             with http.http_as_filelike(self.filelocation) as pqfile:
-                return self.translate_parquet_file_to_entities(pqfile, hostname.endswith(VALID_AZURE_DOMAIN), ref_only)
+                return self.translate_parquet_file_to_entities(pqfile, is_azure=hostname.endswith(VALID_AZURE_DOMAIN), ref_only=ref_only)
         else:
             logging.error(f"unsupported scheme {parsedurl.scheme} provided")
             raise exceptions.InvalidPathException(self.filelocation, user_info, "Unsupported scheme")
