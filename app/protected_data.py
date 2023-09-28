@@ -51,6 +51,10 @@ def get_restricted_url_patterns() -> List[re.Pattern]:
         if source.startswith("s3://"):
             bucket_name = source[5:]
             restricted_url_patterns.extend(url_patterns_for_s3_bucket(bucket_name))
+        else:
+            hostname = source
+            restricted_url_patterns.append(url_pattern_for_host(hostname))
+
 
     return restricted_url_patterns
 
