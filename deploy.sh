@@ -58,7 +58,7 @@ docker run -v $PWD:/app \
   -e ENVIRONMENT=${ENVIRONMENT} \
    $DSDE_TOOLBOX_DOCKER_IMG render-templates.sh
 
-# DDO-3178 - due to issues with legacy jenkins nodes effectin the ability to auth to gcr.io registries, 
+# DDO-3178 - due to issues with legacy jenkins nodes effecting the ability to auth to gcr.io registries, 
 # switching to the dockerhub mirror of the gcloud sdk image. These are the same images, just hosted on dockerhub.
 export CLOUD_SDK_DOCKER_IMG=google/cloud-sdk:403.0.0
 docker pull $CLOUD_SDK_DOCKER_IMG
