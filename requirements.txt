@@ -9,7 +9,7 @@ attrs==22.2.0 ; python_version >= "3.9" and python_version < "3.10"
 backoff==1.11.1 ; python_version >= "3.9" and python_version < "3.10"
 cachetools==5.3.0 ; python_version >= "3.9" and python_version < "3.10"
 cdislogging==1.1.1 ; python_version >= "3.9" and python_version < "3.10"
-certifi==2022.12.7 ; python_version >= "3.9" and python_version < "3.10"
+certifi==2023.7.22 ; python_version >= "3.9" and python_version < "3.10"
 charset-normalizer==3.1.0 ; python_version >= "3.9" and python_version < "3.10"
 click==7.1.2 ; python_version >= "3.9" and python_version < "3.10"
 colorama==0.4.6 ; python_version >= "3.9" and python_version < "3.10" and (sys_platform == "win32" or platform_system == "Windows")
