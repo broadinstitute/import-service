@@ -27,6 +27,7 @@ PROTECTED_URL_PATTERNS: List[re.Pattern] = [
     *url_patterns_for_s3_bucket("edu-ucsc-gi-platform-anvil-prod-storage-anvilprod.us-east-1"),
     # AnVIL development
     url_pattern_for_host("service.anvil.gi.ucsc.edu"),
+    *url_patterns_for_s3_bucket("edu-ucsc-gi-platform-anvil-dev-storage-anvildev.us-east-1"),
     # BioData Catalyst
     url_pattern_for_host("gen3.biodatacatalyst.nhlbi.nih.gov"),
     *url_patterns_for_s3_bucket("gen3-biodatacatalyst-nhlbi-nih-gov-pfb-export"),
