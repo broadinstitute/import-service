@@ -32,6 +32,7 @@ flask-restx = "1.1.0"
 pyarrow = "11.0.0"
 pydantic = "1.10.6"
 pandas = "1.5.3"
+# werkzeug is a transitive dependency that we needed to explicitly update to get security fixes
 werkzeug = "2.3.8"
 [build-system]
 requires = ["poetry-core"]
