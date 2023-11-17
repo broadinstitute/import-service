@@ -32,7 +32,7 @@ flask-restx = "1.1.0"
 pyarrow = "11.0.0"
 pydantic = "1.10.6"
 pandas = "1.5.3"
-werkzeug = {git = "https://github.com/pallets/werkzeug.git", rev = "2.3.8"}
+werkzeug = "2.3.8"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
