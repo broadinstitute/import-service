@@ -19,6 +19,20 @@ $ source venv/bin/activate
 
 You should periodically run the `poetry install` line within your venv to keep it up-to-date with changes in dependencies.
 
+### Troubleshooting first time setup
+
+If you have problems running `poetry install` for the first time and encounter an error like:
+
+`The license_file parameter is deprecated, use license_files instead.`
+
+There is an incompatibility between pyyaml 5.4.1 and cython 3+ which you can work around with the following from your venv:
+```
+pip install wheel
+pip install "cython<3.0.0" && pip install --no-build-isolation pyyaml==5.4.1
+```
+
+([src](https://github.com/yaml/pyyaml/issues/724#issuecomment-1788120324) for workaround)
+
 ### Normal usage
 
 Activate and deactivate the venv:
@@ -103,7 +117,7 @@ When doing a production deployment, each step of the checklist must be performed
       You may refer to (or clone) a [previous release ticket](https://broadworkbench.atlassian.net/browse/AJ-1165)
       for an example.  This ticket ensures that the release is recorded for compliance, and that
       any release notes are picked up to be published.  It also helps to keep track of the steps along the way,
-      outlined in the next section.  
+      outlined in the next section.
 
 ### Deploy and Test
 You must deploy to each tier one-by-one and manually test
@@ -138,7 +152,7 @@ the latest version of Bond running in `prod`.
 
 `Import Service` is a Google App Engine (GAE) application.  Versions of `import-service` are deployed to GAE either via a merge into the `develop` branch (for `dev` apps),
 or via Jenkins for all other environments. [See here for specific details](https://github.com/broadinstitute/import-service#deployment-for-broad-only).
-[GAE allows a maximum of 210 versions of any app](https://cloud.google.com/appengine/docs/standard/an-overview-of-app-engine#limits), so we handle cleanup of old apps as 
+[GAE allows a maximum of 210 versions of any app](https://cloud.google.com/appengine/docs/standard/an-overview-of-app-engine#limits), so we handle cleanup of old apps as
 new versions are deployed.
 
 DSP caps the number of versions that can be stored at 50 (this is just an arbitrary number), just to ensure plenty of versions available for rollback if a bug were introduced.
