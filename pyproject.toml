@@ -29,7 +29,7 @@ gcsfs = "2023.3.0"
 memunit = "0.5.2"
 pyhumps = "3.8.0"
 flask-restx = "1.1.0"
-pyarrow = "11.0.0"
+pyarrow = "14.0.1"
 pydantic = "1.10.6"
 pandas = "1.5.3"
 # werkzeug is a transitive dependency that we needed to explicitly update to get security fixes
